@@ -1,0 +1,27 @@
+---
+import { about } from '../data/profile';
+---
+
+<section id="about" class="section section-alt">
+  <div class="container about-inner">
+    <span class="section-eyebrow">About</span>
+    <h2 class="section-heading">A bit about me</h2>
+    <p class="about-text">{about}</p>
+  </div>
+</section>
+
+<style>
+  .section-alt {
+    background: var(--color-bg-alt);
+    border-block: 1px solid var(--color-border);
+  }
+
+  .about-inner {
+    max-width: 44rem;
+  }
+
+  .about-text {
+    font-size: 1.05rem;
+    color: var(--color-text-muted);
+  }
+</style>

@@ -1,0 +1,23 @@
+---
+import { projects } from '../data/profile';
+import ProjectCard from './ProjectCard.astro';
+---
+
+<section id="projects" class="section">
+  <div class="container">
+    <span class="section-eyebrow">Selected Projects</span>
+    <h2 class="section-heading">Things I've built</h2>
+
+    <div class="project-grid">
+      {projects.map((project) => <ProjectCard project={project} />)}
+    </div>
+  </div>
+</section>
+
+<style>
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: var(--space-3);
+  }
+</style>
