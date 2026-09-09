@@ -1,0 +1,46 @@
+---
+import { site } from '../data/profile';
+---
+
+<section id="contact" class="section section-alt">
+  <div class="container contact-inner">
+    <span class="section-eyebrow">Contact</span>
+    <h2 class="section-heading">Let's talk</h2>
+    <p class="contact-lead">
+      Feel free to reach out — I'm happy to chat about software, AI, robotics, or opportunities.
+    </p>
+
+    <ul class="contact-list">
+      <li>
+        <a class="btn btn-primary" href={`mailto:${site.email}`}>{site.email}</a>
+      </li>
+      <li>
+        <a class="btn btn-secondary" href={site.linkedin} target="_blank" rel="noopener noreferrer"
+          >LinkedIn</a
+        >
+      </li>
+      <li>
+        <a class="btn btn-secondary" href={site.github} target="_blank" rel="noopener noreferrer"
+          >GitHub</a
+        >
+      </li>
+    </ul>
+  </div>
+</section>
+
+<style>
+  .contact-inner {
+    max-width: 40rem;
+  }
+
+  .contact-lead {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-3);
+  }
+
+  .contact-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+</style>

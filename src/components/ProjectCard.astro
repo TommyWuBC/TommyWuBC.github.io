@@ -1,0 +1,112 @@
+---
+import type { Project } from '../data/profile';
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+---
+
+<article class="card project-card">
+  <a class="project-image-link" href={`/projects/${project.slug}/`}>
+    <div class="project-image-placeholder" aria-hidden="true">
+      <span>{project.title.charAt(0)}</span>
+    </div>
+  </a>
+
+  <div class="project-body">
+    <h3><a href={`/projects/${project.slug}/`}>{project.title}</a></h3>
+    {project.org && <p class="project-meta">{project.org} · {project.dates}</p>}
+    <p class="project-summary">{project.summary}</p>
+
+    <ul class="project-tech" aria-label="Technologies used">
+      {project.tech.slice(0, 6).map((t) => (
+        <li class="tag">{t}</li>
+      ))}
+    </ul>
+
+    <div class="project-links">
+      <a class="project-detail-link" href={`/projects/${project.slug}/`}>View details →</a>
+    </div>
+  </div>
+</article>
+
+<style>
+  .project-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .project-image-link {
+    display: block;
+  }
+
+  .project-image-placeholder {
+    background: linear-gradient(180deg, var(--color-accent-soft), var(--color-bg-alt));
+    aspect-ratio: 16 / 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent);
+    font-size: 2.5rem;
+    font-weight: 700;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .project-body {
+    padding: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    flex: 1;
+  }
+
+  .project-body h3 {
+    font-size: 1.1rem;
+  }
+
+  .project-body h3 a {
+    text-decoration: none;
+    color: var(--color-text);
+  }
+
+  .project-body h3 a:hover {
+    color: var(--color-accent);
+  }
+
+  .project-meta {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .project-summary {
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+    margin-block: var(--space-1);
+  }
+
+  .project-tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-block: var(--space-1);
+  }
+
+  .project-links {
+    margin-top: auto;
+    padding-top: var(--space-2);
+  }
+
+  .project-detail-link {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .project-detail-link:hover {
+    text-decoration: underline;
+  }
+</style>

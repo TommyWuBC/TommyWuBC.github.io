@@ -1,0 +1,178 @@
+---
+import { experience, education, honors } from '../data/profile';
+---
+
+<section id="experience" class="section section-alt">
+  <div class="container">
+    <span class="section-eyebrow">Experience &amp; Education</span>
+    <h2 class="section-heading">Where I've been</h2>
+
+    <div class="timeline-columns">
+      <div>
+        <h3 class="timeline-subheading">Experience</h3>
+        <ol class="timeline">
+          {
+            experience.map((item) => (
+              <li class="timeline-item">
+                <div class="timeline-marker" aria-hidden="true" />
+                <div class="timeline-content card">
+                  <p class="timeline-dates">{item.dates}</p>
+                  <h4>{item.role}</h4>
+                  <p class="timeline-org">{item.org}</p>
+                  <ul class="timeline-bullets">
+                    {item.bullets.map((b) => (
+                      <li>{b}</li>
+                    ))}
+                  </ul>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+
+      <div>
+        <h3 class="timeline-subheading">Education</h3>
+        <ol class="timeline">
+          {
+            education.map((item) => (
+              <li class="timeline-item">
+                <div class="timeline-marker" aria-hidden="true" />
+                <div class="timeline-content card">
+                  <p class="timeline-dates">{item.dates}</p>
+                  <h4>{item.school}</h4>
+                  <p class="timeline-org">{item.credential}</p>
+                  {item.details && (
+                    <ul class="timeline-bullets">
+                      {item.details.map((d) => (
+                        <li>{d}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+
+        {
+          honors.length > 0 && (
+            <div class="honors">
+              <h3 class="timeline-subheading">Certifications &amp; Honors</h3>
+              <ul class="honors-list">
+                {honors.map((h) => (
+                  <li>{h}</li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .timeline-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: var(--space-5);
+  }
+
+  .timeline-subheading {
+    font-size: 1.05rem;
+    margin-bottom: var(--space-3);
+    color: var(--color-text);
+  }
+
+  .timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding-left: var(--space-3);
+    border-left: 2px solid var(--color-border);
+  }
+
+  .timeline-item {
+    position: relative;
+  }
+
+  .timeline-marker {
+    position: absolute;
+    left: calc(var(--space-3) * -1 - 5px);
+    top: 0.4rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+
+  .timeline-content {
+    padding: var(--space-3);
+  }
+
+  .timeline-dates {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-accent);
+    margin-bottom: 0.3rem;
+  }
+
+  .timeline-content h4 {
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .timeline-org {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+  }
+
+  .timeline-bullets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .timeline-bullets li {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .timeline-bullets li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+  }
+
+  .honors {
+    margin-top: var(--space-5);
+  }
+
+  .honors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .honors-list li {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .honors-list li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+  }
+</style>

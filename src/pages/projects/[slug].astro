@@ -1,0 +1,168 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { projects } from '../../data/profile';
+
+export function getStaticPaths() {
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+---
+
+<BaseLayout title={`${project.title} — Bingchang Wu`} description={project.summary}>
+  <Header />
+  <main id="main">
+    <article class="section project-detail">
+      <div class="container project-detail-inner">
+        <a class="back-link" href="/#projects">← Back to projects</a>
+
+        <div class="project-image-placeholder" aria-hidden="true">
+          <span>{project.title.charAt(0)}</span>
+        </div>
+
+        <h1>{project.title}</h1>
+        {project.org && <p class="project-meta">{project.org} · {project.dates}</p>}
+
+        <ul class="project-tech" aria-label="Technologies used">
+          {project.tech.map((t: string) => (
+            <li class="tag">{t}</li>
+          ))}
+        </ul>
+
+        <div class="project-description">
+          {project.description.map((paragraph: string) => (
+            <p>{paragraph}</p>
+          ))}
+        </div>
+
+        {project.metrics && project.metrics.length > 0 && (
+          <div class="project-metrics">
+            <h2>Results</h2>
+            <ul>
+              {project.metrics.map((m: string) => (
+                <li>{m}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div class="project-links">
+          {project.links.map((link: { label: string; url: string }) => (
+            <a
+              class="btn btn-secondary"
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </article>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .project-detail-inner {
+    max-width: 44rem;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-bottom: var(--space-3);
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .back-link:hover {
+    text-decoration: underline;
+  }
+
+  .project-image-placeholder {
+    background: linear-gradient(180deg, var(--color-accent-soft), var(--color-bg-alt));
+    aspect-ratio: 16 / 7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent);
+    font-size: 3rem;
+    font-weight: 700;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-4);
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
+    letter-spacing: -0.01em;
+    margin-bottom: 0.4rem;
+  }
+
+  .project-meta {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-3);
+  }
+
+  .project-tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: var(--space-4);
+  }
+
+  .project-description {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    color: var(--color-text);
+    margin-bottom: var(--space-4);
+  }
+
+  .project-metrics {
+    background: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .project-metrics h2 {
+    font-size: 1rem;
+    margin-bottom: var(--space-2);
+  }
+
+  .project-metrics ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .project-metrics li {
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .project-metrics li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+  }
+
+  .project-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+</style>

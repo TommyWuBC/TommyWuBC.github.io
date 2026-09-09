@@ -1,0 +1,47 @@
+---
+import { skills } from '../data/profile';
+---
+
+<section id="skills" class="section">
+  <div class="container">
+    <span class="section-eyebrow">Skills</span>
+    <h2 class="section-heading">Technologies I work with</h2>
+
+    <div class="skills-grid">
+      {
+        skills.map((group) => (
+          <div class="skill-group">
+            <h3>{group.category}</h3>
+            <ul class="skill-tags">
+              {group.items.map((item) => (
+                <li class="tag">{item}</li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: var(--space-4);
+  }
+
+  .skill-group h3 {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+  }
+
+  .skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+</style>
