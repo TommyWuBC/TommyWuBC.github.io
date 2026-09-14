@@ -4,22 +4,26 @@ import { site } from '../data/profile';
 
 <section id="home" class="hero">
   <div class="container hero-inner">
-    <p class="section-eyebrow">Hello, I'm</p>
-    <h1>{site.name}</h1>
-    <p class="hero-headline">{site.headline} · {site.location}</p>
-    <p class="hero-intro">{site.intro}</p>
+    <img class="hero-photo" src={site.photo} alt={site.name} width="160" height="160" />
 
-    <div class="hero-actions">
-      <a class="btn btn-primary" href={site.github} target="_blank" rel="noopener noreferrer"
-        >GitHub</a
-      >
-      <a class="btn btn-secondary" href={site.linkedin} target="_blank" rel="noopener noreferrer"
-        >LinkedIn</a
-      >
-      <a class="btn btn-secondary" href={site.resumeUrl} target="_blank" rel="noopener noreferrer"
-        >Resume</a
-      >
-      <a class="btn btn-secondary" href={`mailto:${site.email}`}>Email</a>
+    <div class="hero-text">
+      <p class="section-eyebrow">Hello, I'm</p>
+      <h1>{site.name}</h1>
+      <p class="hero-headline">{site.headline} · {site.location}</p>
+      <p class="hero-intro">{site.intro}</p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href={site.github} target="_blank" rel="noopener noreferrer"
+          >GitHub</a
+        >
+        <a class="btn btn-secondary" href={site.linkedin} target="_blank" rel="noopener noreferrer"
+          >LinkedIn</a
+        >
+        <a class="btn btn-secondary" href={site.resumeUrl} target="_blank" rel="noopener noreferrer"
+          >Resume</a
+        >
+        <a class="btn btn-secondary" href={`mailto:${site.email}`}>Email</a>
+      </div>
     </div>
   </div>
 </section>
@@ -30,7 +34,38 @@ import { site } from '../data/profile';
   }
 
   .hero-inner {
-    max-width: 42rem;
+    max-width: 44rem;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .hero-photo {
+    flex-shrink: 0;
+    width: 9rem;
+    height: 9rem;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    border: 3px solid var(--color-surface);
+    box-shadow: var(--shadow-md);
+  }
+
+  .hero-text {
+    min-width: 0;
+  }
+
+  @media (max-width: 40rem) {
+    .hero-inner {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-3);
+    }
+
+    .hero-photo {
+      width: 7rem;
+      height: 7rem;
+    }
   }
 
   .hero h1 {
