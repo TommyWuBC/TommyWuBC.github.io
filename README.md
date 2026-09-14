@@ -1,4 +1,4 @@
-# Bingchang Wu — Portfolio
+# Bingchang Wu: Portfolio
 
 A personal software-engineering portfolio site built with [Astro](https://astro.build), TypeScript, and plain CSS. Statically generated, no backend, no CMS, no client-side framework.
 
@@ -10,7 +10,7 @@ All personal content (name, bio, projects, experience, education, skills, contac
 src/data/profile.ts
 ```
 
-Edit that file to update the site — no need to touch any `.astro` component. To add a new project, add an entry to the `projects` array; a detail page is generated automatically at `/projects/<slug>/`.
+Edit that file to update the site; no need to touch any `.astro` component. To add a new project, add an entry to the `projects` array; a detail page is generated automatically at `/projects/<slug>/`.
 
 To swap in a real résumé, replace `public/resume.pdf` with your own file (keep the same filename, or update `resumeUrl` in `profile.ts`).
 

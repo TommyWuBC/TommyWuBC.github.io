@@ -1,6 +1,11 @@
 ---
 import { projects } from '../data/profile';
 import ProjectCard from './ProjectCard.astro';
+
+// GT Movies Store is featured separately in Spotlight.astro above this
+// section (temporary, for CS 2340 grading), so it's excluded here to avoid
+// showing it twice. Remove this filter when the Spotlight section is removed.
+const gridProjects = projects.filter((project) => project.slug !== 'gt-movies-store');
 ---
 
 <section id="projects" class="section">
@@ -9,7 +14,7 @@ import ProjectCard from './ProjectCard.astro';
     <h2 class="section-heading">Things I've built</h2>
 
     <div class="project-grid">
-      {projects.map((project) => <ProjectCard project={project} />)}
+      {gridProjects.map((project) => <ProjectCard project={project} />)}
     </div>
   </div>
 </section>

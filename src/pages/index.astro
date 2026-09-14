@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
+import Spotlight from '../components/Spotlight.astro';
 import About from '../components/About.astro';
 import Projects from '../components/Projects.astro';
 import Experience from '../components/Experience.astro';
@@ -11,10 +12,11 @@ import Footer from '../components/Footer.astro';
 import { site } from '../data/profile';
 ---
 
-<BaseLayout title={`${site.name} — ${site.headline}`}>
+<BaseLayout title={`${site.name} | ${site.headline}`}>
   <Header />
   <main id="main">
     <Hero />
+    <Spotlight />
     <About />
     <Projects />
     <Experience />
