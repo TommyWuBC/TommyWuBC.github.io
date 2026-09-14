@@ -101,6 +101,30 @@ button {
 }
 
 /* ---------------------------------------------------------------------------
+   SCROLL-LINKED SECTION ANIMATION
+   Sections below the fold "pop" in the first time they're scrolled into
+   view, then fade smoothly as they're scrolled past (see scroll-animate.js).
+--------------------------------------------------------------------------- */
+[data-animate] {
+  transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+[data-animate].is-pending {
+  opacity: 0;
+  transform: translateY(28px) scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-animate],
+  [data-animate].is-pending {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    FOCUS STATES (accessibility)
 --------------------------------------------------------------------------- */
 a:focus-visible,
