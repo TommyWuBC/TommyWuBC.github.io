@@ -3,17 +3,13 @@ import { site } from '../data/profile';
 ---
 
 <section id="home" class="hero">
-  <div class="hero-banner" aria-hidden="true">
-    <div class="hero-banner-bg" style={`background-image: url(${site.bannerImage})`} />
-    <img class="hero-banner-fg" src={site.bannerImage} alt="" />
-    <div class="hero-banner-vignette" />
-  </div>
+  <img class="hero-banner" src={site.bannerImage} alt="" aria-hidden="true" />
 
   <div class="container hero-inner">
-    <img class="hero-photo" src={site.photo} alt={site.name} width="160" height="160" />
+    <img class="hero-photo" src={site.photo} alt={site.name} width="176" height="176" />
 
     <div class="hero-text">
-      <div class="hero-text-card">
+      <div class="hero-text-glow">
         <p class="section-eyebrow">Hello, I'm</p>
         <h1>{site.name}</h1>
         <p class="hero-headline">{site.headline} · {site.location}</p>
@@ -43,49 +39,14 @@ import { site } from '../data/profile';
     padding-block: 0 var(--space-6);
   }
 
+  /* Tall enough on wide screens that a plain cover-crop still reads as
+     "the tower and logo", not a tight zoomed-in sliver. */
   .hero-banner {
-    position: relative;
+    display: block;
     width: 100%;
-    height: clamp(10rem, 20vw, 15rem);
-    overflow: hidden;
-    background: var(--color-bg-alt);
-  }
-
-  /* Soft, oversized blurred copy fills the full width on wide screens so
-     there's no hard edge or empty gutter beside the crisp centered photo. */
-  .hero-banner-bg {
-    position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center 35%;
-    filter: blur(26px) saturate(115%) brightness(0.92);
-    transform: scale(1.15);
-  }
-
-  /* The real photo, shown at its natural aspect ratio (never stretched or
-     cropped tight) and centered over the blurred fill. */
-  .hero-banner-fg {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    height: 100%;
-    width: auto;
-    max-width: 100%;
-    object-fit: contain;
-  }
-
-  .hero-banner-vignette {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to right,
-      var(--color-bg) 0%,
-      transparent 20%,
-      transparent 80%,
-      var(--color-bg) 100%
-    );
-    opacity: 0.45;
+    height: clamp(15rem, 24vw, 22rem);
+    object-fit: cover;
+    object-position: center 38%;
   }
 
   .hero-inner {
@@ -95,7 +56,7 @@ import { site } from '../data/profile';
     display: flex;
     align-items: flex-start;
     gap: var(--space-4);
-    margin-top: -4.5rem;
+    margin-top: -7.5rem;
   }
 
   .hero-photo {
@@ -115,20 +76,33 @@ import { site } from '../data/profile';
     min-width: 0;
   }
 
-  .hero-text-card {
-    display: inline-block;
-    background: rgba(255, 255, 255, 0.74);
-    backdrop-filter: blur(10px) saturate(140%);
-    -webkit-backdrop-filter: blur(10px) saturate(140%);
-    border-radius: var(--radius-md);
-    padding: 0.7rem 1.1rem;
-    box-shadow: 0 2px 14px rgba(30, 25, 15, 0.06);
+  /* A soft light glow behind the text (not a boxed card): a blurred,
+     radial-fading white shape sitting behind the letters, plus a touch of
+     text-shadow so glyph edges stay crisp against any part of the photo. */
+  .hero-text-glow {
+    position: relative;
+    isolation: isolate;
   }
 
-  @supports not (backdrop-filter: blur(1px)) {
-    .hero-text-card {
-      background: rgba(255, 255, 255, 0.92);
-    }
+  .hero-text-glow::before {
+    content: '';
+    position: absolute;
+    inset: -1.75rem -2.25rem;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.75) 40%,
+      rgba(255, 255, 255, 0.35) 65%,
+      rgba(255, 255, 255, 0) 85%
+    );
+    filter: blur(10px);
+    z-index: -1;
+  }
+
+  .hero-text-glow .section-eyebrow,
+  .hero-text-glow h1,
+  .hero-text-glow .hero-headline {
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.8), 0 0 18px rgba(255, 255, 255, 0.6);
   }
 
   .hero-intro {
@@ -146,14 +120,14 @@ import { site } from '../data/profile';
 
   @media (max-width: 40rem) {
     .hero-banner {
-      height: clamp(8rem, 34vw, 11rem);
+      height: clamp(9rem, 40vw, 13rem);
     }
 
     .hero-inner {
       flex-direction: column;
       align-items: flex-start;
       gap: var(--space-3);
-      margin-top: -3.5rem;
+      margin-top: -4.5rem;
     }
 
     .hero-photo {
@@ -161,8 +135,12 @@ import { site } from '../data/profile';
       height: 8.25rem;
     }
 
-    .hero-text-card {
-      margin-top: 0.4rem;
+    .hero-text-glow {
+      margin-top: 0.5rem;
+    }
+
+    .hero-text-glow::before {
+      inset: -1.25rem -1.5rem;
     }
   }
 

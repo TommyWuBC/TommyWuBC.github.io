@@ -73,7 +73,7 @@ const { title, description = `${site.name} | ${site.headline}` } = Astro.props;
               'main .project-card',
               'main .story-item',
               'main .skill-group',
-              'main .hero-text-card',
+              'main .hero-text-glow',
               'main .hero-actions',
               'main .spotlight-actions',
               'main .spotlight-highlights',
@@ -90,7 +90,12 @@ const { title, description = `${site.name} | ${site.headline}` } = Astro.props;
 
         const header = document.querySelector('.site-header');
         const headerOffset = header ? header.getBoundingClientRect().height : 0;
-        const FADE_ZONE = 150;
+        // A bit more travel and drift on narrow (mobile) viewports, where
+        // the effect otherwise reads as more subtle.
+        const isNarrow = window.innerWidth <= 640;
+        const FADE_ZONE = isNarrow ? 230 : 190;
+        const DRIFT_PX = isNarrow ? 42 : 34;
+        const SHRINK = isNarrow ? 0.06 : 0.05;
 
         let ticking = false;
 
@@ -106,7 +111,7 @@ const { title, description = `${site.name} | ${site.headline}` } = Astro.props;
             el.style.opacity = String(opacity);
             el.style.transform =
               opacity < 1
-                ? `translateY(-${(1 - opacity) * 26}px) scale(${1 - (1 - opacity) * 0.03})`
+                ? `translateY(-${(1 - opacity) * DRIFT_PX}px) scale(${1 - (1 - opacity) * SHRINK})`
                 : '';
           });
           ticking = false;
