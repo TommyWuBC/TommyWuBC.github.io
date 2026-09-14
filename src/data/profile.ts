@@ -41,8 +41,8 @@ export interface Project {
   org?: string;
   dates?: string;
   links: Link[];
-  /** Set to true if you have a real image at /public/projects/<slug>.jpg */
-  hasImage?: boolean;
+  /** Path to a real image in /public, e.g. '/projects/<slug>.jpg'. Falls back to a placeholder if unset. */
+  image?: string;
   /** Maps required user stories to the screen/feature that implements each one. */
   userStories?: UserStory[];
   /** Paragraphs describing methodology/approach and how doubts were resolved. */
@@ -84,7 +84,7 @@ export const site = {
     "I'm a Computer Science student at Georgia Tech building software across AI systems, robotics, and full-stack web applications. I enjoy turning research ideas and messy real-world data into reliable, well-engineered tools.",
 };
 
-export const about = `I'm Bingchang (Tommy) Wu, a Computer Science student at Georgia Tech studying Intelligence and Systems & Architecture. I like working across the stack, from training reinforcement learning agents and building RAG pipelines, to shipping the web apps and backend services that make that work usable by other people. Outside of class and research, I enjoy teaching (I TA'd Stanford's Code in Place), thinking about the practical and ethical questions around AI, and picking up new languages: I speak English and Chinese natively and am slowly learning Greek.`;
+export const about = `I'm Bingchang (Tommy) Wu, a Computer Science student at Georgia Tech studying Intelligence and Systems & Architecture. I like working across the stack, from training reinforcement learning agents and building RAG pipelines, to shipping the web apps and backend services that make that work usable by other people. Outside of class and research, I enjoy teaching (I TA'd Stanford's Code in Place) and thinking about the practical and ethical questions around AI.`;
 
 export const projects: Project[] = [
   {
@@ -292,20 +292,7 @@ export const projects: Project[] = [
     org: 'Saite Robotics',
     dates: 'May 2026 – Aug 2026',
     links: [{ label: 'Code (internal/private)', url: '[PLACEHOLDER]' }],
-  },
-  {
-    slug: 'carla-behavior-trees',
-    title: 'CARLA Behavior-Tree Simulation Nodes',
-    summary:
-      'Six reusable Python behavior-tree nodes for CARLA autonomous-driving simulations, covering trajectory generation, path matching, obstacle classification, and collision-risk detection.',
-    description: [
-      'Developed six Python behavior-tree nodes for CARLA simulations, including configurable trajectory generation, path matching, obstacle classification, collision-risk detection, and reusable geometry utilities.',
-    ],
-    tech: ['Python', 'CARLA', 'ROS'],
-    metrics: ['0.31 m average path deviation across 24 test scenarios'],
-    org: 'Saite Robotics',
-    dates: 'May 2026 – Aug 2026',
-    links: [{ label: 'Code (internal/private)', url: '[PLACEHOLDER]' }],
+    image: '/projects/autonomous-vehicle-diagnostics.jpg',
   },
   {
     slug: 'visual-navigation-research',
@@ -330,6 +317,7 @@ export const projects: Project[] = [
     org: 'PAIR Lab, Georgia Institute of Technology',
     dates: 'May 2026 – Present',
     links: [{ label: 'Code (in progress)', url: '[PLACEHOLDER]' }],
+    image: '/projects/visual-navigation-research.png',
   },
   {
     slug: 'buzzboard',
@@ -348,6 +336,7 @@ export const projects: Project[] = [
       { label: 'GitHub', url: '[PLACEHOLDER]' },
       { label: 'Live site', url: '[PLACEHOLDER]' },
     ],
+    image: '/projects/buzzboard.png',
   },
 ];
 
