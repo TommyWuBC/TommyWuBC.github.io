@@ -101,23 +101,32 @@ button {
 }
 
 /* ---------------------------------------------------------------------------
-   SCROLL-LINKED SECTION ANIMATION
-   Sections below the fold "pop" in the first time they're scrolled into
-   view, then fade smoothly as they're scrolled past (see scroll-animate.js).
+   SCROLL-LINKED ANIMATION (see the script at the bottom of BaseLayout.astro)
+   - [data-animate] marks whole sections: each "pops" in with a rise + scale
+     the first time it's scrolled into view.
+   - .scroll-fade marks individual headings/paragraphs/list items/cards
+     within those sections: each fades and drifts on its own as it scrolls
+     past the header, instead of the whole section fading as one block.
 --------------------------------------------------------------------------- */
 [data-animate] {
-  transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.35s ease, transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: opacity, transform;
 }
 
 [data-animate].is-pending {
   opacity: 0;
-  transform: translateY(28px) scale(0.98);
+  transform: translateY(34px) scale(0.96);
+}
+
+.scroll-fade {
+  transition: opacity 0.25s ease, transform 0.35s ease;
+  will-change: opacity, transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
   [data-animate],
-  [data-animate].is-pending {
+  [data-animate].is-pending,
+  .scroll-fade {
     transition: none;
     opacity: 1;
     transform: none;

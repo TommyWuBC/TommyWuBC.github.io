@@ -3,7 +3,11 @@ import { site } from '../data/profile';
 ---
 
 <section id="home" class="hero">
-  <img class="hero-banner" src={site.bannerImage} alt="" aria-hidden="true" />
+  <div class="hero-banner" aria-hidden="true">
+    <div class="hero-banner-bg" style={`background-image: url(${site.bannerImage})`} />
+    <img class="hero-banner-fg" src={site.bannerImage} alt="" />
+    <div class="hero-banner-vignette" />
+  </div>
 
   <div class="container hero-inner">
     <img class="hero-photo" src={site.photo} alt={site.name} width="160" height="160" />
@@ -40,11 +44,48 @@ import { site } from '../data/profile';
   }
 
   .hero-banner {
-    display: block;
+    position: relative;
     width: 100%;
-    height: clamp(9.5rem, 20vw, 14rem);
-    object-fit: cover;
-    object-position: center 35%;
+    height: clamp(10rem, 20vw, 15rem);
+    overflow: hidden;
+    background: var(--color-bg-alt);
+  }
+
+  /* Soft, oversized blurred copy fills the full width on wide screens so
+     there's no hard edge or empty gutter beside the crisp centered photo. */
+  .hero-banner-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center 35%;
+    filter: blur(26px) saturate(115%) brightness(0.92);
+    transform: scale(1.15);
+  }
+
+  /* The real photo, shown at its natural aspect ratio (never stretched or
+     cropped tight) and centered over the blurred fill. */
+  .hero-banner-fg {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  .hero-banner-vignette {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      var(--color-bg) 0%,
+      transparent 20%,
+      transparent 80%,
+      var(--color-bg) 100%
+    );
+    opacity: 0.45;
   }
 
   .hero-inner {
@@ -54,14 +95,14 @@ import { site } from '../data/profile';
     display: flex;
     align-items: flex-start;
     gap: var(--space-4);
-    margin-top: -4.25rem;
+    margin-top: -4.5rem;
   }
 
   .hero-photo {
     flex-shrink: 0;
     margin-top: 0.5rem;
-    width: 10rem;
-    height: 10rem;
+    width: 11rem;
+    height: 11rem;
     border-radius: 50%;
     object-fit: cover;
     object-position: center;
@@ -105,19 +146,19 @@ import { site } from '../data/profile';
 
   @media (max-width: 40rem) {
     .hero-banner {
-      height: clamp(7rem, 32vw, 10rem);
+      height: clamp(8rem, 34vw, 11rem);
     }
 
     .hero-inner {
       flex-direction: column;
       align-items: flex-start;
       gap: var(--space-3);
-      margin-top: -3.25rem;
+      margin-top: -3.5rem;
     }
 
     .hero-photo {
-      width: 7.5rem;
-      height: 7.5rem;
+      width: 8.25rem;
+      height: 8.25rem;
     }
 
     .hero-text-card {
