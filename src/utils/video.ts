@@ -4,7 +4,7 @@
 // Turns a plain URL (YouTube, Vimeo, direct video file, or generic embed
 // link) into something a project page can render. Add a link in
 // src/data/profile.ts under a project's `video.url` field and it will
-// automatically render as the right kind of embed — no template changes
+// automatically render as the right kind of embed, no template changes
 // needed.
 // ---------------------------------------------------------------------------
 

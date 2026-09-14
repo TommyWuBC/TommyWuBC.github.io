@@ -16,7 +16,7 @@ const { project } = Astro.props;
 const videoEmbed = project.video ? resolveVideoEmbed(project.video.url) : null;
 ---
 
-<BaseLayout title={`${project.title} — Bingchang Wu`} description={project.summary}>
+<BaseLayout title={`${project.title} | Bingchang Wu`} description={project.summary}>
   <Header />
   <main id="main">
     <article class="section project-detail">
@@ -78,7 +78,7 @@ const videoEmbed = project.video ? resolveVideoEmbed(project.video.url) : null;
                 Demo video coming soon. Once it's recorded, add the YouTube/Vimeo link (or a
                 file path like <code>/videos/demo.mp4</code> for a file dropped in{' '}
                 <code>public/videos/</code>) to this project's <code>video.url</code> in{' '}
-                <code>src/data/profile.ts</code> — it will appear here automatically.
+                <code>src/data/profile.ts</code>, and it will appear here automatically.
               </p>
             )}
             {project.video.caption && <p class="video-caption">{project.video.caption}</p>}

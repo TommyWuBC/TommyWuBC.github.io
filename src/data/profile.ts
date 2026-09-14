@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 // This is the single place to edit all site content: name, bio, projects,
 // experience, education, skills, and contact links. Every component reads
-// from this file — you should not need to touch any .astro file just to
+// from this file, so you should not need to touch any .astro file just to
 // update your own information.
 //
 // Fields marked [PLACEHOLDER] should be replaced with real content/links.
@@ -24,7 +24,7 @@ export interface UserStory {
 export interface VideoDemo {
   /**
    * YouTube/Vimeo URL, direct embed URL, or a path to a file in /public
-   * (e.g. '/videos/demo.mp4'). Leave as '' until the recording is ready —
+   * (e.g. '/videos/demo.mp4'). Leave as '' until the recording is ready;
    * the project page shows a "coming soon" placeholder until then.
    */
   url: string;
@@ -83,23 +83,23 @@ export const site = {
     "I'm a Computer Science student at Georgia Tech building software across AI systems, robotics, and full-stack web applications. I enjoy turning research ideas and messy real-world data into reliable, well-engineered tools.",
 };
 
-export const about = `I'm Bingchang (Tommy) Wu, a Computer Science student at Georgia Tech studying Intelligence and Systems & Architecture. I like working across the stack — from training reinforcement learning agents and building RAG pipelines, to shipping the web apps and backend services that make that work usable by other people. Outside of class and research, I enjoy teaching (I TA'd Stanford's Code in Place), thinking about the practical and ethical questions around AI, and picking up new languages — I speak English and Chinese natively and am slowly learning Greek.`;
+export const about = `I'm Bingchang (Tommy) Wu, a Computer Science student at Georgia Tech studying Intelligence and Systems & Architecture. I like working across the stack, from training reinforcement learning agents and building RAG pipelines, to shipping the web apps and backend services that make that work usable by other people. Outside of class and research, I enjoy teaching (I TA'd Stanford's Code in Place), thinking about the practical and ethical questions around AI, and picking up new languages: I speak English and Chinese natively and am slowly learning Greek.`;
 
 export const projects: Project[] = [
   {
     slug: 'gt-movies-store',
     title: 'GT Movies Store',
     summary:
-      'A full-stack Django movie storefront built for CS 2340: account management, a searchable catalog, a session-based cart and checkout, user reviews with moderation, and a Django-admin back office — deployed live on PythonAnywhere.',
+      'A full-stack Django movie storefront built for CS 2340: account management, a searchable catalog, a session-based cart and checkout, user reviews with moderation, and a Django-admin back office, deployed live on PythonAnywhere.',
     description: [
       "GT Movies Store is an online movie shop built as the term project for Georgia Tech's CS 2340 (Objects & Design). Users can register an account, browse and search the movie catalog, view movie details, add movies to a shopping cart, check out to build an order history, and leave reviews on movies to help other shoppers decide what to buy.",
       "The app is split into four Django apps by responsibility: home (landing/about pages), accounts (signup, login, logout, order history), movies (catalog, movie detail, reviews), and cart (session-based cart and checkout). Each app owns its own models, views, URLs, and templates, which kept the 21 required user stories easy to trace back to a single, obvious place in the codebase.",
       'Every page extends one shared Bootstrap 5 base template with a collapsible responsive navbar and a grid-based footer, so the same interface works from a widescreen monitor down to a phone without a separate mobile build. Authentication state (logged in vs. logged out) drives which nav links and page actions are shown.',
-      "Every model — users, movies, reviews, orders, and order line items — is registered with Django's built-in admin site, giving an administrator full create/view/update/delete control over the store's data without any custom admin UI code.",
+      "Every model (users, movies, reviews, orders, and order line items) is registered with Django's built-in admin site, giving an administrator full create/view/update/delete control over the store's data without any custom admin UI code.",
       "The one feature not covered directly by the course template is review moderation: reviews carry a `reported` boolean that any signed-in user (other than the reviewer) can flip via a 'Report' button, and the movie-detail view filters those reviews out of the page from that point on.",
     ],
     tech: ['Python', 'Django 5', 'SQLite', 'Bootstrap 5', 'HTML/CSS', 'PythonAnywhere'],
-    org: 'Georgia Institute of Technology — CS 2340: Objects & Design',
+    org: 'Georgia Institute of Technology, CS 2340: Objects & Design',
     dates: 'Fall 2026',
     links: [
       { label: 'Live Site', url: 'https://bwu.pythonanywhere.com/' },
@@ -247,14 +247,14 @@ export const projects: Project[] = [
       },
     ],
     process: [
-      "I worked through this project mostly sequentially, using the chapter structure of Django 5 for the Impatient (Correa & Lim) as a rough roadmap: get the project skeleton and home app running first, then layer in accounts/auth, then the movies catalog, then reviews, then cart and checkout — testing each user story in the browser before moving on so I always had a working app rather than a half-finished one.",
+      "I worked through this project mostly sequentially, using the chapter structure of Django 5 for the Impatient (Correa & Lim) as a rough roadmap: get the project skeleton and home app running first, then layer in accounts/auth, then the movies catalog, then reviews, then cart and checkout, testing each user story in the browser before moving on so I always had a working app rather than a half-finished one.",
       "Before writing code, I grouped the 21 user stories by which Django app would own them (home, accounts, movies, cart), since Django expects a project to be sliced into apps by responsibility rather than by page. That grouping made it obvious which app should own which models, views, and URLs, and kept later debugging localized to one app at a time.",
-      "When I hit an error or wasn't sure how a Django feature worked — session-based carts, login_required, ForeignKey cascade behavior, wiring up the admin site — I'd start with the official Django documentation for the exact API, then cross-check GeeksforGeeks or W3Schools when I wanted a simpler explanation or a runnable example, and come back to the book for how the pieces fit together in this specific project's structure.",
-      "The review-reporting feature (user story #21) isn't covered in the book, so I extended the Review model with a boolean `reported` field and filtered it out of the query used by the movie detail view — the same pattern the book uses elsewhere for flags on a model, applied to a new case.",
+      "When I hit an error or wasn't sure how a Django feature worked (session-based carts, login_required, ForeignKey cascade behavior, wiring up the admin site), I'd start with the official Django documentation for the exact API, then cross-check GeeksforGeeks or W3Schools when I wanted a simpler explanation or a runnable example, and come back to the book for how the pieces fit together in this specific project's structure.",
+      "The review-reporting feature (user story #21) isn't covered in the book, so I extended the Review model with a boolean `reported` field and filtered it out of the query used by the movie detail view, the same pattern the book uses elsewhere for flags on a model, applied to a new case.",
       'I deployed to PythonAnywhere early rather than waiting until the end, so every feature after that point was tested against the real deployment target and not just the local dev server.',
     ],
     video: {
-      url: '',
+      url: '/videos/gt-movies-store-demo.mp4',
       caption:
         'Full walkthrough: account signup/login, browsing and searching the catalog, cart and checkout, creating/editing/deleting/reporting reviews, and the Django admin panel.',
     },
@@ -332,7 +332,7 @@ export const projects: Project[] = [
   },
   {
     slug: 'buzzboard',
-    title: 'BuzzBoard — Campus Event Discovery Platform',
+    title: 'BuzzBoard: Campus Event Discovery Platform',
     summary:
       'A full-stack campus event-discovery platform with real-time RSVP and presence updates, proximity-aware feed ranking, and schedule-conflict detection.',
     description: [
@@ -394,7 +394,7 @@ export const experience: ExperienceEntry[] = [
 export const education: EducationEntry[] = [
   {
     school: 'Georgia Institute of Technology',
-    credential: 'B.S. in Computer Science — Threads: Intelligence, Systems & Architecture',
+    credential: 'B.S. in Computer Science, Threads: Intelligence, Systems & Architecture',
     dates: 'Aug 2025 – May 2028 (expected)',
     details: [
       'GPA: 4.0 / 4.0',
