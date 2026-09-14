@@ -1,25 +1,47 @@
 ---
 // TEMPORARY: highlights the GT Movies Store project above the regular
-// Projects grid so course TAs/graders see it immediately. To revert, remove
-// the <Spotlight /> line from src/pages/index.astro, delete this file, and
-// remove the 'gt-movies-store' exclusion filter in src/components/Projects.astro.
+// Projects grid. To revert, remove the <Spotlight /> line from
+// src/pages/index.astro, delete this file, and remove the
+// 'gt-movies-store' exclusion filter in src/components/Projects.astro.
 import { projects } from '../data/profile';
+import { resolveVideoEmbed } from '../utils/video';
 
 const spotlight = projects.find((p) => p.slug === 'gt-movies-store');
+const videoEmbed = spotlight?.video?.url ? resolveVideoEmbed(spotlight.video.url) : null;
 ---
 
 {
   spotlight && (
     <section id="spotlight" class="section spotlight-section">
       <div class="container spotlight-inner">
-        <span class="spotlight-badge">Course Project Spotlight, for CS 2340 TAs</span>
+        <span class="spotlight-badge">Featured Project</span>
         <h2 class="section-heading">{spotlight.title}</h2>
         <p class="spotlight-summary">{spotlight.summary}</p>
+
+        {videoEmbed && (
+          <div class="spotlight-video">
+            {videoEmbed.kind === 'file' ? (
+              <video class="video-file" controls preload="metadata" src={videoEmbed.src}>
+                Your browser doesn't support embedded video.
+                <a href={videoEmbed.src}>Download the video</a> instead.
+              </video>
+            ) : (
+              <div class="video-frame">
+                <iframe
+                  src={videoEmbed.src}
+                  title={`${spotlight.title} demo video`}
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         <ul class="spotlight-highlights">
           <li>All 21 required user stories mapped to the screen/feature that implements them</li>
           <li>Process and methodology write-up</li>
-          <li>In-browser demo video</li>
         </ul>
 
         {(spotlight.org || spotlight.dates) && (
@@ -32,7 +54,7 @@ const spotlight = projects.find((p) => p.slug === 'gt-movies-store');
 
         <div class="spotlight-actions">
           <a class="btn btn-primary" href={`/projects/${spotlight.slug}/`}>
-            View full write-up and demo video
+            View full write-up
           </a>
           {spotlight.links.map((link) => (
             <a class="btn btn-secondary" href={link.url} target="_blank" rel="noopener noreferrer">
@@ -79,6 +101,35 @@ const spotlight = projects.find((p) => p.slug === 'gt-movies-store');
     font-size: 1.05rem;
     color: rgba(255, 255, 255, 0.9);
     margin-bottom: var(--space-3);
+  }
+
+  .spotlight-video {
+    margin-bottom: var(--space-3);
+  }
+
+  .video-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .video-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .video-file {
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: #000;
   }
 
   .spotlight-highlights {
