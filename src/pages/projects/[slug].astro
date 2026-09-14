@@ -23,9 +23,15 @@ const videoEmbed = project.video ? resolveVideoEmbed(project.video.url) : null;
       <div class="container project-detail-inner">
         <a class="back-link" href="/#projects">← Back to projects</a>
 
-        <div class="project-image-placeholder" aria-hidden="true">
-          <span>{project.title.charAt(0)}</span>
-        </div>
+        {project.image ? (
+          <div class="project-image">
+            <img src={project.image} alt="" loading="lazy" />
+          </div>
+        ) : (
+          <div class="project-image-placeholder" aria-hidden="true">
+            <span>{project.title.charAt(0)}</span>
+          </div>
+        )}
 
         <h1>{project.title}</h1>
         {project.org && <p class="project-meta">{project.org} · {project.dates}</p>}
@@ -162,6 +168,24 @@ const videoEmbed = project.video ? resolveVideoEmbed(project.video.url) : null;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     margin-bottom: var(--space-4);
+  }
+
+  .project-image {
+    aspect-ratio: 16 / 7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-4);
+    overflow: hidden;
+  }
+
+  .project-image img {
+    max-width: 70%;
+    max-height: 70%;
+    object-fit: contain;
   }
 
   h1 {
