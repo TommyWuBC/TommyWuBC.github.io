@@ -80,6 +80,7 @@ export const site = {
   linkedin: 'https://www.linkedin.com/in/bingchang-wu-017474274',
   resumeUrl: '/resume.pdf',
   photo: '/profile.jpg',
+  bannerImage: '/hero-banner.jpg',
   intro:
     "I'm a Computer Science student at Georgia Tech building software across AI systems, robotics, and full-stack web applications. I enjoy turning research ideas and messy real-world data into reliable, well-engineered tools.",
 };

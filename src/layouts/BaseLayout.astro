@@ -22,5 +22,63 @@ const { title, description = `${site.name} | ${site.headline}` } = Astro.props;
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <slot />
+    <script>
+      // Sections pop in the first time they're scrolled into view, then fade
+      // smoothly as they're scrolled past (out the top). Purely additive:
+      // if JS never runs, every section is just visible as normal.
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const targets = Array.from(document.querySelectorAll('main > section, main > article'));
+
+      if (!prefersReduced && targets.length) {
+        targets.forEach((el) => {
+          el.setAttribute('data-animate', '');
+          const rect = el.getBoundingClientRect();
+          if (rect.top > window.innerHeight * 0.85) {
+            el.classList.add('is-pending');
+          }
+        });
+
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.remove('is-pending');
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+        );
+        targets.forEach((el) => io.observe(el));
+
+        let ticking = false;
+
+        function updateFades() {
+          const viewportH = window.innerHeight;
+          targets.forEach((el) => {
+            if (el.classList.contains('is-pending')) return;
+            const rect = el.getBoundingClientRect();
+            const fadeZone = Math.min(420, rect.height * 0.6, viewportH * 0.6);
+            let opacity = 1;
+            if (fadeZone > 0 && rect.bottom < fadeZone) {
+              opacity = Math.max(0, rect.bottom / fadeZone);
+            }
+            el.style.opacity = String(opacity);
+            el.style.transform = opacity < 1 ? `translateY(-${(1 - opacity) * 18}px)` : '';
+          });
+          ticking = false;
+        }
+
+        function onScroll() {
+          if (!ticking) {
+            ticking = true;
+            requestAnimationFrame(updateFades);
+          }
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll);
+        updateFades();
+      }
+    </script>
   </body>
 </html>
