@@ -334,7 +334,7 @@ export const projects: Project[] = [
     dates: 'Jan 2026 – May 2026',
     links: [
       { label: 'GitHub', url: '[PLACEHOLDER]' },
-      { label: 'Live site', url: '[PLACEHOLDER]' },
+      { label: 'Live site', url: 'https://gt-buzzboard.vercel.app/home' },
     ],
     image: '/projects/buzzboard.png',
   },
