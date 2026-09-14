@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { projects } from '../../data/profile';
+import { resolveVideoEmbed } from '../../utils/video';
 
 export function getStaticPaths() {
   return projects.map((project) => ({
@@ -12,6 +13,7 @@ export function getStaticPaths() {
 }
 
 const { project } = Astro.props;
+const videoEmbed = project.video ? resolveVideoEmbed(project.video.url) : null;
 ---
 
 <BaseLayout title={`${project.title} — Bingchang Wu`} description={project.summary}>
@@ -48,6 +50,67 @@ const { project } = Astro.props;
                 <li>{m}</li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {project.video && (
+          <div class="project-video">
+            <h2>Demo Video</h2>
+            {videoEmbed ? (
+              videoEmbed.kind === 'file' ? (
+                <video class="video-file" controls src={videoEmbed.src}>
+                  Your browser doesn't support embedded video.
+                  <a href={videoEmbed.src}>Download the video</a> instead.
+                </video>
+              ) : (
+                <div class="video-frame">
+                  <iframe
+                    src={videoEmbed.src}
+                    title={`${project.title} demo video`}
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                  ></iframe>
+                </div>
+              )
+            ) : (
+              <p class="video-placeholder">
+                Demo video coming soon. Once it's recorded, add the YouTube/Vimeo link (or a
+                file path like <code>/videos/demo.mp4</code> for a file dropped in{' '}
+                <code>public/videos/</code>) to this project's <code>video.url</code> in{' '}
+                <code>src/data/profile.ts</code> — it will appear here automatically.
+              </p>
+            )}
+            {project.video.caption && <p class="video-caption">{project.video.caption}</p>}
+          </div>
+        )}
+
+        {project.userStories && project.userStories.length > 0 && (
+          <div class="project-stories">
+            <h2>User Story Coverage</h2>
+            <ul class="story-list">
+              {project.userStories.map((story) => (
+                <li class="story-item">
+                  <div class="story-head">
+                    <span class="story-id">#{story.id}</span>
+                    <span class={`tag story-role story-role-${story.role}`}>{story.role}</span>
+                  </div>
+                  <p class="story-text">{story.story}</p>
+                  <p class="story-feature">
+                    <strong>How it's addressed:</strong> {story.feature}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {project.process && project.process.length > 0 && (
+          <div class="project-process">
+            <h2>Process &amp; Approach</h2>
+            {project.process.map((paragraph: string) => (
+              <p>{paragraph}</p>
+            ))}
           </div>
         )}
 
@@ -164,5 +227,120 @@ const { project } = Astro.props;
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
+  }
+
+  .project-video,
+  .project-stories,
+  .project-process {
+    margin-bottom: var(--space-4);
+  }
+
+  .project-video h2,
+  .project-stories h2,
+  .project-process h2 {
+    font-size: 1.2rem;
+    margin-bottom: var(--space-2);
+  }
+
+  .project-process p {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+  }
+
+  .video-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-alt);
+  }
+
+  .video-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .video-file {
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: #000;
+  }
+
+  .video-placeholder {
+    padding: var(--space-3);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-alt);
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+  }
+
+  .video-placeholder code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--color-surface);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    border: 1px solid var(--color-border);
+  }
+
+  .video-caption {
+    margin-top: var(--space-2);
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+  }
+
+  .story-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .story-item {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  .story-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .story-id {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--color-accent);
+    font-size: 0.9rem;
+  }
+
+  .story-role {
+    text-transform: capitalize;
+  }
+
+  .story-role-admin {
+    background: #f5e7d6;
+    color: #8a5a15;
+  }
+
+  .story-text {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+    margin-bottom: 0.4rem;
+  }
+
+  .story-feature {
+    font-size: 0.95rem;
+    color: var(--color-text);
   }
 </style>
