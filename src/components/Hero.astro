@@ -3,7 +3,14 @@ import { site } from '../data/profile';
 ---
 
 <section id="home" class="hero">
-  <img class="hero-banner" src={site.bannerImage} alt="" aria-hidden="true" />
+  <img
+    class="hero-banner"
+    src={site.bannerImage}
+    alt=""
+    aria-hidden="true"
+    width="1200"
+    height="475"
+  />
 
   <div class="container hero-inner">
     <img class="hero-photo" src={site.photo} alt={site.name} width="176" height="176" />
@@ -39,14 +46,14 @@ import { site } from '../data/profile';
     padding-block: 0 var(--space-6);
   }
 
-  /* Tall enough on wide screens that a plain cover-crop still reads as
-     "the tower and logo", not a tight zoomed-in sliver. */
+  /* Scales by its own intrinsic aspect ratio (no object-fit crop at all)
+     so the whole photo is always visible, at any viewport width. The
+     width/height attributes above reserve the right aspect ratio before
+     the image loads, so this doesn't cause a layout jump. */
   .hero-banner {
     display: block;
     width: 100%;
-    height: clamp(15rem, 24vw, 22rem);
-    object-fit: cover;
-    object-position: center 38%;
+    height: auto;
   }
 
   .hero-inner {
@@ -76,33 +83,19 @@ import { site } from '../data/profile';
     min-width: 0;
   }
 
-  /* A soft light glow behind the text (not a boxed card): a blurred,
-     radial-fading white shape sitting behind the letters, plus a touch of
-     text-shadow so glyph edges stay crisp against any part of the photo. */
-  .hero-text-glow {
-    position: relative;
-    isolation: isolate;
-  }
-
-  .hero-text-glow::before {
-    content: '';
-    position: absolute;
-    inset: -1.75rem -2.25rem;
-    background: radial-gradient(
-      ellipse at center,
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(255, 255, 255, 0.75) 40%,
-      rgba(255, 255, 255, 0.35) 65%,
-      rgba(255, 255, 255, 0) 85%
-    );
-    filter: blur(10px);
-    z-index: -1;
-  }
-
+  /* A soft glow hugging each letter (not a card or a single blob behind
+     the block): several stacked, blurred white text-shadows, so every
+     glyph gets its own halo that stays legible over any part of the photo. */
   .hero-text-glow .section-eyebrow,
   .hero-text-glow h1,
   .hero-text-glow .hero-headline {
-    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.8), 0 0 18px rgba(255, 255, 255, 0.6);
+    text-shadow:
+      0 0 2px rgba(255, 255, 255, 0.95),
+      0 0 4px rgba(255, 255, 255, 0.95),
+      0 0 8px rgba(255, 255, 255, 0.9),
+      0 0 14px rgba(255, 255, 255, 0.85),
+      0 0 22px rgba(255, 255, 255, 0.7),
+      0 0 32px rgba(255, 255, 255, 0.55);
   }
 
   .hero-intro {
@@ -119,10 +112,6 @@ import { site } from '../data/profile';
   }
 
   @media (max-width: 40rem) {
-    .hero-banner {
-      height: clamp(9rem, 40vw, 13rem);
-    }
-
     .hero-inner {
       flex-direction: column;
       align-items: flex-start;
@@ -137,10 +126,6 @@ import { site } from '../data/profile';
 
     .hero-text-glow {
       margin-top: 0.5rem;
-    }
-
-    .hero-text-glow::before {
-      inset: -1.25rem -1.5rem;
     }
   }
 

@@ -97,8 +97,6 @@ const { title, description = `${site.name} | ${site.headline}` } = Astro.props;
         const DRIFT_PX = isNarrow ? 42 : 34;
         const SHRINK = isNarrow ? 0.06 : 0.05;
 
-        let ticking = false;
-
         function updateFades() {
           fadeEls.forEach((el) => {
             if (el.closest('[data-animate].is-pending')) return;
@@ -114,18 +112,23 @@ const { title, description = `${site.name} | ${site.headline}` } = Astro.props;
                 ? `translateY(-${(1 - opacity) * DRIFT_PX}px) scale(${1 - (1 - opacity) * SHRINK})`
                 : '';
           });
-          ticking = false;
         }
 
-        function onScroll() {
-          if (!ticking) {
-            ticking = true;
-            requestAnimationFrame(updateFades);
-          }
-        }
+        // Belt-and-suspenders: a direct 'scroll' listener (fires for every
+        // scroll regardless of direction) plus a continuous rAF loop (keeps
+        // things in sync even if scroll events ever get coalesced). Either
+        // one alone should be enough; running both costs nothing on a page
+        // this small and removes any dependency on one specific mechanism
+        // catching every scroll in both directions.
+        window.addEventListener('scroll', updateFades, { passive: true });
+        window.addEventListener('resize', updateFades);
 
-        window.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('resize', onScroll);
+        function loop() {
+          updateFades();
+          requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+
         updateFades();
       }
     </script>
