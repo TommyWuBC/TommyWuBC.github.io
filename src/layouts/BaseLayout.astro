@@ -23,14 +23,20 @@ const { title, description = `${site.name} | ${site.headline}` } = Astro.props;
     <a class="skip-link" href="#main">Skip to content</a>
     <slot />
     <script>
-      // Sections pop in the first time they're scrolled into view, then fade
-      // smoothly as they're scrolled past (out the top). Purely additive:
-      // if JS never runs, every section is just visible as normal.
+      // Two independent, purely-additive scroll effects (everything is just
+      // visible as normal if JS never runs):
+      //  1. Each whole section "pops" in (rise + scale) the first time it's
+      //     scrolled into view.
+      //  2. Individual headings/paragraphs/list items/cards fade and drift
+      //     on their own as they scroll past the header, so the page feels
+      //     like a constant, granular fade rather than whole sections
+      //     blinking out one at a time.
       const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const targets = Array.from(document.querySelectorAll('main > section, main > article'));
+      const sections = Array.from(document.querySelectorAll('main > section, main > article'));
 
-      if (!prefersReduced && targets.length) {
-        targets.forEach((el) => {
+      if (!prefersReduced && sections.length) {
+        // --- 1. Section entrance pop -----------------------------------
+        sections.forEach((el) => {
           el.setAttribute('data-animate', '');
           const rect = el.getBoundingClientRect();
           if (rect.top > window.innerHeight * 0.85) {
@@ -48,22 +54,60 @@ const { title, description = `${site.name} | ${site.headline}` } = Astro.props;
           },
           { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
         );
-        targets.forEach((el) => io.observe(el));
+        sections.forEach((el) => io.observe(el));
+
+        // --- 2. Per-element fade as content scrolls past the header -----
+        // Collect meaningful content units (text and cards), then drop any
+        // that are nested inside another match so a card's own heading/
+        // paragraph doesn't fade a second time independently of its card.
+        const candidates = Array.from(
+          document.querySelectorAll(
+            [
+              'main h1',
+              'main h2',
+              'main h3',
+              'main h4',
+              'main p',
+              'main li',
+              'main .card',
+              'main .project-card',
+              'main .story-item',
+              'main .skill-group',
+              'main .hero-text-card',
+              'main .hero-actions',
+              'main .spotlight-actions',
+              'main .spotlight-highlights',
+              'main .video-frame',
+              'main .video-file',
+              'main .video-placeholder',
+            ].join(', ')
+          )
+        );
+        const fadeEls = candidates.filter(
+          (el) => !candidates.some((other) => other !== el && other.contains(el))
+        );
+        fadeEls.forEach((el) => el.classList.add('scroll-fade'));
+
+        const header = document.querySelector('.site-header');
+        const headerOffset = header ? header.getBoundingClientRect().height : 0;
+        const FADE_ZONE = 150;
 
         let ticking = false;
 
         function updateFades() {
-          const viewportH = window.innerHeight;
-          targets.forEach((el) => {
-            if (el.classList.contains('is-pending')) return;
+          fadeEls.forEach((el) => {
+            if (el.closest('[data-animate].is-pending')) return;
             const rect = el.getBoundingClientRect();
-            const fadeZone = Math.min(420, rect.height * 0.6, viewportH * 0.6);
+            const bottom = rect.bottom - headerOffset;
             let opacity = 1;
-            if (fadeZone > 0 && rect.bottom < fadeZone) {
-              opacity = Math.max(0, rect.bottom / fadeZone);
+            if (bottom < FADE_ZONE) {
+              opacity = Math.max(0, bottom / FADE_ZONE);
             }
             el.style.opacity = String(opacity);
-            el.style.transform = opacity < 1 ? `translateY(-${(1 - opacity) * 18}px)` : '';
+            el.style.transform =
+              opacity < 1
+                ? `translateY(-${(1 - opacity) * 26}px) scale(${1 - (1 - opacity) * 0.03})`
+                : '';
           });
           ticking = false;
         }
