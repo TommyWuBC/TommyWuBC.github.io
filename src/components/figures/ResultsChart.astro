@@ -1,0 +1,131 @@
+---
+// Fig. 2: success rate by layout family, one ink. Solid = trained on many
+// layouts, dotted = trained on one, matching the routes in Fig. 1.
+// Rendered at build time as two SVGs (wide and narrow) so text never shrinks
+// below a readable size; CSS shows the one that fits.
+interface Props {
+  label?: string;
+}
+const { label = 'Fig. 2' } = Astro.props;
+const cats = [
+  ['S9N1', '1 wall'],
+  ['S9N2', '2 walls'],
+  ['S9N3', '3 walls'],
+];
+const series = [
+  { key: 'many', name: 'Trained on many layouts', short: 'Many layouts', values: [100, 98.4, 97.8] },
+  { key: 'one', name: 'Trained on one layout', short: 'One layout', values: [95.2, 20, 10] },
+];
+
+function chart(W: number, H: number, wide: boolean) {
+  const m = { t: 28, r: wide ? 200 : 20, b: 52, l: 46 };
+  const pw = W - m.l - m.r;
+  const ph = H - m.t - m.b;
+  const xs = (i: number) => m.l + 28 + (i * (pw - 56)) / (cats.length - 1);
+  const ys = (v: number) => m.t + ph - (v / 100) * ph;
+  const o: string[] = [];
+  for (const t of [0, 50, 100]) {
+    o.push(`<line class="rc-grid${t === 0 ? ' rc-base' : ''}" x1="${m.l}" x2="${W - m.r}" y1="${ys(t)}" y2="${ys(t)}"/>`);
+    o.push(`<text class="rc-tick" x="${m.l - 10}" y="${ys(t) + 4}" text-anchor="end">${t}%</text>`);
+  }
+  cats.forEach(([a, b], i) => {
+    o.push(`<text class="rc-cat" x="${xs(i)}" y="${H - m.b + 24}" text-anchor="middle">${a}</text>`);
+    o.push(`<text class="rc-tick" x="${xs(i)}" y="${H - m.b + 40}" text-anchor="middle">${b}</text>`);
+  });
+  for (const s of series) {
+    const pts = s.values.map((v, i) => `${xs(i)},${ys(v)}`).join(' ');
+    o.push(`<polyline class="rc-line rc-line--${s.key}" points="${pts}"/>`);
+  }
+  for (const s of series) {
+    s.values.forEach((v, i) => {
+      o.push(`<circle class="rc-dot" cx="${xs(i)}" cy="${ys(v)}" r="4.5"><title>${s.name}, ${cats[i][0]}: ${v}%</title></circle>`);
+    });
+    // selective direct labels: where each line ends, plus the collapse at S9N2
+    const below = s.key === 'one';
+    const last = s.values.length - 1;
+    o.push(`<text class="rc-val" x="${xs(last)}" y="${ys(s.values[last]) + (below ? 24 : -12)}" text-anchor="middle">${s.values[last]}%</text>`);
+    if (below) o.push(`<text class="rc-val" x="${xs(1) + 12}" y="${ys(s.values[1]) - 12}" text-anchor="start">${s.values[1]}%</text>`);
+    const end = s.values[last];
+    if (wide) {
+      o.push(`<text class="rc-name" x="${W - m.r + 18}" y="${ys(end) + 5}">${s.name}</text>`);
+    } else {
+      o.push(`<text class="rc-name" x="${xs(last) - 14}" y="${ys(end) + (below ? -12 : 24)}" text-anchor="end">${s.short}</text>`);
+    }
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">${o.join('')}</svg>`;
+}
+---
+
+<figure class="fig rc" aria-labelledby="rc-label rc-cap">
+  <p class="fig__label" id="rc-label">{label}</p>
+  <div class="rc__wide" set:html={chart(720, 330, true)} />
+  <div class="rc__narrow" set:html={chart(360, 300, false)} />
+  <figcaption class="fig__caption" id="rc-cap">
+    Success rate by layout family. Trained on one layout, PPO falls from 95.2% to 20% and then 10% as walls are
+    added. Trained across all three families, it holds 100%, 98.4% and 97.8%. The same numbers are in Table 2.
+  </figcaption>
+</figure>
+
+<style>
+  .rc :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .rc__wide {
+    max-width: 720px;
+  }
+  .rc__narrow {
+    display: none;
+  }
+  @media (max-width: 640px) {
+    .rc__wide {
+      display: none;
+    }
+    .rc__narrow {
+      display: block;
+    }
+  }
+  .rc :global(.rc-grid) {
+    stroke: var(--rule);
+    stroke-width: 1;
+  }
+  .rc :global(.rc-base) {
+    stroke: var(--rule-strong);
+  }
+  .rc :global(.rc-tick) {
+    font-family: var(--sans);
+    font-size: 12px;
+    fill: var(--ink-2);
+  }
+  .rc :global(.rc-cat),
+  .rc :global(.rc-name) {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    fill: var(--ink);
+  }
+  .rc :global(.rc-val) {
+    font-family: var(--serif);
+    font-size: 17px;
+    fill: var(--ink);
+    font-variant-numeric: lining-nums;
+  }
+  .rc :global(.rc-line) {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .rc :global(.rc-line--one) {
+    stroke-width: 3;
+    stroke-dasharray: 0.1 7;
+  }
+  .rc :global(.rc-dot) {
+    fill: var(--ink);
+    stroke: var(--paper);
+    stroke-width: 2;
+  }
+</style>

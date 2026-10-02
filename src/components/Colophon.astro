@@ -1,0 +1,36 @@
+---
+import { site } from '../data/site';
+const year = new Date().getFullYear();
+---
+
+<footer class="colophon">
+  <div class="grid">
+    <p>
+      Colophon. Set in Newsreader, by Production Type, and Schibsted Grotesk. Printed in one ink, lake blue, on
+      cool stock. Built with Astro; <a href="https://github.com/TommyWuBC/TommyWuBC.github.io">source on GitHub</a>.
+    </p>
+    <p>&copy; {year} {site.fullName}</p>
+  </div>
+</footer>
+
+<style>
+  .colophon {
+    padding: var(--s6) var(--margin) var(--s7);
+    border-top: 1px solid var(--rule);
+    font-family: var(--sans);
+    font-size: var(--t-cap);
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+  .colophon p:first-child {
+    grid-column: 3 / span 6;
+  }
+  .colophon p:last-child {
+    grid-column: 10 / -1;
+  }
+  @media (max-width: 760px) {
+    .colophon p:last-child {
+      margin-top: var(--s3);
+    }
+  }
+</style>

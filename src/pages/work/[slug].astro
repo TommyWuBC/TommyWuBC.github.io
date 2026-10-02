@@ -1,0 +1,86 @@
+---
+// One page per project with `caseStudy: true`. The MDX body is the article;
+// the components below are available inside it without imports.
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Section from '../../components/article/Section.astro';
+import Row from '../../components/article/Row.astro';
+import Finding from '../../components/article/Finding.astro';
+import Table from '../../components/article/Table.astro';
+import Mark from '../../components/article/Mark.astro';
+import Band from '../../components/article/Band.astro';
+import Pull from '../../components/Pull.astro';
+import LavaFigure from '../../components/figures/LavaFigure.astro';
+import ResultsChart from '../../components/figures/ResultsChart.astro';
+import GazeFigure from '../../components/figures/GazeFigure.astro';
+import SearchPipeline from '../../components/figures/SearchPipeline.astro';
+import { getProjects, plain } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const { caseStudies } = await getProjects();
+  return caseStudies.map((project, i) => ({
+    params: { slug: project.id },
+    props: { project, next: caseStudies[(i + 1) % caseStudies.length] },
+  }));
+}
+
+const { project, next } = Astro.props;
+const p = project.data;
+const { Content } = await render(project);
+const components = { Section, Row, Finding, Table, Mark, Band, Pull, LavaFigure, ResultsChart, GazeFigure, SearchPipeline };
+const year = p.date.getFullYear();
+---
+
+<Base title={p.title} description={plain(p.dek)} section="Case study" folio="" type="article">
+  <article>
+    <header class="article-head section">
+      <div class="grid">
+        <p class="article-head__kicker"><a href="/#work">Work</a> / {p.context}, {year}</p>
+        <h1 class="article-head__title">{p.title}</h1>
+        <p class="article-head__dek" set:html={p.dek} />
+        <dl class="article-head__meta">
+          {p.role && <div><dt>Role</dt><dd>{p.role}</dd></div>}
+          <div><dt>Built with</dt><dd>{p.stack.join(', ')}</dd></div>
+          {
+            p.links.length > 0 && (
+              <div>
+                <dt>Links</dt>
+                <dd>
+                  {p.links.map((l, i) => (
+                    <>
+                      {i > 0 && <br />}
+                      <a href={l.href}>{l.label}</a>
+                    </>
+                  ))}
+                </dd>
+              </div>
+            )
+          }
+        </dl>
+      </div>
+    </header>
+
+    <div class="prose section">
+      <Content components={components} />
+
+      <footer class="article-end">
+        <p class="links">
+          {p.links.map((l) => <a href={l.href}>{l.label}</a>)}
+          <a href="/#work">All work</a>
+        </p>
+      </footer>
+
+      {
+        next.id !== project.id && (
+          <nav class="next" aria-label="Next case study">
+            <p class="next__label">Next case study</p>
+            <a href={`/work/${next.id}/`}>
+              {next.data.title}
+              <span set:html={next.data.dek} />
+            </a>
+          </nav>
+        )
+      }
+    </div>
+  </article>
+</Base>

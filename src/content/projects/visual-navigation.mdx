@@ -1,0 +1,111 @@
+---
+title: Visual navigation under distribution shift
+context: Research, PAIR Lab
+when: Jul 2026 to now
+date: 2026-07-01
+order: 0
+dek: "Can an agent find the gap in a lava wall when the layout changes? Five approaches, three layout families. One result runs against intuition: asking the language model to think step by step made it worse."
+stack: [Python, PyTorch, Stable-Baselines3, MiniGrid, GPT-4o-mini]
+links:
+  - { label: "Paper, 17 pages (PDF)", href: "https://github.com/TommyWuBC/visual-navigation-rl-vlm/blob/main/paper/paper_final.pdf" }
+  - { label: Repository, href: "https://github.com/TommyWuBC/visual-navigation-rl-vlm" }
+caseStudy: true
+role: Undergraduate research assistant
+---
+
+<Band folio="Fig. 1" kicker="Interactive" title="Move the gap">
+  <LavaFigure />
+</Band>
+
+<Section n="§1" title="The question">
+<Row note="<sup>1</sup> S9 is the grid size; N is the number of lava walls. Domain-randomized PPO was evaluated on 42, 249 and 276 distinct layout patterns in the three families.">
+
+<p class="lede">MiniGrid&#8217;s LavaCrossing puts an agent in a 9&#8202;&#215;&#8202;9 room cut by walls of lava. Each wall has exactly one gap. The agent has to reach the goal square without stepping in lava.</p>
+
+The variants differ in how many walls there are: one in S9N1, two in S9N2, three in S9N3.<Mark n="1" /> Within a family, the walls and gaps can sit in many places.
+
+A policy that only ever sees one layout can score well on it without learning anything about gaps. I wanted to know how badly that breaks when the layout changes, what fixes it, and whether a vision-language model that was never trained on the task does any better.
+
+</Row>
+</Section>
+
+<Section n="§2" title="Five approaches">
+<Row wide>
+<Table caption="Table 1. What each approach learns from">
+
+| Approach | How it gets its behavior |
+| --- | --- |
+| Single-environment PPO | Reinforcement learning on one layout family (S9N1). |
+| Domain-randomized PPO | Reinforcement learning across all three families, randomized per episode, 40M steps. |
+| BC + DAgger | Imitates 1,500 BFS demonstrations, then three rounds of the expert relabeling the states the agent actually reaches. |
+| Zero-shot GPT-4o-mini | No task training at all. Looks at a rendered image of the grid and chooses moves. |
+| BFS planner | Not learned. Searches the full grid state directly: the ceiling for what is possible. |
+
+</Table>
+</Row>
+</Section>
+
+<Section n="§3" title="What happened">
+<Row wide note="<sup>2</sup> The language model and the planner were compared on sampled episodes: twenty per variant for the model, fifty for the planner.">
+<Table caption="Table 2. Success rate by layout family" numeric>
+
+| Approach | S9N1 | S9N2 | S9N3 |
+| --- | --- | --- | --- |
+| Single-environment PPO | 95.2% | 20% | 10% |
+| Domain-randomized PPO | 100% | 98.4% | 97.8% |
+| Zero-shot GPT-4o-mini<Mark n="2" /> | 20/20 | 20/20 | 20/20 |
+| BFS planner<Mark n="2" /> | 50/50 | 50/50 | 50/50 |
+
+</Table>
+</Row>
+
+<Row wide>
+<ResultsChart />
+</Row>
+
+<Finding title="Memorizing is not navigating" value="10%" caption="Single-environment PPO on three walls.">
+
+Single-environment PPO reached 95.2% on the layout family it trained in, then fell to 20% with two walls and 10% with three. It had learned a route, not the idea of a gap. Fig. 1 replays that failure: the dotted agent repeats its training route wherever the gap happens to be.
+
+</Finding>
+
+<Finding title="Variety fixes it" value="97.8%" caption="Domain-randomized PPO on three walls, over 276 layout patterns.">
+
+Train the same algorithm across many randomized layouts and the collapse mostly disappears: 100%, 98.4% and 97.8% across the three families, after 40M steps. The failure was about training coverage, not reinforcement learning as such.
+
+</Finding>
+
+<Finding title="Thinking out loud made the model worse" value="85%" caption="Success with chain-of-thought prompting, down from 100% without it.">
+
+Zero-shot, GPT-4o-mini with a full rendered view solved every sampled episode. Asking it to reason step by step dropped success from 100% to 85%, and its account of where the gap was became much less consistent: gap-position inconsistency went from 4.1% to 24.3% of reasoning steps. That last number comes from an LLM judge that hasn&#8217;t been validated against human labels yet.
+
+</Finding>
+
+<Finding title="Good steps, bad trips" value="18%" caption="Rollout success for BC + DAgger, despite 85.2% step accuracy.">
+
+Behavior cloning with DAgger picked the expert&#8217;s move 85.2% of the time, yet finished only 18% of rollouts. Small mistakes put the agent in states the expert never showed it, and the errors compound.
+
+</Finding>
+</Section>
+
+<Section n="§4" title="Making it run, and reading the reasoning">
+<Finding value="8&#215;" caption="Training throughput, about 200 to 1,600 frames per second.">
+
+Training was the bottleneck. Removing redundant observation generation, running eight environments in parallel and cutting GPU overhead the job didn&#8217;t need took throughput from about 200 to about 1,600 frames per second.
+
+</Finding>
+
+<Finding value="1,671" caption="VLM reasoning steps classified, across 40 episodes.">
+
+Success rates say whether the language model got there, not how. So I built an LLM-as-judge pipeline with a five-category spatial-reasoning taxonomy and used it to classify the 1,671 reasoning steps the model wrote across 40 navigation episodes.
+
+</Finding>
+</Section>
+
+<Section n="§5" title="What it doesn't show">
+<Row>
+
+This is a small, static, fully observable grid world with a verbally simple goal, which favors the language model. These are findings about this setting, not a verdict on reinforcement learning versus language models. The full write-up, methods and caveats included, is the 17-page paper in the repository.
+
+</Row>
+</Section>

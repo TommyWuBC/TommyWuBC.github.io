@@ -1,0 +1,309 @@
+/* Sections, openers, entries (projects and jobs), pull-figures, the archive. */
+
+.section {
+  padding: var(--s9) var(--margin) 0;
+}
+@media (min-width: 761px) {
+  .section {
+    padding-top: calc(var(--s9) + var(--s5));
+  }
+}
+
+/* section opener: a folio number in the margin, a big light serif head */
+.opener {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  align-items: end;
+  padding-bottom: var(--s7);
+}
+.opener__folio {
+  grid-column: 1 / span 2;
+  align-self: start;
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+.opener__folio b {
+  display: block;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 2.25rem;
+  line-height: 1;
+  color: var(--ink);
+  margin-bottom: 10px;
+  font-variant-numeric: lining-nums;
+}
+.opener h2 {
+  grid-column: 3 / -1;
+  font-weight: 300;
+  font-size: var(--t-h2);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  font-variation-settings: 'opsz' 72;
+  max-width: 16ch;
+}
+
+/* entry: margin note | main column | aside (pull-figure) */
+.entry {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  padding: var(--s7) 0 var(--s7);
+  border-top: 1px solid var(--rule);
+}
+.entry__margin {
+  grid-column: 1 / span 2;
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  line-height: 1.45;
+  color: var(--ink-2);
+  padding-top: 0.55em;
+}
+.entry__margin span {
+  display: block;
+  color: var(--ink);
+}
+.entry__main {
+  grid-column: 3 / span 6;
+}
+.entry__title {
+  font-size: clamp(2rem, 3.2vw, 2.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  font-variation-settings: 'opsz' 60;
+}
+.entry__title a {
+  text-decoration: none;
+}
+.entry__title a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.12em;
+}
+.entry__dek {
+  margin-top: var(--s3);
+  font-style: italic;
+  font-size: 1.3125rem;
+  line-height: 1.4;
+  max-width: 40ch;
+}
+.entry__body {
+  margin-top: var(--s4);
+  max-width: 62ch;
+}
+.entry__meta {
+  margin-top: var(--s4);
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.entry__main .links {
+  margin-top: var(--s2);
+}
+.entry__aside {
+  grid-column: 10 / -1;
+  padding-top: 0.4em;
+}
+/* a compact entry: title, dek and links only */
+.entry--compact {
+  padding-bottom: var(--s6);
+}
+
+/* experience bullets, written as a Markdown list */
+.points ul {
+  margin-top: var(--s4);
+  padding: 0;
+  display: grid;
+  gap: var(--s3);
+  max-width: 62ch;
+}
+.points li {
+  position: relative;
+  padding-left: 1.4em;
+}
+.points li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.78em;
+  width: 0.7em;
+  border-top: 1px solid var(--ink);
+}
+
+/* pull-figure: a big lining numeral over a rule, with a sans caption */
+.pull {
+  border-top: 2px solid var(--ink);
+  padding-top: var(--s4);
+}
+.pull__value {
+  display: block;
+  font-weight: 300;
+  font-size: var(--t-fig);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-variant-numeric: lining-nums proportional-nums;
+  font-variation-settings: 'opsz' 72;
+  white-space: nowrap;
+}
+.pull__caption {
+  display: block;
+  margin-top: var(--s3);
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  line-height: 1.45;
+  color: var(--ink-2);
+  max-width: 30ch;
+}
+.pull--quote .pull__value {
+  white-space: normal;
+  font-size: clamp(1.75rem, 2.4vw, 2.25rem);
+  line-height: 1.12;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+/* archive: one line per older project */
+.archive {
+  margin-top: var(--s4);
+  padding-top: var(--s6);
+  border-top: 1px solid var(--rule);
+}
+.archive__head {
+  grid-column: 1 / span 2;
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+.archive__list {
+  grid-column: 3 / -1;
+  display: grid;
+}
+.archive__list li {
+  display: grid;
+  grid-template-columns: 3fr 6fr 2fr 2fr;
+  gap: var(--gutter);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: baseline;
+}
+.archive__list li:first-child {
+  padding-top: 0;
+}
+.archive__title {
+  font-size: 1.125rem;
+}
+.archive__what {
+  font-size: 1rem;
+}
+.archive__stack,
+.archive__when {
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  color: var(--ink-2);
+}
+.archive__when {
+  text-align: right;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+@media (max-width: 1080px) {
+  .entry__main {
+    grid-column: 3 / span 7;
+  }
+  .entry__aside {
+    grid-column: 3 / -1;
+    margin-top: var(--s6);
+    max-width: 420px;
+  }
+}
+
+@media (max-width: 760px) {
+  .section {
+    padding-top: var(--s9);
+  }
+  .opener,
+  .entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .opener__folio {
+    grid-column: 1;
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    margin-bottom: var(--s4);
+  }
+  .opener__folio b {
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  .opener h2 {
+    grid-column: 1;
+    font-size: clamp(2.75rem, 12vw, 3.5rem);
+  }
+  .entry {
+    padding: var(--s6) 0 var(--s7);
+  }
+  .entry__margin,
+  .entry__aside {
+    grid-column: 1;
+  }
+  .entry__margin {
+    padding-top: 0;
+    margin-bottom: var(--s3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 10px;
+  }
+  /* on a phone the pull-figure moves up, right under the dek */
+  .entry__main {
+    display: contents;
+  }
+  .entry__margin {
+    order: 0;
+  }
+  .entry__title {
+    order: 1;
+  }
+  .entry__dek {
+    order: 2;
+  }
+  .entry__aside {
+    order: 3;
+    margin: var(--s5) 0 var(--s2);
+  }
+  .entry__aside:empty {
+    display: none;
+  }
+  .entry__body,
+  .points {
+    order: 4;
+  }
+  .entry__meta {
+    order: 5;
+  }
+  .entry__main .links {
+    order: 6;
+  }
+  .pull__value {
+    font-size: 3.25rem;
+  }
+  .archive__head {
+    margin-bottom: var(--s4);
+  }
+  .archive__list li {
+    grid-template-columns: 1fr auto;
+    gap: 2px var(--s4);
+  }
+  .archive__what {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .archive__stack {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+}

@@ -1,0 +1,166 @@
+---
+// csearch, indexing and querying, as a one-ink flow diagram. Plain HTML so it
+// reflows: left to right on a desk, top to bottom on a phone.
+interface Props {
+  label?: string;
+}
+const { label = 'Fig. 1' } = Astro.props;
+
+type Stage = { name: string; detail: string } | { fork: { name: string; detail: string }[] };
+const lanes: { title: string; stages: Stage[] }[] = [
+  {
+    title: 'Indexing, once per changed file',
+    stages: [
+      { name: 'Walk', detail: '.gitignore and vendor filters' },
+      { name: 'Chunk', detail: 'One chunk per function, class and method (ast, tree-sitter)' },
+      {
+        fork: [
+          { name: 'Keywords', detail: 'Split identifiers, docstrings, comments into SQLite FTS5' },
+          { name: 'Meaning', detail: '768-d code embeddings into sqlite-vec' },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Querying, about 100 ms warm',
+    stages: [
+      { name: 'Ask', detail: '&#8220;where do we validate the checkout form&#8221;' },
+      {
+        fork: [
+          { name: 'BM25', detail: 'Top 40 by keyword' },
+          { name: 'Vector', detail: 'Top 40 by cosine distance' },
+        ],
+      },
+      { name: 'Fuse', detail: 'Reciprocal rank fusion: &#931; 1 / (60 + rank)' },
+      { name: 'Answer', detail: '<code>checkout.py:6-15</code>' },
+    ],
+  },
+];
+---
+
+<figure class="fig sp" aria-labelledby="sp-label sp-cap">
+  <p class="fig__label" id="sp-label">{label}</p>
+  {
+    lanes.map((lane) => (
+      <div class="sp__lane">
+        <p class="sp__title">{lane.title}</p>
+        <ol class="sp__flow">
+          {lane.stages.map((s) =>
+            'fork' in s ? (
+              <li class="sp__fork">
+                {s.fork.map((b) => (
+                  <div class="sp__box">
+                    <b>{b.name}</b>
+                    <span set:html={b.detail} />
+                  </div>
+                ))}
+              </li>
+            ) : (
+              <li>
+                <div class="sp__box">
+                  <b>{s.name}</b>
+                  <span set:html={s.detail} />
+                </div>
+              </li>
+            ),
+          )}
+        </ol>
+      </div>
+    ))
+  }
+  <figcaption class="fig__caption" id="sp-cap">
+    Everything lives in one SQLite file inside the repository. Re-indexing skips any file whose SHA-256 hasn&#8217;t
+    changed. The two rankings are merged by rank, not by score, because BM25 scores and cosine distances aren&#8217;t
+    on the same scale.
+  </figcaption>
+</figure>
+
+<style>
+  .sp__lane + .sp__lane {
+    margin-top: var(--s5);
+  }
+  .sp__title {
+    font-family: var(--sans);
+    font-size: var(--t-cap);
+    color: var(--ink-2);
+    margin-bottom: var(--s2);
+  }
+  .sp__flow {
+    display: flex;
+    align-items: stretch;
+    gap: 28px;
+    padding: 0;
+  }
+  .sp__flow > li {
+    position: relative;
+    flex: 1 1 0;
+    display: flex;
+  }
+  .sp__flow > li + li::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 50%;
+    width: 16px;
+    border-top: 1.5px solid var(--ink);
+  }
+  .sp__flow > li + li::after {
+    content: '';
+    position: absolute;
+    left: -11px;
+    top: calc(50% - 4px);
+    border: 4px solid transparent;
+    border-left: 6px solid var(--ink);
+    border-right: 0;
+  }
+  .sp__fork {
+    flex-direction: column;
+    gap: 6px;
+    flex-grow: 1.4 !important;
+  }
+  .sp__box {
+    flex: 1;
+    display: grid;
+    align-content: start;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    font-family: var(--sans);
+    font-size: var(--t-cap);
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+  .sp__box b {
+    color: var(--ink);
+    font-size: var(--t-small);
+  }
+  .sp__box :global(code) {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    color: var(--ink);
+  }
+  @media (max-width: 760px) {
+    .sp__flow {
+      flex-direction: column;
+      gap: 22px;
+    }
+    .sp__flow > li + li::before {
+      left: 50%;
+      top: -17px;
+      width: 0;
+      height: 12px;
+      border-top: 0;
+      border-left: 1.5px solid var(--ink);
+    }
+    .sp__flow > li + li::after {
+      left: calc(50% - 3.5px);
+      top: -8px;
+      border: 4px solid transparent;
+      border-top: 6px solid var(--ink);
+      border-bottom: 0;
+    }
+    .sp__fork {
+      flex-direction: row;
+    }
+  }
+</style>

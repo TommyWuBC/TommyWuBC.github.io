@@ -1,0 +1,73 @@
+---
+// Cue's gaze pipeline, live: noisy samples -> One Euro filter -> dwell select.
+interface Props {
+  label?: string;
+}
+const { label = 'Fig. 1' } = Astro.props;
+---
+
+<figure class="fig gz" aria-labelledby="gz-label gz-cap">
+  <p class="fig__label" id="gz-label">{label}</p>
+  <div class="gz__pad nojs-hide" data-gaze>
+    <canvas aria-hidden="true"></canvas>
+    <div class="gz__read" aria-hidden="true">
+      <span>Raw jitter <b data-raw>&#8211;</b></span>
+      <span>Filtered <b data-filtered>&#8211;</b></span>
+      <span class="gz__pick" data-picked></span>
+    </div>
+  </div>
+  <figcaption class="fig__caption" id="gz-cap">
+    Faint dots are simulated webcam gaze samples arriving at 30&#8202;Hz. The ring is the cursor after a One Euro
+    filter. Rest the ring on an item and the rule under it fills; when it&#8217;s full, the item is focused. Point at
+    the pad to steer. The noise here is simulated; Cue&#8217;s measured numbers are below.
+  </figcaption>
+</figure>
+
+<style>
+  .gz__pad {
+    position: relative;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    max-width: 720px;
+  }
+  .gz__pad canvas {
+    display: block;
+    width: 100%;
+    height: 260px;
+    cursor: crosshair;
+    touch-action: pan-y;
+  }
+  .gz__read {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--sans);
+    font-size: var(--t-small);
+    color: var(--ink-2);
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  .gz__read b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .gz__pick {
+    margin-left: auto;
+    color: var(--ink);
+    font-style: italic;
+    font-family: var(--serif);
+  }
+  @media (max-width: 760px) {
+    .gz__pad canvas {
+      height: 200px;
+    }
+    .gz__pick {
+      margin-left: 0;
+    }
+  }
+</style>
+
+<script>
+  import '../../scripts/gaze-figure';
+</script>

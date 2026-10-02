@@ -1,0 +1,154 @@
+---
+// The running head: name, the current section (it changes as you read,
+// like a book's recto head), and the site nav.
+import { site } from '../data/site';
+import { getNotes } from '../lib/content';
+
+interface Props {
+  home: boolean;
+  section: string;
+  folio: string;
+}
+const { home, section, folio } = Astro.props;
+const at = (hash: string) => (home ? hash : `/${hash}`);
+const hasNotes = (await getNotes()).length > 0;
+
+const nav = [
+  { label: 'Research', href: at('#research'), optional: true },
+  { label: 'Work', href: at('#work') },
+  { label: 'Experience', href: at('#experience'), optional: true },
+  ...(hasNotes ? [{ label: 'Notes', href: '/notes/' }] : []),
+  { label: 'About', href: at('#about') },
+];
+---
+
+<header class="rh">
+  <a class="rh__name" href="/">{site.name} <span>Georgia Tech</span></a>
+  <p class="rh__where" aria-hidden="true">
+    <span class="rh__folio" data-rh-folio>{folio}</span><span class="rh__section" data-rh-section>{section}</span>
+  </p>
+  <nav class="rh__nav" aria-label="Site">
+    {nav.map((n) => <a href={n.href} class:list={{ rh__opt: n.optional }}>{n.label}</a>)}
+    <a href={site.resume} class="rh__cv">Résumé</a>
+  </nav>
+</header>
+
+<style>
+  .rh {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: var(--head-h);
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--gutter);
+    align-items: center;
+    padding: 0 var(--margin);
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--sans);
+    font-size: var(--t-small);
+    line-height: 1;
+  }
+  .rh__name {
+    grid-column: 1 / span 3;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .rh__name span {
+    font-weight: 400;
+    color: var(--ink-2);
+  }
+  .rh__where {
+    grid-column: 4 / span 4;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    overflow: hidden;
+    padding: 4px 0;
+    line-height: 1.2;
+  }
+  .rh__folio {
+    font-variant-numeric: lining-nums tabular-nums;
+    color: var(--ink-2);
+    min-width: 1ch;
+  }
+  .rh__section {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1rem;
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .rh__section:global(.is-swapping) {
+    animation: rh-swap 0.45s var(--ease-out);
+  }
+  @keyframes rh-swap {
+    from {
+      opacity: 0;
+      transform: translateY(0.6em);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .rh__nav {
+    grid-column: 8 / -1;
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: clamp(14px, 1.8vw, 28px);
+  }
+  .rh__nav a {
+    text-decoration: none;
+    padding: 6px 0;
+  }
+  .rh__nav a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+  }
+  .rh__nav .rh__cv {
+    padding: 6px 12px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    margin-left: 4px;
+  }
+  .rh__nav .rh__cv:hover {
+    border-color: var(--ink);
+    text-decoration: none;
+  }
+
+  @media (max-width: 1080px) {
+    .rh__where {
+      display: none;
+    }
+    .rh__nav {
+      grid-column: 4 / -1;
+    }
+  }
+  @media (max-width: 760px) {
+    .rh {
+      grid-template-columns: auto 1fr;
+    }
+    .rh__name {
+      grid-column: 1;
+    }
+    .rh__name span {
+      display: none;
+    }
+    .rh__nav {
+      grid-column: 2;
+      gap: 16px;
+      font-size: 13px;
+    }
+    .rh__nav .rh__opt {
+      display: none;
+    }
+    .rh__nav .rh__cv {
+      padding: 5px 10px;
+      margin-left: 0;
+    }
+  }
+</style>

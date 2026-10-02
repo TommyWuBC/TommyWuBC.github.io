@@ -1,10 +1,17 @@
 import { defineConfig } from 'astro/config';
+import mdx from '@astrojs/mdx';
+import sitemap from '@astrojs/sitemap';
 
-// This repo is a GitHub *user* Pages site (TommyWuBC.github.io), so it is
-// served from the domain root; no `base` path is needed. If you ever move
-// this content into a project repo (e.g. github.com/you/portfolio) deployed
-// at username.github.io/portfolio, set `base: '/portfolio'` below.
+// GitHub *user* Pages site (TommyWuBC.github.io): served from the domain root, no `base` needed.
 export default defineConfig({
-  site: 'https://TommyWuBC.github.io',
+  site: 'https://tommywubc.github.io',
   output: 'static',
+  integrations: [mdx(), sitemap()],
+  // Old URLs from the first version of the site.
+  redirects: {
+    '/projects/visual-navigation-research': '/work/visual-navigation/',
+    '/projects/gt-movies-store': '/',
+    '/projects/buzzboard': '/',
+    '/projects/autonomous-vehicle-diagnostics': '/',
+  },
 });

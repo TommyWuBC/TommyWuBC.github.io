@@ -1,0 +1,84 @@
+---
+// Fig. 1, "Move the gap". The static SVG is rendered at build time from the
+// same code the browser uses, so the figure reads fine without JavaScript.
+import { TRAINING, render, describe } from '../../lib/lava';
+
+interface Props {
+  /** Link under the figure, e.g. to the case study. */
+  more?: { href: string; label: string };
+}
+const { more } = Astro.props;
+const res = render(TRAINING, false);
+const { desc } = describe(TRAINING, res);
+---
+
+<div class="plate" data-lava>
+  <figure class="plate__fig" aria-labelledby="fig1-label">
+    <svg class="plate__svg" viewBox="-6 -6 712 712" role="img" aria-labelledby="fig1-t fig1-d" data-lava-svg>
+      <title id="fig1-t">Figure 1. A LavaCrossing grid with two agent routes.</title>
+      <desc id="fig1-d" data-lava-desc>{desc}</desc>
+      <Fragment set:html={res.svg} />
+    </svg>
+  </figure>
+  <div class="plate__side">
+    <p class="plate__label" id="fig1-label">Fig. 1</p>
+    <p class="plate__caption">
+      MiniGrid LavaCrossing. The agent (triangle) starts top left and has to reach the square without touching lava
+      (hatched). The dotted route belongs to a policy trained on one layout; the solid route to one trained on many.
+      Move the gap and see which keeps up.
+    </p>
+    <div class="legend" aria-hidden="true">
+      <div>
+        <svg viewBox="0 0 44 14"><line x1="3" y1="7" x2="41" y2="7" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"></line></svg>
+        <span>Trained on many layouts (domain-randomized PPO)</span>
+      </div>
+      <div>
+        <svg viewBox="0 0 44 14"><line x1="3" y1="7" x2="41" y2="7" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0.1 8"></line></svg>
+        <span>Trained on one layout (single-environment PPO)</span>
+      </div>
+    </div>
+    <div class="controls nojs-hide">
+      <div class="controls__row" role="group" aria-label="Layout">
+        <button class="seg" type="button" data-variant="0" aria-pressed="true">Training layout</button>
+        <button class="seg" type="button" data-variant="1" aria-pressed="false">1 wall</button>
+        <button class="seg" type="button" data-variant="2" aria-pressed="false">2 walls</button>
+        <button class="seg" type="button" data-variant="3" aria-pressed="false">3 walls</button>
+      </div>
+      <div class="controls__row">
+        <button class="btn" type="button" data-lava-shuffle>Move the gap</button>
+      </div>
+      <p class="status" data-lava-status aria-live="polite"></p>
+    </div>
+    <table class="readout">
+      <caption>Measured success rate by layout family (%)</caption>
+      <thead>
+        <tr>
+          <th scope="col">Policy</th>
+          <th scope="col" data-col="1">S9N1<small>1 wall</small></th>
+          <th scope="col" data-col="2">S9N2<small>2 walls</small></th>
+          <th scope="col" data-col="3">S9N3<small>3 walls</small></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Trained on one layout</th>
+          <td class="num" data-col="1">95.2</td><td class="num" data-col="2">20</td><td class="num" data-col="3">10</td>
+        </tr>
+        <tr>
+          <th scope="row">Trained on many</th>
+          <td class="num" data-col="1">100</td><td class="num" data-col="2">98.4</td><td class="num" data-col="3">97.8</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="plate__note">
+      The many-layout policy was trained for 40M steps and tested across 42, 249 and 276 layout patterns. The drawn
+      routes are an illustration, not the trained networks: the dotted agent replays its training route, the solid one
+      takes a shortest path.
+    </p>
+    {more && <p class="plate__more"><a href={more.href}>{more.label}</a></p>}
+  </div>
+</div>
+
+<script>
+  import '../../scripts/lava-figure';
+</script>

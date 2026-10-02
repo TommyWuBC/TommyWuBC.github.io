@@ -1,27 +1,54 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Header from '../components/Header.astro';
-import Hero from '../components/Hero.astro';
-import Spotlight from '../components/Spotlight.astro';
+import Base from '../layouts/Base.astro';
+import Cover from '../components/Cover.astro';
+import Opener from '../components/Opener.astro';
+import ProjectEntry from '../components/ProjectEntry.astro';
+import JobEntry from '../components/JobEntry.astro';
+import Archive from '../components/Archive.astro';
 import About from '../components/About.astro';
-import Projects from '../components/Projects.astro';
-import Experience from '../components/Experience.astro';
-import Skills from '../components/Skills.astro';
 import Contact from '../components/Contact.astro';
-import Footer from '../components/Footer.astro';
-import { site } from '../data/profile';
+import LavaFigure from '../components/figures/LavaFigure.astro';
+import { getProjects, getExperience, countWord } from '../lib/content';
+
+const { featured, archive } = await getProjects();
+const jobs = await getExperience();
+const years = featured.map((p) => p.data.date.getFullYear());
+const span = Math.min(...years) === Math.max(...years) ? `${Math.max(...years)}` : `${Math.min(...years)} to ${Math.max(...years)}`;
 ---
 
-<BaseLayout title={`${site.name} | ${site.headline}`}>
-  <Header />
-  <main id="main">
-    <Hero />
-    <Spotlight />
-    <About />
-    <Projects />
-    <Experience />
-    <Skills />
-    <Contact />
-  </main>
-  <Footer />
-</BaseLayout>
+<Base home>
+  <Cover
+    contents={[
+      ['2', 'Finding the gap', '#research'],
+      ['3', 'Selected work', '#work'],
+      ['4', 'Experience', '#experience'],
+      ['5', 'About', '#about'],
+      ['6', 'Contact', '#contact'],
+    ]}
+  />
+
+  <section class="plate-band" id="research" data-head="Finding the gap" data-folio="2" aria-labelledby="research-h">
+    <Opener folio="2" kicker="Research, PAIR Lab" id="research-h">
+      Can an agent find the gap in a lava wall when the wall moves?
+    </Opener>
+    <LavaFigure more={{ href: '/work/visual-navigation/', label: 'Read the case study' }} />
+  </section>
+
+  <section class="section" id="work" data-head="Selected work" data-folio="3" aria-labelledby="work-h">
+    <Opener folio="3" kicker={`${countWord(featured.length, 'project')}, ${span}`} id="work-h">Selected work</Opener>
+    <div class="entries">
+      {featured.map((p) => <ProjectEntry project={p} />)}
+    </div>
+    <Archive items={archive} />
+  </section>
+
+  <section class="section" id="experience" data-head="Experience" data-folio="4" aria-labelledby="exp-h">
+    <Opener folio="4" kicker="Lab, industry, teaching" id="exp-h">Experience</Opener>
+    <div class="entries">
+      {jobs.map((j) => <JobEntry job={j} />)}
+    </div>
+  </section>
+
+  <About folio="5" />
+  <Contact folio="6" />
+</Base>

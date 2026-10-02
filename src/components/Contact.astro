@@ -1,46 +1,68 @@
 ---
-import { site } from '../data/profile';
+import Opener from './Opener.astro';
+import { site } from '../data/site';
+
+interface Props {
+  folio: string;
+}
+const { folio } = Astro.props;
 ---
 
-<section id="contact" class="section section-alt">
-  <div class="container contact-inner">
-    <span class="section-eyebrow">Contact</span>
-    <h2 class="section-heading">Let's talk</h2>
-    <p class="contact-lead">
-      Feel free to reach out. I'm happy to chat about software, AI, robotics, or opportunities.
-    </p>
-
-    <ul class="contact-list">
-      <li>
-        <a class="btn btn-primary" href={`mailto:${site.email}`}>{site.email}</a>
-      </li>
-      <li>
-        <a class="btn btn-secondary" href={site.linkedin} target="_blank" rel="noopener noreferrer"
-          >LinkedIn</a
-        >
-      </li>
-      <li>
-        <a class="btn btn-secondary" href={site.github} target="_blank" rel="noopener noreferrer"
-          >GitHub</a
-        >
-      </li>
-    </ul>
+<section class="section contact" id="contact" data-head="Contact" data-folio={folio} aria-labelledby="contact-h">
+  <Opener folio={folio} kicker={site.location} id="contact-h">Write to me</Opener>
+  <div class="grid">
+    <p class="contact__mail"><a href={`mailto:${site.email}`}>{site.email}</a></p>
+    <div class="contact__links">
+      <button class="seg nojs-hide" type="button" data-copy={site.email} aria-live="polite">Copy address</button>
+      <a href={site.github}>GitHub</a>
+      <a href={site.linkedin}>LinkedIn</a>
+      <a href={site.resume}>Résumé (PDF)</a>
+      <p>English or Chinese, either is fine.</p>
+    </div>
   </div>
 </section>
 
 <style>
-  .contact-inner {
-    max-width: 40rem;
+  .contact {
+    padding-bottom: var(--s9);
   }
-
-  .contact-lead {
-    color: var(--color-text-muted);
-    margin-bottom: var(--space-3);
+  .contact__mail {
+    grid-column: 3 / -1;
+    font-weight: 300;
+    font-size: clamp(2.1rem, 7.4vw, 7.5rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variation-settings: 'opsz' 72;
+    overflow-wrap: anywhere;
   }
-
-  .contact-list {
+  .contact__mail a {
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.12em;
+  }
+  .contact__links {
+    grid-column: 3 / -1;
+    margin-top: var(--s6);
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2);
+    align-items: center;
+    gap: 8px 36px;
+    font-family: var(--sans);
+    font-size: 1rem;
+  }
+  .contact__links a {
+    padding: 4px 0;
+  }
+  .contact__links p {
+    color: var(--ink-2);
+  }
+  .contact__links .seg {
+    font-size: var(--t-small);
+  }
+  .js .contact__links .seg {
+    display: inline-block;
+  }
+  .contact__links .seg[data-state='done'] {
+    background: var(--ink);
+    color: var(--paper);
   }
 </style>

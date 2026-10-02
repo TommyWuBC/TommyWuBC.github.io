@@ -1,0 +1,30 @@
+---
+// "Also, from earlier": older and smaller projects, one line each.
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  items: CollectionEntry<'projects'>[];
+}
+const { items } = Astro.props;
+---
+
+{
+  items.length > 0 && (
+    <div class="archive grid">
+      <h3 class="archive__head">Also, from earlier</h3>
+      <ul class="archive__list">
+        {items.map(({ data: a }) => {
+          const href = a.links[0]?.href;
+          return (
+            <li>
+              <span class="archive__title">{href ? <a href={href}>{a.title}</a> : a.title}</span>
+              <span class="archive__what" set:html={a.dek} />
+              <span class="archive__stack">{a.stack.join(', ')}</span>
+              <span class="archive__when">{a.when}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  )
+}

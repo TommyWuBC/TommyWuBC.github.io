@@ -1,0 +1,268 @@
+/* Figures: the tinted plate band, Fig. 1 (lava), and shared figure parts.
+   Global on purpose: the figure SVGs are re-drawn by scripts at runtime. */
+
+.plate-band {
+  margin-top: calc(var(--s9) + var(--s5));
+  background: var(--paper-2);
+  padding: var(--s9) var(--margin);
+}
+.plate-band .opener {
+  padding-bottom: var(--s7);
+}
+.plate-band .opener h2 {
+  max-width: 22ch;
+  font-size: clamp(2.75rem, 4.6vw, 4.5rem);
+  line-height: 1;
+}
+
+.plate {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  row-gap: var(--s7);
+  align-items: start;
+}
+.plate__fig {
+  grid-column: 3 / span 5;
+  width: 100%;
+  max-width: 560px;
+}
+.plate__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  background: var(--paper);
+}
+.plate__side {
+  grid-column: 8 / -1;
+  max-width: 520px;
+}
+.plate__label {
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+.plate__caption {
+  margin-top: var(--s2);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+.legend {
+  margin-top: var(--s4);
+  display: grid;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: var(--t-small);
+}
+.legend div {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.legend svg {
+  width: 44px;
+  height: 14px;
+  overflow: visible;
+}
+
+.controls {
+  margin-top: var(--s5);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--rule-strong);
+  font-family: var(--sans);
+  font-size: var(--t-small);
+}
+.controls__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.controls__row + .controls__row {
+  margin-top: var(--s3);
+}
+.status {
+  margin-top: var(--s4);
+  min-height: 4.4em;
+  font-style: italic;
+  font-size: 1.0625rem;
+  line-height: 1.45;
+}
+.status__tally {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: var(--t-small);
+  color: var(--ink-2);
+  font-variant-numeric: lining-nums;
+}
+
+.readout {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--s4);
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  font-variant-numeric: lining-nums;
+}
+.readout caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 6px;
+}
+.readout th,
+.readout td {
+  text-align: right;
+  padding: 7px 0 7px 10px;
+  border-bottom: 1px solid var(--rule);
+  font-weight: 400;
+  vertical-align: bottom;
+}
+.readout th:first-child {
+  text-align: left;
+  padding-left: 0;
+}
+.readout thead th {
+  color: var(--ink-2);
+  line-height: 1.25;
+}
+.readout thead th small {
+  display: block;
+  font-size: 12px;
+}
+.readout td.num {
+  font-family: var(--serif);
+  font-size: 1.3125rem;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.readout .is-on {
+  background: var(--paper);
+}
+.readout tbody th {
+  line-height: 1.3;
+}
+.plate__note {
+  margin-top: var(--s3);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.plate__more {
+  margin-top: var(--s4);
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+
+/* Fig. 1 drawing */
+.lv-grid {
+  stroke: var(--ink);
+  stroke-opacity: 0.14;
+  stroke-width: 1.5;
+}
+.lv-frame {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 8;
+}
+.lv-lava {
+  fill: url(#lv-hatch);
+}
+.lv-goal {
+  fill: var(--ink);
+}
+.lv-goal-ring {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.lv-agent {
+  fill: var(--ink);
+}
+.lv-route {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 6;
+}
+.lv-route--spec {
+  stroke-dasharray: 0.1 15;
+}
+.lv-fail-bg {
+  fill: var(--paper);
+}
+.lv-fail {
+  stroke: var(--ink);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+/* routes are walked, not faded */
+.lv-reveal {
+  transition: stroke-dashoffset var(--dur, 1.4s) cubic-bezier(0.45, 0.05, 0.55, 0.95);
+}
+.is-drawn .lv-reveal {
+  stroke-dashoffset: 0;
+}
+.lv-failmark[style] {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.4);
+  transition:
+    opacity 0.25s var(--delay),
+    transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) var(--delay);
+}
+.is-drawn .lv-failmark[style] {
+  opacity: 1;
+  transform: none;
+}
+
+/* a figure that sits in the text column of an article */
+.fig {
+  margin: var(--s6) 0 var(--s4);
+}
+.fig__label {
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  font-weight: 600;
+  margin-bottom: var(--s2);
+}
+.fig__caption {
+  margin-top: var(--s3);
+  font-family: var(--sans);
+  font-size: var(--t-cap);
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 68ch;
+}
+
+@media (max-width: 1080px) {
+  .plate__fig {
+    grid-column: 1 / -1;
+  }
+  .plate__side {
+    grid-column: 1 / -1;
+    max-width: 560px;
+  }
+}
+@media (max-width: 760px) {
+  .plate-band {
+    padding: var(--s8) var(--margin);
+  }
+  .plate-band .opener h2 {
+    font-size: clamp(2.25rem, 10vw, 3rem);
+  }
+  .plate {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--s5);
+  }
+  .readout td.num {
+    font-size: 1.125rem;
+  }
+}

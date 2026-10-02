@@ -1,0 +1,16 @@
+---
+// A pull-figure (big number + caption) or, with `quote`, a pull-quote.
+// Values may contain HTML entities (&#215;, &#8722;).
+interface Props {
+  value: string;
+  caption: string;
+  quote?: boolean;
+  class?: string;
+}
+const { value, caption, quote = false, class: cls } = Astro.props;
+const shown = quote ? `&#8220;${value}&#8221;` : value;
+---
+
+<p class:list={['pull', { 'pull--quote': quote }, cls]}>
+  <span class="pull__value" set:html={shown} /><span class="pull__caption" set:html={caption} />
+</p>

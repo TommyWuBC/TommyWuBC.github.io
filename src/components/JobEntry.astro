@@ -1,0 +1,23 @@
+---
+// One job under Experience. Bullets are the Markdown body of the entry.
+import { render, type CollectionEntry } from 'astro:content';
+import Pull from './Pull.astro';
+
+interface Props {
+  job: CollectionEntry<'experience'>;
+}
+const { job } = Astro.props;
+const j = job.data;
+const { Content } = await render(job);
+---
+
+<article class="entry">
+  <p class="entry__margin"><span>{j.when}</span></p>
+  <div class="entry__main">
+    <h3 class="entry__title">{j.role}</h3>
+    <p class="entry__dek">{j.org}</p>
+    <div class="points"><Content /></div>
+    {j.stack.length > 0 && <p class="entry__meta">{j.stack.join(', ')}</p>}
+  </div>
+  <aside class="entry__aside">{j.figure && <Pull value={j.figure.value} caption={j.figure.caption} />}</aside>
+</article>

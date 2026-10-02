@@ -1,0 +1,72 @@
+---
+title: Cue
+context: HackGT 13
+when: Sep 2026
+date: 2026-09-26
+order: 2
+dek: Shop a real website with your voice and your eyes, for someone who can&#8217;t use a mouse.
+summary: A Chrome extension that answers from what is actually on the page, compares products and works the controls for you. It only spends money after you say yes, and checkout sits behind a passkey. Most of the effort went into making webcam gaze usable&#58; One Euro filtering, tuned, plus dwell targeting.
+figure:
+  value: "&#8722;73%"
+  caption: Gaze noise, 70 px down to 19. Jitter fell 89%, and a 400 px saccade settles in 260 ms.
+stack: [JavaScript, Python, FastAPI, WebGazer, ElevenLabs, Claude]
+links:
+  - { label: Repository, href: "https://github.com/TommyWuBC/cue.ai" }
+caseStudy: true
+---
+
+<Section n="§1" title="The idea">
+<Row>
+
+<p class="lede">You talk; Cue reads the page, answers from what is actually there, compares products side by side and works the controls. It buys only after you say yes to the button that spends the money.</p>
+
+Two rules shaped everything else.
+
+**Gaze never selects; voice commits.** Your eyes set focus and your voice confirms. That is the accessibility story, and it is also why a few centimeters of webcam error is harmless.
+
+**The model may shop; only you may commit.** It can search, compare, open pages, scroll and add to a cart. It cannot confirm a purchase: the server strips those actions from anything the model proposes, and the page refuses them from any source except the deterministic router, which only acts on your own words.
+
+</Row>
+</Section>
+
+<Section n="§2" title="Making webcam gaze usable">
+<Row wide>
+<GazeFigure />
+</Row>
+
+<Finding value="&#8722;73%" caption="Simulated gaze noise, from 70 px to 19 px.">
+
+Raw webcam gaze is noisy enough to be useless as a cursor. A One Euro filter smooths hard when the eyes are still and gets out of the way when they move. Tuned for this, it cut noise from 70 to 19 pixels.
+
+</Finding>
+
+<Finding value="260 ms" caption="For a 400 px saccade to settle.">
+
+Smoothing that kills jitter usually adds lag. Frame-to-frame jitter fell 89%, from 87 to 10 pixels, while a 400-pixel jump between products still settles in about a quarter of a second. Dwell targeting does the rest: focus moves only after the gaze has rested on something.
+
+</Finding>
+
+<Row>
+
+Calibration is thirteen points, then five more that measure accuracy without any input. An early version put numbered badges on products; live sessions showed the numbers drifting as the eyes moved, so they were removed. You name what you mean instead.
+
+</Row>
+</Section>
+
+<Section n="§3" title="Spending money safely">
+<Row>
+
+Prices are set by the server from its own product data; a cart price sent by the browser is never accepted. Checkout reads back the item, the total and the remaining budget, then waits for a spoken yes and a passkey. &#8220;Cue, cancel&#8221; works at any point, including during the passkey prompt, and if an order was already committed Cue says so instead of claiming it was cancelled.
+
+The common commands go through a regular-expression router and never reach a language model. Only what it can&#8217;t match goes to Claude, as one call with strict JSON out. Speech in and speech out each have a fallback chain that ends at the browser&#8217;s built-in voice, so a missing API key degrades the demo instead of breaking it.
+
+</Row>
+</Section>
+
+<Section n="§4" title="Where it stands">
+<Row>
+
+It runs as a localhost demo with its own storefront, plus an experimental extension for live store pages. Eye tracking is built and currently switched off while the voice path is tuned, and a full passkey test on a live store hasn&#8217;t been run yet. The repository says all of this up front.
+
+</Row>
+</Section>

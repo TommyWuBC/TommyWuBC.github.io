@@ -1,0 +1,14 @@
+---
+// Section opener: folio number and kicker in the margin, a big serif head.
+interface Props {
+  folio: string;
+  kicker: string;
+  id: string;
+}
+const { folio, kicker, id } = Astro.props;
+---
+
+<header class="opener">
+  <p class="opener__folio"><b>{folio}</b>{kicker}</p>
+  <h2 id={id}><slot /></h2>
+</header>
