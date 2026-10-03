@@ -1,0 +1,73 @@
+---
+// Control 2: each classified email becomes a control on that application's
+// course; the append-only event log underneath. Static fallback: the final course.
+import { INBOX, classify, reduce, onTimeline, evaluateGhost, LABEL, day, type EventType } from './engine';
+import { drawCourse, type Lane } from './course';
+import { makeNoise, fbm, contour } from '../../shells/map-shell.terrain';
+import './apptrack.css';
+
+const typed = INBOX.map((e) => ({ e, t: classify(e).type as EventType, conf: classify(e).conf }));
+const lane = (app: 'tern' | 'quarry'): Lane => {
+  const ctls = typed.filter((x) => x.e.app === app && onTimeline(x.t)).map((x) => ({ type: x.t, date: x.e.date, email: x.e.id }));
+  const state = reduce(ctls.map((c) => c.type));
+  return { app, ctls, state, quiet: { days: 64, ghost: evaluateGhost({ state, days: 64, scheduledAhead: false, dismissed: false }) } };
+};
+const W = 720;
+const drawn = drawCourse([lane('tern'), lane('quarry')], { width: W });
+
+// Faint terrain behind the course, computed once at build time.
+const noise = makeNoise(31);
+const st = 12, nx = Math.ceil(W / st) + 1, ny = Math.ceil(drawn.h / st) + 1;
+const grid = new Float32Array(nx * ny);
+for (let j = 0; j < ny; j++)
+  for (let i = 0; i < nx; i++) {
+    const x = i * st, y = j * st;
+    grid[j * nx + i] = fbm(noise, x / 260, y / 260) + 0.5 * Math.exp(-((x - 520) ** 2 + (y - 120) ** 2) / 26000);
+  }
+let d = '';
+const sink = { moveTo: (x: number, y: number) => (d += `M${x.toFixed(1)} ${y.toFixed(1)}`), lineTo: (x: number, y: number) => (d += `L${x.toFixed(1)} ${y.toFixed(1)}`) };
+for (let k = 0; k < 12; k++) contour(sink, grid, nx, ny, st, 0.3 + k * 0.06);
+const log = typed.filter((x) => x.e.app && onTimeline(x.t));
+---
+
+<figure class="at at-course" data-at-course aria-labelledby="at-course-cap">
+  <figcaption id="at-course-cap" class="at-cap">
+    <span>Two applications, drawn as courses</span>
+    <span class="at-cap-note" data-course-hint>Classify the inbox above and the controls appear as each event lands.</span>
+  </figcaption>
+  <div class="at-map">
+    <svg class="at-course-svg" viewBox={`0 0 ${W} ${drawn.h}`} role="img" aria-labelledby="at-course-desc" data-course-svg>
+      <path class="terrain" d={d} />
+      <g data-course-g set:html={drawn.svg} />
+    </svg>
+    <p id="at-course-desc" class="sr-only" data-course-desc>
+      Tern Robotics: applied, confirmed, assessment, interview invitation, interview scheduled, offer. Quarry Analytics: applied,
+      confirmed, then quiet.
+    </p>
+  </div>
+  <div class="at-log-wrap">
+    <p class="at-log-h"><span>Event log</span><span class="at-log-note">Append-only. Nothing here is ever edited; corrections are new rows.</span></p>
+    <div class="at-log-scroll" tabindex="0" role="region" aria-label="Event log">
+      <table class="at-log">
+        <thead><tr><th scope="col">#</th><th scope="col">Date</th><th scope="col">Application</th><th scope="col">Event</th><th scope="col">Decided by</th></tr></thead>
+        <tbody data-log>
+          {
+            log.map((x, i) => (
+              <tr>
+                <td>{i + 1}</td>
+                <td>{day(x.e.date)}</td>
+                <td>{x.e.app === 'tern' ? 'Tern' : 'Quarry'}</td>
+                <td>{LABEL[x.t]}</td>
+                <td>classifier, {x.conf.toFixed(2)}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</figure>
+
+<script>
+  import './apptrack.ts';
+</script>

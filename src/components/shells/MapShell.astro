@@ -1,25 +1,113 @@
 ---
-// Map shell: how a project with `expansion: map` opens from the notebook.
-// PLACEHOLDER: a plain paper panel. Replace with the real map scene.
-// Contract: receives the project entry; renders the MDX body (default slot)
-// inside the scene, plus a way back to the notebook (/#<project id>).
-import type { CollectionEntry } from 'astro:content';
+// Map shell: a project with `expansion: map` opens as an orienteering map
+// unfolded on the cutting mat. The reading column is the map's margin; the
+// live map beside it (contours drawn in the browser) carries the course.
+// Every h2 in the project's MDX body becomes a numbered control, in order,
+// so any project can use this shell without extra markup.
+// Contract: receives the project entry; renders the MDX body (default slot).
+import { render, type CollectionEntry } from 'astro:content';
+import './map-shell.css';
 
 interface Props {
   project: CollectionEntry<'projects'>;
 }
 const { project } = Astro.props;
 const d = project.data;
+const { headings } = await render(project);
+const controls = headings.filter((h) => h.depth === 2);
+const ext = (href: string) => /^https?:/.test(href);
 ---
 
-<div class="shell-stub" data-shell="map">
-  <p><a class="pen-link" href={`/#${project.id}`}>Back to the notebook</a></p>
-  <h1>{d.title}</h1>
-  <p set:html={d.dek} />
-  <slot />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet" />
+
+<div class="ms" data-mapshell data-seed={project.id}>
+  <div class="ms-sheet">
+    <div class="ms-read">
+      <p class="ms-back"><a href={`/#${project.id}`}>Back to the notebook</a></p>
+
+      <header class="ms-head" id="ms-start">
+        <p class="ms-kicker">{d.context}, {d.when}</p>
+        <h1 class="ms-h1">{d.title}</h1>
+        <p class="ms-dek" set:html={d.dek} />
+        <dl class="ms-spec">
+          {d.role && <div><dt>Role</dt><dd>{d.role}</dd></div>}
+          {d.stack.length > 0 && <div><dt>Built with</dt><dd>{d.stack.join(', ')}</dd></div>}
+          {
+            d.links.length > 0 && (
+              <div>
+                <dt>Links</dt>
+                <dd>
+                  {d.links.map((l, i) => (
+                    <>
+                      {i > 0 && ', '}
+                      <a href={l.href} target={ext(l.href) ? '_blank' : undefined} rel={ext(l.href) ? 'noopener' : undefined}>{l.label}</a>
+                    </>
+                  ))}
+                  {d.note && <span class="ms-note"> {d.note}</span>}
+                </dd>
+              </div>
+            )
+          }
+        </dl>
+
+        {
+          controls.length > 0 && (
+            <nav class="ms-clues" aria-labelledby="ms-clues-h">
+              <h2 id="ms-clues-h" class="ms-clues-h">Control descriptions</h2>
+              <ol>
+                <li><span class="ms-row"><span class="ms-sym" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M10 3.2 17 15.8H3z" /></svg></span><span>Start, the title block</span></span></li>
+                {controls.map((c, i) => (
+                  <li><a href={`#${c.slug}`}><b>{i + 1}</b><span>{c.text}</span></a></li>
+                ))}
+                <li><a class="ms-row" href="#ms-finish"><span class="ms-sym" aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.4" /><circle cx="10" cy="10" r="4.2" /></svg></span><span>Finish</span></a></li>
+              </ol>
+            </nav>
+          )
+        }
+      </header>
+
+      <div class="ms-body">
+        <span class="ms-gutter" aria-hidden="true"><span class="ms-grunner"></span></span>
+        <slot />
+      </div>
+
+      <footer class="ms-finish" id="ms-finish">
+        <span class="ms-fin-ring" aria-hidden="true"></span>
+        <h2 class="ms-fin-h">Finish</h2>
+        <p class="ms-fin-links">
+          {d.links.map((l) => <a href={l.href} target={ext(l.href) ? '_blank' : undefined} rel={ext(l.href) ? 'noopener' : undefined}>{l.label}</a>)}
+          <a href={`/#${project.id}`}>Back to the notebook</a>
+          <a href="/toolbox/">The skill map</a>
+        </p>
+      </footer>
+    </div>
+
+    <aside class="ms-map" aria-label="Course map for this page">
+      <div class="ms-frame" data-map-root>
+        <canvas class="ms-base" aria-hidden="true"></canvas>
+        <canvas class="ms-lines" aria-hidden="true"></canvas>
+        <svg class="ms-legs" aria-hidden="true"></svg>
+        <div class="ms-dark" aria-hidden="true"></div>
+        <div class="ms-ctrls"></div>
+        <p class="ms-mtitle" aria-hidden="true">{d.title}<span>{controls.length} controls, drawn as you read</span></p>
+        <button class="ms-reset" type="button" hidden>Flatten</button>
+        <div class="ms-punch" aria-live="polite">
+          <p class="ms-punch-h"><span>Control card</span><span class="ms-punch-s" data-punch-sum>0 of {controls.length + 1} punched</span></p>
+          <ol class="ms-boxes" data-punch-boxes aria-hidden="true"></ol>
+        </div>
+        <p class="ms-legend" aria-hidden="true">
+          <span><svg viewBox="0 0 20 20"><path d="M10 3.2 17 15.8H3z" /></svg>Start</span>
+          <span><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" /></svg>Section</span>
+          <span><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.4" /><circle cx="10" cy="10" r="4.2" /></svg>Finish</span>
+          <span class="tip">Press and hold the ground to raise a hill</span>
+        </p>
+      </div>
+    </aside>
+  </div>
 </div>
 
-<style>
-  .shell-stub { max-width: 760px; margin: 24px auto; padding: 40px; background: var(--paper); color: var(--ink); border-radius: 4px; }
-  h1 { font-size: 40px; margin: 12px 0; }
-</style>
+<script>
+  import './map-shell.ts';
+</script>

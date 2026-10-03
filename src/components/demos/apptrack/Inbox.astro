@@ -1,0 +1,33 @@
+---
+// Control 1: the sample inbox, classified one email at a time.
+// Static fallback (no JS): every email with its result, from the same engine.
+import { INBOX, classify, LABEL, day } from './engine';
+import './apptrack.css';
+const results = INBOX.map((e) => ({ e, r: classify(e) }));
+---
+
+<figure class="at at-inbox" data-at-inbox aria-labelledby="at-inbox-cap">
+  <figcaption id="at-inbox-cap" class="at-cap">
+    <span>A sample inbox</span>
+    <span class="at-cap-note">Invented companies and emails, written for this page. The classifier is a port of the real L0 to L2 rules.</span>
+  </figcaption>
+  <div class="at-mount js-only" data-mount></div>
+  <ol class="at-static no-js">
+    {
+      results.map(({ e, r }) => (
+        <li>
+          <p class="at-s-h"><b>{e.fromName}</b> <span>{day(e.date)}</span></p>
+          <p class="at-s-subj">{e.subject}</p>
+          <p class="at-s-r">
+            <span class={`at-tag t-${r.type}`}>{LABEL[r.type]}</span> {r.conf.toFixed(2)}.{' '}
+            {r.steps.filter((s) => s.tone === 'hit' || s.tone === 'stop').map((s) => `${s.layer}: ${s.outcome}`).join('. ')}
+          </p>
+        </li>
+      ))
+    }
+  </ol>
+</figure>
+
+<script>
+  import './apptrack.ts';
+</script>

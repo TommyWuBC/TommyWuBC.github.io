@@ -1,0 +1,40 @@
+---
+// Control 4: corrections win. Reprocess the inbox with a newer rule set and
+// watch locked corrections survive. Precedence from docs/corrections-review.md.
+import { SAMPLE_RULE } from './engine';
+import './apptrack.css';
+---
+
+<figure class="at at-repro" data-at-repro aria-labelledby="at-repro-cap">
+  <figcaption id="at-repro-cap" class="at-cap">
+    <span>Reprocess with a new rule</span>
+    <span class="at-cap-note">The rule below was written for this page to show what a reprocess does; it isn't in the repository.</span>
+  </figcaption>
+
+  <ol class="r-prec" aria-label="Which value wins">
+    <li><b>Locked by you</b></li>
+    <li><b>Corrected by you</b></li>
+    <li><b>The classifier</b></li>
+  </ol>
+
+  <div class="r-rule">
+    <p class="r-rule-id">{SAMPLE_RULE.id}</p>
+    <p>
+      If the email says <q>{SAMPLE_RULE.patterns[0]}</q> or <q>{SAMPLE_RULE.patterns[1]}</q>, call it a follow-up request, weight {SAMPLE_RULE.weight.toFixed(2)}.
+    </p>
+  </div>
+
+  <div class="js-only">
+    <div class="r-mine" data-r-mine></div>
+    <p class="r-go"><button type="button" class="at-btn" data-r-run>Reprocess the inbox</button> <span class="r-ver" data-r-ver>Rules: rules-2026.07.0</span></p>
+    <ol class="r-out" data-r-out aria-live="polite"></ol>
+  </div>
+  <p class="no-js r-static">
+    With JavaScript on, you can correct email 8 (Checking in), then reprocess: the new rule changes the classifier's answer, and your
+    locked correction stays.
+  </p>
+</figure>
+
+<script>
+  import './apptrack.ts';
+</script>

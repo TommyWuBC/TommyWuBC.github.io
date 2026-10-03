@@ -1,0 +1,66 @@
+---
+// Control 3: silence as an inference. Real thresholds from
+// packages/core/src/ghosting/thresholds.ts; evidence strings follow evaluate.ts.
+import { evaluateGhost, THRESHOLDS } from './engine';
+import './apptrack.css';
+const initial = evaluateGhost({ state: 'confirmation_received', days: 64, scheduledAhead: false, dismissed: false });
+const stages = [
+  { key: 'real', label: 'Its real stage', t: THRESHOLDS.default },
+  { key: 'interviewing', label: 'Interviewing', t: THRESHOLDS.interviewing },
+  { key: 'final_round', label: 'Final round', t: THRESHOLDS.final_round },
+];
+---
+
+<figure class="at at-quiet" data-at-quiet aria-labelledby="at-quiet-cap">
+  <figcaption id="at-quiet-cap" class="at-cap">
+    <span>Quarry Analytics has gone quiet</span>
+    <span class="at-cap-note">Sample application. Move the slider to let time pass.</span>
+  </figcaption>
+
+  <div class="q-grid">
+    <div class="q-ctl">
+      <label class="q-slider">
+        <span class="q-l">Days since the last meaningful email</span>
+        <input type="range" min="0" max="120" step="1" value="64" data-q-days aria-describedby="q-out" />
+        <output data-q-days-out>64 days</output>
+      </label>
+
+      <fieldset class="q-stages">
+        <legend class="q-l">Thresholds for</legend>
+        {
+          stages.map((s, i) => (
+            <label class="q-chip">
+              <input type="radio" name="q-stage" value={s.key} checked={i === 0} data-q-stage />
+              <span>
+                <b data-q-stage-name={s.key === 'real' ? '' : undefined}>{s.label}</b>
+                <i data-q-stage-t={s.key === 'real' ? '' : undefined}>stale {s.t.stale}, ghost {s.t.ghost}</i>
+              </span>
+            </label>
+          ))
+        }
+      </fieldset>
+
+      <label class="q-check">
+        <input type="checkbox" data-q-ahead />
+        <span>An interview or assessment deadline is still ahead</span>
+      </label>
+    </div>
+
+    <div class="q-out" id="q-out" aria-live="polite">
+      <svg class="q-bar" viewBox="0 0 400 74" aria-hidden="true" data-q-bar>
+        <line class="q-axis" x1="10" y1="40" x2="390" y2="40" />
+        <line class="q-walked" x1="10" y1="40" x2="10" y2="40" data-q-walked />
+        <g data-q-ticks></g>
+        <g class="q-runner" data-q-runner><circle r="9" class="ring" /><circle r="5" /></g>
+      </svg>
+      <p class="q-status" data-q-status data-s={initial.status}>Stale</p>
+      <p class="q-why" data-q-why>The timeline marks it stale. Nothing is written as fact; it's an inference you can dismiss.</p>
+      <p class="q-ev"><span class="q-ev-k">Evidence</span> <span data-q-ev>{initial.evidence}</span></p>
+      <p class="q-actions js-only"><button type="button" class="at-btn ghost" data-q-dismiss>Dismiss</button></p>
+    </div>
+  </div>
+</figure>
+
+<script>
+  import './apptrack.ts';
+</script>

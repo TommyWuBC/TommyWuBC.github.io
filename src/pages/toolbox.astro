@@ -1,14 +1,202 @@
 ---
-// The skill map, opened from the notebook's Toolbox page.
-// PLACEHOLDER: replace with the orienteering-style skill map.
+// The skill map, opened from the notebook's Toolbox page. Every tool is a
+// control on an orienteering map; categories are terrain (a lake, a forest,
+// open land, a hill, a marsh); projects and jobs are flags placed between the
+// tools they used. The list below the map is the same data, readable without JS.
+import { getCollection } from 'astro:content';
 import Notebook from '../layouts/Notebook.astro';
-import { skills } from '../data/site';
+import ToolBadge from '../components/toolbox/ToolBadge.astro';
+import { buildMap, REGIONS, MAP_W, MAP_H, type Cat } from '../components/toolbox/skills';
+import { makeNoise, mulberry32 } from '../components/shells/map-shell.terrain';
+import '../components/shells/map-shell.css';
+import '../components/toolbox/toolbox.css';
+
+const projects = (await getCollection('projects', ({ data }) => !data.draft)).map((p) => ({
+  id: p.id, title: p.data.title, stack: p.data.stack, expansion: p.data.expansion, tier: p.data.tier,
+}));
+const jobs = (await getCollection('experience')).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .map((j) => ({ id: j.id, org: j.data.org, role: j.data.role, stack: j.data.stack }));
+const { tools, spots } = buildMap(projects, jobs);
+const cats = Object.keys(REGIONS) as Cat[];
+const byCat = (c: Cat) => tools.filter((t) => t.cat === c).sort((a, b) => b.uses.length - a.uses.length || a.name.localeCompare(b.name));
+const used = tools.filter((t) => t.uses.length).length;
+
+// Region blobs: noisy closed curves, drawn at build time.
+const noise = makeNoise(5);
+function blob(cx: number, cy: number, rx: number, ry: number, seed: number, wob = 0.16) {
+  const n = 28, pts: [number, number][] = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    const k = 1 + (noise(Math.cos(a) * 1.6 + seed, Math.sin(a) * 1.6 + seed * 0.7) - 0.5) * 2 * wob;
+    pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]);
+  }
+  const mid = (a: [number, number], b: [number, number]) => `${((a[0] + b[0]) / 2).toFixed(1)} ${((a[1] + b[1]) / 2).toFixed(1)}`;
+  let d = `M${mid(pts[n - 1], pts[0])}`;
+  for (let i = 0; i < n; i++) d += `Q${pts[i][0].toFixed(1)} ${pts[i][1].toFixed(1)} ${mid(pts[i], pts[(i + 1) % n])}`;
+  return d + 'Z';
+}
+const R = REGIONS;
+const shapes = {
+  forest: blob(R.ml.cx, R.ml.cy, R.ml.rx * 1.08, R.ml.ry * 1.12, 1.3),
+  forest2: blob(R.ml.cx + 40, R.ml.cy - 10, R.ml.rx * 0.55, R.ml.ry * 0.55, 2.1, 0.28),
+  open: blob(R.web.cx, R.web.cy, R.web.rx * 1.08, R.web.ry * 1.16, 3.7),
+  open2: blob(R.web.cx - 20, R.web.cy + 6, R.web.rx * 0.7, R.web.ry * 0.68, 4.4, 0.24),
+  hill: blob(R.infra.cx, R.infra.cy, R.infra.rx * 1.1, R.infra.ry * 1.06, 5.2),
+  marsh: blob(R.met.cx, R.met.cy, R.met.rx * 1.08, R.met.ry * 1.12, 6.6),
+  lake: blob(R.lang.cx, R.lang.cy, R.lang.rx * 1.08, R.lang.ry * 1.1, 7.9, 0.12),
+};
+const boulders = (() => { const r = mulberry32(11); return Array.from({ length: 22 }, () => [40 + r() * (MAP_W - 80), 90 + r() * (MAP_H - 140), 1.6 + r() * 1.3]); })();
+const nameAt: Record<Cat, [number, number]> = {
+  lang: [R.lang.cx, R.lang.cy - R.lang.ry - 14], ml: [R.ml.cx, R.ml.cy - R.ml.ry - 20], web: [R.web.cx, MAP_H - 16],
+  infra: [R.infra.cx, R.infra.cy - R.infra.ry - 22], met: [R.met.cx, MAP_H - 16],
+};
+const data = JSON.stringify({
+  w: MAP_W, h: MAP_H,
+  regions: REGIONS,
+  tools: tools.map((t) => ({ id: t.id, name: t.name, cat: t.cat, x: t.x, y: t.y, hex: t.icon?.hex, uses: t.uses })),
+  spots: spots.map((s) => ({ id: s.id, kind: s.kind, title: s.title, href: s.href, x: s.x, y: s.y, tools: s.tools.map((n) => tools.find((t) => t.name === n)!.id) })),
+});
+const kite = (x: number, y: number, s: number) => `M${x - s} ${y - s}h${2 * s}v${2 * s}h${-2 * s}z`;
+const kiteF = (x: number, y: number, s: number) => `M${x - s} ${y - s}L${x + s} ${y + s}V${y - s}z`;
 ---
 
-<Notebook title="Toolbox" description="Every tool Tommy Wu works with, and where he used it." bodyClass="shell shell-map">
-  <div style="max-width:760px;margin:24px auto;padding:40px;background:var(--paper);color:var(--ink)">
-    <p><a class="pen-link" href="/#toolbox">Back to the notebook</a></p>
-    <h1>Toolbox</h1>
-    <dl>{skills.map((s) => <><dt>{s.label}</dt><dd>{s.items}</dd></>)}</dl>
+<Notebook title="Toolbox" description="Every tool Tommy Wu works with, drawn as an orienteering map, and the projects and jobs that used each one." bodyClass="shell shell-map">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet" />
+
+  <div class="tb" data-toolbox>
+    <div class="tb-sheet">
+      <p class="ms-back tb-pad"><a href="/#toolbox">Back to the notebook</a></p>
+      <header class="tb-head tb-pad">
+        <h1 class="ms-h1">Toolbox</h1>
+        <p class="ms-dek">Every tool I work with, and where I used it.</p>
+        <p class="tb-how">
+          {tools.length} tools and {spots.length} projects and jobs. Point at a tool to run legs to everything that used it; select it to
+          pin the list. Flags sit between the tools they were built with.
+        </p>
+      </header>
+
+      <div class="tb-bar tb-pad js-only" role="group" aria-label="Show a region">
+        <button type="button" class="tb-chip" aria-pressed="true" data-filter="all">Everything</button>
+        {cats.map((c) => <button type="button" class={`tb-chip c-${c}`} aria-pressed="false" data-filter={c}><i aria-hidden="true"></i>{R[c].name}</button>)}
+      </div>
+
+      <div class="tb-scroll tb-pad">
+        <div class="tb-frame" data-frame>
+          <svg class="tb-under" viewBox={`0 0 ${MAP_W} ${MAP_H}`} aria-hidden="true">
+            <defs>
+              <pattern id="marsh" width="30" height="14" patternUnits="userSpaceOnUse">
+                <line x1="3" y1="4" x2="17" y2="4" class="marsh-line" /><line x1="18" y1="11" x2="28" y2="11" class="marsh-line" />
+              </pattern>
+            </defs>
+            <g class="north">{Array.from({ length: 13 }, (_, i) => <line x1={i * 104 - 20} y1="0" x2={i * 104 + 23} y2={MAP_H} />)}</g>
+            <path class={`rg rg-hill`} data-region="infra" d={shapes.hill} />
+            <path class="rg rg-open" data-region="web" d={shapes.open} />
+            <path class="rg rg-open2" data-region="web" d={shapes.open2} />
+            <path class="rg rg-forest" data-region="ml" d={shapes.forest} />
+            <path class="rg rg-forest2" data-region="ml" d={shapes.forest2} />
+            <path class="rg rg-marsh" data-region="met" d={shapes.marsh} />
+            <path class="track" d="M-10 470C150 450 300 470 420 430S640 380 760 420 900 560 1210 520" />
+            <path class="path" d="M440 -10C470 120 430 300 480 420S520 700 470 830" />
+            <g class="boulders">{boulders.map(([x, y, r]) => <circle cx={x} cy={y} r={r} />)}</g>
+          </svg>
+          <canvas class="tb-lines" aria-hidden="true"></canvas>
+          <svg class="tb-over" viewBox={`0 0 ${MAP_W} ${MAP_H}`} role="group" aria-labelledby="tb-map-label">
+            <title id="tb-map-label">Skill map. Each tool links to its entry in the list below.</title>
+            <path class="rg rg-lake" data-region="lang" d={shapes.lake} />
+            {cats.map((c) => <text class={`rg-name n-${c}`} data-region={c} x={nameAt[c][0]} y={nameAt[c][1]} text-anchor="middle">{R[c].name}</text>)}
+            <g class="tb-legs" data-legs></g>
+            {
+              spots.map((s) => (
+                <a class={`sp${s.archive ? ' arch' : ''} k-${s.kind}`} href={`#use-${s.id}`} data-spot={s.id} aria-label={`${s.title}: built with ${s.tools.join(', ')}`}>
+                  <rect class="hitbox" x={s.x - 22} y={s.y - 22} width="44" height="44" />
+                  <path class="kite" d={kite(s.x, s.y, s.archive ? 9 : 11)} />
+                  <path class="kite-f" d={kiteF(s.x, s.y, s.archive ? 9 : 11)} />
+                  {s.kind === 'job' && <path class="kite-pole" d={`M${s.x - 11} ${s.y - 11}v30`} />}
+                  <text class="sp-lab" x={s.lab.x} y={s.lab.y} text-anchor={s.lab.anchor}>{s.short}</text>
+                </a>
+              ))
+            }
+            {
+              tools.map((t) => (
+                <a class={`tl c-${t.cat}${t.uses.length ? '' : ' unused'}`} href={`#tool-${t.id}`} data-tool={t.id} data-cat={t.cat}
+                  aria-label={`${t.name}: ${t.uses.length ? `used in ${t.uses.length} ${t.uses.length === 1 ? 'place' : 'places'}` : 'not attached to a project here yet'}`}>
+                  <circle class="ring" cx={t.x} cy={t.y} r="17" />
+                  {t.icon ? (
+                    <path class="logo" d={t.icon.path} transform={`translate(${t.x - 9.5} ${t.y - 9.5}) scale(${19 / 24})`} />
+                  ) : (
+                    <text class="mono" x={t.x} y={t.y + (t.mono!.length > 2 ? 3.6 : 4.4)} text-anchor="middle" font-size={t.mono!.length > 2 ? 9.5 : 12}>{t.mono}</text>
+                  )}
+                  <text class="tl-lab" x={t.lab.x} y={t.lab.y} text-anchor={t.lab.anchor}>{t.name}</text>
+                </a>
+              ))
+            }
+          </svg>
+          <div class="tb-dark" aria-hidden="true"></div>
+          <button class="ms-reset tb-reset" type="button" hidden>Flatten</button>
+          <aside class="tb-card" data-card hidden aria-live="polite"></aside>
+        </div>
+      </div>
+
+      <div class="tb-legend tb-pad">
+        <ul aria-label="Map legend">
+          {cats.map((c) => <li><span class={`sw sw-${c}`} aria-hidden="true"></span>{R[c].name}<i>{R[c].terrain}</i></li>)}
+          <li><svg viewBox="0 0 24 24" aria-hidden="true" class="lg-tool"><circle cx="12" cy="12" r="9" /></svg>A tool</li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true" class="lg-kite"><path d="M5 5h14v14H5z" class="kite" /><path d="M5 5l14 14V5z" class="kite-f" /></svg>A project</li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true" class="lg-kite"><path d="M6 5h13v13H6z" class="kite" /><path d="M6 5l13 13V5z" class="kite-f" /><path d="M6 5v17" class="kite-pole" /></svg>A job</li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true" class="lg-leg"><path d="M3 18 21 6" /></svg>Used in</li>
+        </ul>
+        <p class="tb-tip js-only">Press and hold the ground to raise a hill. Arrow keys move between tools; Escape lets go.</p>
+      </div>
+
+      <section class="tb-list tb-pad" aria-labelledby="tb-list-h">
+        <h2 id="tb-list-h" class="tb-list-h">The same map, as a list</h2>
+        <div class="tb-cols">
+          {
+            cats.map((c) => (
+              <section class={`tb-cat c-${c}`} aria-labelledby={`cat-${c}`} data-cat={c}>
+                <h3 id={`cat-${c}`}><span class={`sw sw-${c}`} aria-hidden="true"></span>{R[c].name}</h3>
+                <ul>
+                  {byCat(c).map((t) => (
+                    <li id={`tool-${t.id}`} data-tool-row={t.id}>
+                      <ToolBadge tool={t} />
+                      <div>
+                        <p class="tl-name">{t.name}</p>
+                        {t.uses.length ? (
+                          <p class="tl-uses">
+                            {t.uses.map((u, i) => (
+                              <>
+                                {i > 0 && ', '}
+                                <a href={u.href}>{u.kind === 'job' ? u.title.split(', ').pop() : u.title.replace(/ under .*/, '')}</a>
+                                {u.why && <span class="why"> ({u.why})</span>}
+                              </>
+                            ))}
+                          </p>
+                        ) : (
+                          <p class="tl-uses none">Not attached to a project on this site yet.</p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+          }
+        </div>
+        <h3 class="tb-proj-h">Projects and jobs</h3>
+        <ul class="tb-proj">
+          {spots.map((s) => (
+            <li id={`use-${s.id}`}><a href={s.href}>{s.title}</a> <span>{s.tools.join(', ')}</span></li>
+          ))}
+        </ul>
+        <p class="fine tb-foot">{used} of {tools.length} tools are attached to something on this site. Uses marked in brackets are implied by the stack rather than listed in it.</p>
+      </section>
+    </div>
   </div>
+
+  <script type="application/json" id="tb-data" set:html={data} />
+  <script>
+    import '../components/toolbox/toolbox.ts';
+  </script>
 </Notebook>
