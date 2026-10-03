@@ -8,7 +8,7 @@ export interface Command {
   group: string;
   label: string;
   href?: string;
-  action?: 'copy' | 'theme' | 'fan';
+  action?: 'copy' | 'theme' | 'fan' | 'shuffle' | 'move';
   icon: 'page' | 'go' | 'copy' | 'file' | 'theme' | 'grid' | 'ext';
   hint?: string;
   keywords?: string;
@@ -43,6 +43,8 @@ export async function buildCommands(home: boolean): Promise<Command[]> {
     { group: 'Actions', label: 'Copy email address', action: 'copy', icon: 'copy', hint: site.email, keywords: 'mail contact' },
     { group: 'Actions', label: 'Open résumé', href: site.resume, icon: 'file', hint: 'PDF', keywords: 'resume cv pdf' },
     { group: 'Actions', label: 'Switch the lamp', action: 'theme', icon: 'theme', hint: 'light or dark', keywords: 'dark light mode theme' },
+    { group: 'Actions', label: 'New lava layout', action: 'shuffle', icon: 'grid', keywords: 'race lava shuffle', when: '[data-lava]' },
+    { group: 'Actions', label: 'Move the gaps', action: 'move', icon: 'grid', keywords: 'race lava gap', when: '[data-lava]' },
     { group: 'Actions', label: 'Spread the photos out', action: 'fan', icon: 'grid', keywords: 'photos pile shuffle', when: '#pile' },
     { group: 'Elsewhere', label: 'GitHub', href: site.github, external: true, icon: 'ext', hint: 'TommyWuBC' },
     { group: 'Elsewhere', label: 'LinkedIn', href: site.linkedin, external: true, icon: 'ext', hint: 'bingchang-wu' },
