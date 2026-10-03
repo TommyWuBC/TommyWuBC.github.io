@@ -1,25 +1,139 @@
 ---
-// Zine shell: how a project with `expansion: zine` opens from the notebook.
-// PLACEHOLDER: a plain paper panel. Replace with the real zine scene.
-// Contract: receives the project entry; renders the MDX body (default slot)
-// inside the scene, plus a way back to the notebook (/#<project id>).
+// Zine shell: a project with `expansion: zine` opens as a two-ink riso zine,
+// pulled out of the notebook and laid on the cutting mat.
+//
+// The scene: a stapled booklet. Page 0 is the cover, built here from the
+// frontmatter (title, dek, role, stack, links, a contents list, stickers).
+// The MDX body supplies the inside pages. The last page is the back cover.
+//
+// Writing pages in MDX: each page is a top-level <section class="zpage">.
+// Leave a blank line after the opening tag so Markdown works inside.
+//
+//   <section class="zpage">
+//
+//   ## A heading (it is listed on the cover's contents)
+//
+//   Some text.
+//
+//   </section>
+//
+// Optional page classes: `flood` (a page printed solid blue). Inside a page:
+// `.zp-big` for a big riso number, `.zp-note` for a pen note in the margin,
+// `.zp-cap` for a small caption, `.zp-lede` for a larger first paragraph,
+// `.zp-sample` for the "this is sample data" label. Wrap display words in
+// <span class="ink" data-ink="same words">same words</span> to print them twice.
+//
+// Without JS, or under 960 px, the pages lie flat on the mat, taped down, two
+// to a row (a spread per row) or one per row on a phone. With JS on a wide
+// screen they are stapled into a booklet you turn by dragging a page, the
+// dog-eared corners, the buttons, or the arrow keys; "Lay them flat" unstaples it.
 import type { CollectionEntry } from 'astro:content';
+import { render } from 'astro:content';
+import './zine-shell.css';
 
 interface Props {
   project: CollectionEntry<'projects'>;
 }
 const { project } = Astro.props;
 const d = project.data;
+const { headings } = await render(project);
+const contents = headings.filter((h) => h.depth === 2);
+const back = `/#${project.id}`;
+const plainTitle = d.title.replace(/<[^>]+>/g, '');
+const firstSentence = (s: string) => s.split(/(?<=[.!?])\s/)[0].replace(/\.$/, '');
+// sticker positions inside the sticker strip: [x as a fraction of its width, y px, rotation]
+const stickers = [
+  d.figure && { id: 'figure', kind: 'round', pos: [0.6, 6, -9] },
+  { id: 'context', kind: 'label', pos: [0.04, 64, 4] },
+  { id: 'when', kind: 'oval', pos: [0.34, 92, -5] },
+].filter(Boolean) as { id: string; kind: string; pos: number[] }[];
 ---
 
-<div class="shell-stub" data-shell="zine">
-  <p><a class="pen-link" href={`/#${project.id}`}>Back to the notebook</a></p>
-  <h1>{d.title}</h1>
-  <p set:html={d.dek} />
-  <slot />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,400..900&display=swap" />
+
+<div class="zine-scene" data-zine-scene data-project={project.id} style={`--run-head: ${JSON.stringify(plainTitle)}`}>
+  <div class="zine-top">
+    <a class="zine-back" href={back}><span aria-hidden="true" class="zine-back-arrow"></span>Back to the notebook</a>
+    <div class="zine-ctl" data-zine-ctl hidden>
+      <button type="button" class="ztab" data-turn="-1">Previous pages</button>
+      <p class="zine-count" aria-live="polite" data-zine-count></p>
+      <button type="button" class="ztab" data-turn="1">Next pages</button>
+      <button type="button" class="ztab ztab-alt" data-flat aria-pressed="false">Lay them flat</button>
+    </div>
+  </div>
+
+  <div class="zine" data-zine>
+    <section class="zpage zp-cover" id="cover" aria-labelledby="zine-title">
+      <p class="zc-top">
+        <span>From Tommy Wu&#8217;s notebook</span>
+        <svg class="zreg" viewBox="0 0 40 40" aria-hidden="true"
+          ><g class="zreg-b"><circle cx="20" cy="20" r="11"></circle><path d="M20 2v36M2 20h36"></path></g
+          ><g class="zreg-p"><circle cx="20" cy="20" r="11"></circle><path d="M20 2v36M2 20h36"></path></g></svg
+        >
+        <span>{d.when}</span>
+      </p>
+      <h1 id="zine-title" class="zc-mast" data-mast title="Click to run it through the printer again" style={`--len: ${plainTitle.length}`}>
+        <span class="ink" data-ink={plainTitle}>{plainTitle}</span>
+      </h1>
+      <p class="zc-dek" set:html={d.dek} />
+
+      <dl class="zc-meta">
+        <div><dt>Made at</dt><dd>{d.context}, {d.when}</dd></div>
+        {d.role && <div><dt>My part</dt><dd set:html={d.role} /></div>}
+        {d.stack.length > 0 && <div><dt>Built with</dt><dd>{d.stack.join(', ')}</dd></div>}
+        {d.links.length > 0 && (
+          <div>
+            <dt>Links</dt>
+            <dd class="zc-links">{d.links.map((l) => <a href={l.href} rel="noopener">{l.label}</a>)}</dd>
+          </div>
+        )}
+        {d.note && <div><dt>Note</dt><dd set:html={d.note} /></div>}
+      </dl>
+
+      {contents.length > 0 && (
+        <nav class="zc-toc" aria-label="Inside this zine">
+          <p class="zc-toc-h">Inside</p>
+          <ol>
+            {contents.map((h) => (
+              <li><a href={`#${h.slug}`} data-goto={h.slug}><span class="ztoc-n" aria-hidden="true"></span><span class="ztoc-t">{h.text}</span></a></li>
+            ))}
+          </ol>
+        </nav>
+      )}
+
+      <div class="zc-stickers" data-stickers data-key={`zine-stickers-${project.id}`}>
+        <p class="sr-only" id="sticker-help">Stickers on the cover. Use the arrow keys to move one, Shift for a bigger step, Enter to peel and re-stick it.</p>
+        {stickers.map((s) => (
+          <div class={`zsticker zs-${s.kind}`} data-id={s.id} data-pos={s.pos.join(',')} style={`--x:${s.pos[0] * 100}%; --y:${s.pos[1]}px; --r:${s.pos[2]}deg`}>
+            {s.id === 'figure' && d.figure && (
+              <span class="face"><b set:html={d.figure.value} /><small set:html={firstSentence(d.figure.caption)} /></span>
+            )}
+            {s.id === 'context' && <span class="face">{d.context}</span>}
+            {s.id === 'when' && <span class="face">{d.when}</span>}
+            <span class="curl" aria-hidden="true"></span>
+          </div>
+        ))}
+      </div>
+      <p class="zc-hint" aria-hidden="true">drag a page to turn it</p>
+    </section>
+
+    <slot />
+
+    <section class="zpage zp-back flood" aria-label="Back cover">
+      <p class="zb-big"><a href={back}><span class="ink" data-ink="Back to the notebook">Back to the notebook</span></a></p>
+      {d.links.length > 0 && (
+        <p class="zb-links">{d.links.map((l) => <a class="zpill" href={l.href} rel="noopener">{l.label}</a>)}</p>
+      )}
+      <p class="zb-colophon">
+        Printed in two inks, blue and fluorescent pink, which overlap into a third. Set in Anybody and Newsreader, with pen
+        notes in Nanum Pen Script. Interactive figures are drawn in your browser.
+      </p>
+    </section>
+  </div>
 </div>
 
-<style>
-  .shell-stub { max-width: 760px; margin: 24px auto; padding: 40px; background: var(--paper); color: var(--ink); border-radius: 4px; }
-  h1 { font-size: 40px; margin: 12px 0; }
-</style>
+<script>
+  import './zine-shell.ts';
+</script>

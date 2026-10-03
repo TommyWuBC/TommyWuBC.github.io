@@ -15,6 +15,108 @@ links:
 expansion: zine
 ---
 
-{/* Interactive write-up for the zine shell. The earlier One Ink version is in git: git show redesign:src/content/projects/cue.mdx */}
+import GazePad from '../../components/demos/cue/GazePad.astro';
+import Sized from '../../components/demos/cue/Sized.astro';
+import Session from '../../components/demos/cue/Session.astro';
+import '../../components/demos/cue/cue-pages.css';
 
-The full write-up is being rebuilt.
+<section class="zpage flood">
+
+## Two rules
+
+<p class="zp-lede">You talk. Cue reads the page, answers from what is actually there, compares products side by side and works the controls. It buys only after you say yes to the button that spends the money.</p>
+
+<div class="cue-rule">
+  <p class="cue-rule-h">Gaze never selects; voice commits.</p>
+  <p>Your eyes set focus and your voice confirms. That is the accessibility story, and it is also why a few centimeters of webcam error is harmless.</p>
+</div>
+
+<div class="cue-rule">
+  <p class="cue-rule-h">The model may shop; only you may commit.</p>
+  <p>It can search, compare, open pages, scroll and add to a bag. It cannot complete a purchase. Those actions are stripped on the server from anything the model proposes.</p>
+</div>
+
+<p class="zp-foot zp-cap">Built at HackGT 13, September 2026. The next two spreads let you try both rules.</p>
+
+</section>
+
+<section class="zpage">
+
+## Webcam gaze, filtered
+
+Raw webcam gaze is too noisy to steer with. A One Euro filter smooths hard while the eyes rest and gets out of the way when they jump. Focus moves only once the gaze has rested on a product.
+
+<GazePad />
+
+<p class="zp-note">turn the filter off, then try to rest on one</p>
+
+</section>
+
+<section class="zpage">
+
+## Tuned against a simulator
+
+Cue has a sim mode: the mouse is the truth, synthetic noise goes on top, and it all runs through the real filter. The constants were swept over six noise seeds at a noise of 70 px.
+
+<Sized
+  caption="Within each row the numbers are set at sizes proportional to their values, down to a size you can still read."
+  rows={[
+    { label: 'Gaze noise (sd)', before: 70, after: 19, unit: 'px' },
+    { label: 'Frame-to-frame jitter', before: 87, after: 10, unit: 'px' },
+    { label: 'Worst single jump', before: 303, after: 46, unit: 'px' },
+  ]}
+/>
+
+<div class="cue-settle">
+  <p class="zp-big"><span class="ink" data-ink="260">260</span><small>ms</small></p>
+  <p>for a 400 px jump between products to settle. Heavy smoothing usually trades jitter for lag; this is the lag side of the trade.</p>
+</div>
+
+<p class="zp-note">dCutoff has to stay well below the noise frequency, or the noise drives the speed estimate and beta opens the filter back up</p>
+
+Calibration is 13 points, then 5 more that measure accuracy without any input. An early build put numbered badges on products; live sessions showed the numbers drifting as the eyes moved, so they came out. You name what you mean instead.
+
+</section>
+
+<section class="zpage">
+
+## The model may shop; only you may commit
+
+Common commands go through a regular-expression router and never reach a language model. Everything else goes to Claude as one call that has to come back as strict JSON. Checkout reads the order back and waits for a spoken yes and a passkey. &#8220;Cue, cancel&#8221; works at any point.
+
+<Session part="talk" />
+
+</section>
+
+<section class="zpage">
+
+## What happened underneath
+
+<Session part="trace" />
+
+</section>
+
+<section class="zpage">
+
+## Where it stands
+
+It runs as a localhost demo with its own storefront, plus an experimental Chrome extension that adapts live store pages. Eye tracking is built and switched off for now while the voice path is tuned, and a full passkey test on a live store hasn&#8217;t been run yet. The repository says all of this up front.
+
+<ul>
+  <li>Prices come from the server&#8217;s own product list. A cart price sent by the browser is never accepted.</li>
+  <li>Every checkout approval is signed (Ed25519, two-minute expiry, single-use nonces) and checked by a separate merchant endpoint. The signature never replaces the passkey.</li>
+  <li>Nothing spends money on one utterance. The budget is enforced when something is added, not at checkout.</li>
+</ul>
+
+<h3>When a key is missing, it degrades instead of breaking</h3>
+
+<ol class="cue-chain" aria-label="Fallback order">
+  <li><b>Speech in</b> <span>Grok</span><span>ElevenLabs Scribe</span><span>the browser&#8217;s recognizer</span></li>
+  <li><b>Speech out</b> <span>Grok</span><span>ElevenLabs</span><span>the browser&#8217;s voice</span></li>
+  <li><b>Answers</b> <span>Claude</span><span>an offline answerer over the product data</span></li>
+  <li><b>Gaze</b> <span>the webcam</span><span>the mouse</span></li>
+</ol>
+
+<p class="zp-foot"><a class="zpill" href="https://github.com/TommyWuBC/cue.ai">Read the code on GitHub</a></p>
+
+</section>

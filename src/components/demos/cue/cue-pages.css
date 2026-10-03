@@ -1,0 +1,17 @@
+/* Page-level styles for the Cue zine (src/content/projects/cue.mdx). */
+.zine-scene .cue-rule { margin-top: 22px; padding-top: 14px; border-top: 1px dashed currentColor; }
+.zine-scene .cue-rule p { margin: 6px 0 0; }
+.zine-scene .cue-rule-h { font: 850 clamp(24px, 6.6cqw, 36px)/1.02 var(--f-display); font-variation-settings: "wdth" 84; letter-spacing: -.01em; text-wrap: balance; }
+.zine-scene .cue-rule-h { text-shadow: .03em .022em 0 var(--z-pink); }
+.zine-scene .cue-settle { display: grid; grid-template-columns: auto 1fr; align-items: end; gap: 6px 16px; margin: 20px 0 6px; }
+.zine-scene .cue-settle .zp-big { margin: 0; }
+.zine-scene .cue-settle .zp-big small { font-size: 22px; font-variation-settings: "wdth" 90; margin-left: 4px; color: var(--z-blue); }
+.zine-scene .cue-settle p:last-child { margin: 0 0 4px; font-size: 15.5px; line-height: 1.4; }
+.zine-scene .cue-chain { margin: 6px 0 0; display: grid; gap: 6px; }
+.zine-scene .cue-chain li { padding: 0; margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; font-size: 14.5px; line-height: 1.3; }
+.zine-scene .cue-chain li::before { content: none; }
+.zine-scene .cue-chain b { width: 6.4em; font: 750 13.5px/1.2 var(--f-display); font-variation-settings: "wdth" 96; }
+.zine-scene .cue-chain span { padding: 3px 8px; border: 1.5px solid var(--z-blue); border-radius: 3px; }
+.zine-scene .cue-chain span + span { margin-left: 22px; position: relative; }
+.zine-scene .cue-chain span + span::before { content: ""; position: absolute; left: -19px; top: 50%; width: 15px; height: 2px; background: var(--z-pink); }
+.zine-scene .cue-chain span:first-of-type { background: var(--z-blue); color: var(--z-sheet); }

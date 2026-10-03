@@ -1,0 +1,74 @@
+---
+// Your day: classes from a sample .ics file on the left, events you're going
+// to on the right. Overlaps are flagged across both lanes. One script
+// (buzz.ts) drives the map, the feed and this plan together.
+import { CLASSES, DAY_START, DAY_END, span } from './data';
+const H = (DAY_END - DAY_START) / 60;
+const hours = Array.from({ length: H + 1 }, (_, i) => DAY_START / 60 + i);
+const pct = (m: number) => `${((m - DAY_START) / (DAY_END - DAY_START)) * 100}%`;
+---
+
+<div class="bz-day" data-bz-day data-noturn>
+  <div class="bz-day-bar">
+    <button type="button" class="bz-ics" data-bz-ics aria-pressed="true">Sample .ics imported</button>
+  </div>
+  <div class="bz-grid" style={`--hours: ${H}`}>
+    <div class="bz-hours" aria-hidden="true">
+      {hours.map((h) => <span style={`top: ${pct(h * 60)}`}>{((h + 11) % 12) + 1}{h < 12 ? 'am' : 'pm'}</span>)}
+    </div>
+    <div class="bz-lane" data-lane="classes" aria-label="Classes">
+      <p class="bz-lh">Classes</p>
+      {CLASSES.map((c) => (
+        <div class:list={['bz-b bz-class', { short: c.end - c.start < 60 }]} title={`${c.title}, ${span(c.start, c.end)}`} style={`top: ${pct(c.start)}; height: calc(${pct(c.end)} - ${pct(c.start)})`}>
+          <b>{c.title}</b><span>{span(c.start, c.end)}</span>
+        </div>
+      ))}
+    </div>
+    <div class="bz-lane" data-lane="events" aria-label="Events you're going to">
+      <p class="bz-lh">Going</p>
+    </div>
+    <div class="bz-clash" data-bz-clash aria-hidden="true"></div>
+  </div>
+  <ul class="bz-conf" data-bz-conf aria-live="polite">
+    <li class="bz-none">Nothing clashes yet. RSVP to something on the feed.</li>
+  </ul>
+</div>
+
+<style is:global>
+  .zine-scene .bz-day-bar { display: flex; justify-content: flex-end; margin: -4px 0 8px; }
+  .zine-scene .bz-ics { cursor: pointer; padding: 6px 10px 5px; border: 2px solid var(--z-blue); border-radius: 4px; background: transparent; color: var(--z-ink); font: 700 13px/1 var(--f-display); }
+  .zine-scene .bz-ics[aria-pressed="true"] { background: var(--z-blue); color: var(--z-sheet); }
+  html:not(.js) .zine-scene .bz-day-bar { display: none; }
+  .zine-scene .bz-grid { position: relative; display: grid; grid-template-columns: 44px 1fr 1fr; column-gap: 8px; height: calc(var(--hours) * 29px); margin-top: 26px; border-top: 2px solid var(--z-blue); border-bottom: 2px solid var(--z-blue);
+    background: repeating-linear-gradient(transparent 0 calc(100% / var(--hours) - 1px), var(--z-guide) calc(100% / var(--hours) - 1px) calc(100% / var(--hours))); }
+  .zine-scene .bz-hours { position: relative; }
+  .zine-scene .bz-hours span { position: absolute; left: 0; transform: translateY(-50%); font: 650 11.5px/1 var(--f-display); background: var(--z-sheet); padding: 1px 2px; }
+  .zine-scene .bz-hours span:first-child { transform: none; }
+  .zine-scene .bz-hours span:last-child { transform: translateY(-100%); }
+  .zine-scene .bz-lane { position: relative; }
+  .zine-scene .bz-lh { position: absolute; top: -24px; left: 0; margin: 0; font: 800 13px/1 var(--f-display); }
+  .zine-scene .bz-b { position: absolute; left: 0; right: 0; z-index: 1; overflow: hidden; padding: 3px 6px; border-radius: 3px; font-size: 12px; line-height: 1.2; display: flex; flex-direction: column; }
+  .zine-scene .bz-b b { font: 750 12.5px/1.15 var(--f-display); font-variation-settings: "wdth" 90; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .zine-scene .bz-b span { white-space: nowrap; }
+  .zine-scene .bz-b.short span { display: none; }
+  .zine-scene .bz-b.short { justify-content: center; padding-block: 0; }
+  .zine-scene .bz-class { background: var(--z-blue); color: var(--z-sheet); }
+  .zine-scene .bz-going { border: 2px solid var(--z-blue); background: var(--z-sheet); color: var(--z-ink); animation: bz-drop .45s var(--z-spring); }
+  .zine-scene .bz-going.pending { border-style: dashed; }
+  .zine-scene .bz-going.clash { border-color: var(--z-pink-deep); box-shadow: 3px 3px 0 var(--z-pink); }
+  .zine-scene .bz-class.clash { box-shadow: 3px 3px 0 var(--z-pink); }
+  html.js .zine-scene .bz-class.out { display: none; }
+  @keyframes bz-drop { from { transform: translateY(-10px) rotate(-2deg); opacity: 0; } }
+  .zine-scene .bz-clash { position: absolute; left: 52px; right: 0; top: 0; bottom: 0; pointer-events: none; z-index: 0; }
+  .zine-scene .bz-clash i { position: absolute; left: -4px; right: -4px; border-top: 2px solid var(--z-pink-deep); border-bottom: 2px solid var(--z-pink-deep);
+    background: repeating-linear-gradient(-45deg, rgb(255 72 176 / .45) 0 3px, transparent 3px 7px); mix-blend-mode: var(--z-plate); }
+  .zine-scene .bz-conf { margin: 12px 0 0; padding: 0; list-style: none; font-size: 14.5px; line-height: 1.4; }
+  .zine-scene .bz-conf li { padding-left: 20px; margin: 3px 0; position: relative; }
+  .zine-scene .bz-conf li::before { content: ""; position: absolute; left: 0; top: .3em; width: 12px; height: 12px; background: repeating-linear-gradient(-45deg, var(--z-pink-deep) 0 2px, transparent 2px 4px); border: 1.5px solid var(--z-pink-deep); border-radius: 0; mix-blend-mode: normal; }
+  .zine-scene .bz-conf .bz-none { font-style: italic; padding-left: 0; }
+  .zine-scene .bz-conf .bz-none::before { content: none; }
+</style>
+
+<script>
+  import './buzz';
+</script>

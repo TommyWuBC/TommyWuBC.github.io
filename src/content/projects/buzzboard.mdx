@@ -12,6 +12,63 @@ links:
 expansion: zine
 ---
 
-{/* Interactive write-up for the zine shell. The earlier One Ink version is in git: git show redesign:src/content/projects/buzzboard.mdx */}
+import CampusMap from '../../components/demos/buzzboard/CampusMap.astro';
+import EventFeed from '../../components/demos/buzzboard/EventFeed.astro';
+import DayPlan from '../../components/demos/buzzboard/DayPlan.astro';
 
-The full write-up is being rebuilt.
+<section class="zpage">
+
+## What&#8217;s on, near you, that fits
+
+<p class="zp-lede">BuzzBoard is campus event discovery for Georgia Tech, built with GT Web Dev Club between January and May 2026. It&#8217;s live.</p>
+
+<p class="zp-big"><span class="ink" data-ink="500+">500+</span></p>
+
+<p class="zp-cap">events on the live site.</p>
+
+<ul>
+  <li>RSVPs, friends and presence update in real time, with optimistic UI so nothing waits on the network.</li>
+  <li>The feed ranks events by how close they are.</li>
+  <li>Going to something that clashes with your schedule gets flagged.</li>
+  <li>Events sit on a Leaflet map, and calendars come in through ICS import.</li>
+</ul>
+
+Next.js and TypeScript in front; Express, Firebase and Firestore behind.
+
+<p class="zp-note">the map, events and classes on the next pages are samples I drew for this zine</p>
+
+<p class="zp-foot"><a class="zpill" href="https://gt-buzzboard.vercel.app/home">Open the live site</a></p>
+
+</section>
+
+<section class="zpage">
+
+## Near you first
+
+Drag the pink pin, tap the map, or focus the pin and use the arrow keys. The feed on the facing page re-ranks by walking distance as you go; the numbers on the pins follow.
+
+<CampusMap />
+
+</section>
+
+<section class="zpage">
+
+## The feed
+
+RSVP and the count changes at once. The server confirms a moment later; if the save fails, the change rolls back and says so. Going to something also puts it on your day, overleaf.
+
+<EventFeed />
+
+</section>
+
+<section class="zpage">
+
+## Does it fit your day?
+
+Classes come in from an .ics file. Events you&#8217;re going to drop in beside them, and anything that overlaps is flagged in both lanes.
+
+<DayPlan />
+
+<p class="zp-sample">Sample classes and events. An illustration, not BuzzBoard&#8217;s code.</p>
+
+</section>

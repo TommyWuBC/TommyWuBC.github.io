@@ -1,0 +1,29 @@
+---
+// Pen sketch under Cue's notebook entry: an eye, a jittery gaze path that
+// smooths out, and a product it comes to rest on.
+---
+
+<svg viewBox="0 0 460 200" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Sketch: an eye whose jittery gaze path smooths out and settles on a product">
+  <!-- the eye -->
+  <path d="M18 98 C 40 66, 92 64, 116 97 C 92 130, 42 131, 18 98 Z" stroke-width="2" />
+  <circle cx="67" cy="97" r="15" stroke-width="1.8" />
+  <circle cx="68" cy="97" r="6" fill="currentColor" stroke="none" />
+  <path d="M30 79 l-6 -9 M52 70 l-2 -10 M76 69 l2 -10 M98 76 l6 -8" stroke-width="1.5" />
+  <!-- raw gaze: jumpy -->
+  <path d="M124 97 l9 -14 l7 22 l8 -27 l6 31 l9 -24 l6 19 l9 -15 l7 13 l9 -10 l8 9 l9 -6 l9 5 l10 -3 l11 2 c 14 -1, 26 1, 38 1 c 18 0, 34 1, 52 2" stroke-width="1.7" />
+  <!-- a few raw samples scattered around the path -->
+  <g fill="currentColor" stroke="none">
+    <circle cx="137" cy="72" r="2" /><circle cx="151" cy="113" r="2" /><circle cx="160" cy="66" r="1.8" />
+    <circle cx="176" cy="111" r="2" /><circle cx="189" cy="79" r="1.7" /><circle cx="205" cy="104" r="1.6" />
+  </g>
+  <!-- the product it settles on, with a dwell ring -->
+  <path d="M352 58 l84 -2 l2 86 l-85 2 z" stroke-width="2" />
+  <path d="M364 128 l62 -1" stroke-width="3" />
+  <circle cx="335" cy="100" r="10" stroke-width="1.8" />
+  <circle cx="335" cy="100" r="2.6" fill="currentColor" stroke="none" />
+  <path d="M347 101 l14 -1" stroke-width="1.6" />
+  <text x="132" y="150" font-size="21" fill="currentColor" stroke="none" style="font-family: var(--hand)">raw webcam gaze</text>
+  <text x="232" y="70" font-size="21" fill="currentColor" stroke="none" style="font-family: var(--hand)">one euro filter</text>
+  <path d="M262 76 c 2 8, 4 14, 6 18" stroke-width="1.3" />
+  <text x="318" y="172" font-size="21" fill="currentColor" stroke="none" style="font-family: var(--hand)">rests, then focus</text>
+</svg>

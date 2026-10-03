@@ -1,0 +1,182 @@
+---
+// The simulated session, in two halves on facing pages: `talk` (what you say
+// and what Cue says back) and `trace` (what happened underneath: router,
+// model, server filter, page). One script drives both. Without JS both halves
+// show a worked example run.
+import { UTTERANCES, exampleRun, lineHTML, traceHTML, stateHTML } from './session-logic';
+
+interface Props {
+  part: 'talk' | 'trace';
+}
+const { part } = Astro.props;
+const ex = exampleRun();
+---
+
+{part === 'talk' ? (
+  <div class="ss" data-session-talk data-noturn>
+    <div class="ss-say" role="group" aria-label="Say something to Cue">
+      {UTTERANCES.map((u) => (
+        <button type="button" class="ss-chip" data-say={u}>&#8220;{u}&#8221;</button>
+      ))}
+    </div>
+    <ol class="ss-log" role="log" aria-live="polite" aria-label="Conversation" data-ss-log set:html={ex.lines.map(lineHTML).join('')} />
+    <div class="ss-foot">
+      <p class="zp-sample">Sample products and budget. An illustration of the design, not the live system.</p>
+      <button type="button" class="ss-reset" data-ss-reset>Start over</button>
+    </div>
+  </div>
+) : (
+  <div class="st" data-session-trace>
+    <ol class="st-steps" data-st-steps aria-live="polite" set:html={traceHTML(ex.trace)} />
+    <div class="st-box">
+      <dl class="st-state" data-st-state set:html={stateHTML(ex.state)} />
+      <div class="st-passkey" data-st-passkey hidden role="dialog" aria-label="Passkey" aria-modal="false">
+        <p><b>Confirm it&#8217;s you.</b> Use your passkey to place this order.</p>
+        <p class="st-pk-btns">
+          <button type="button" class="ss-chip ss-pk" data-pk="1">Use passkey</button>
+          <button type="button" class="ss-chip" data-pk="0">Cancel</button>
+        </p>
+      </div>
+    </div>
+  </div>
+)}
+
+<style is:global>
+  .zine-scene .ss-say { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 14px; }
+  html:not(.js) .zine-scene .ss-say, html:not(.js) .zine-scene .ss-reset { display: none; }
+  .zine-scene .ss-chip {
+    cursor: pointer; padding: 7px 11px 7px; border: 2px solid var(--z-blue); border-radius: 999px;
+    background: var(--z-sheet); color: var(--z-ink); font: 600 15px/1.1 var(--print); font-style: italic;
+    box-shadow: 2px 2px 0 var(--z-pink);
+    transition: transform .15s var(--ease-out), box-shadow .15s var(--ease-out);
+  }
+  .zine-scene .ss-chip:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--z-pink); }
+  .zine-scene .ss-chip:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--z-pink); }
+  .zine-scene .ss-chip.ss-pk { background: var(--z-blue); color: var(--z-sheet); font-style: normal; font-family: var(--f-display); font-weight: 700; }
+
+  .zine-scene .ss-log {
+    height: 272px; overflow-y: auto; overscroll-behavior: contain;
+    margin: 0; padding: 10px 12px; list-style: none;
+    border: 2px solid var(--z-blue); border-radius: 3px;
+    background: repeating-linear-gradient(transparent 0 27px, var(--z-guide) 27px 28px);
+    scroll-behavior: smooth;
+  }
+  .zine-scene .ss-l { display: grid; grid-template-columns: 3.1em 1fr; gap: 8px; padding: 3px 0 4px; margin: 0; }
+  .zine-scene .ss-l::before { content: none !important; }
+  .zine-scene .ss-who { font: 800 13px/1.6 var(--f-display); font-variation-settings: "wdth" 96; }
+  .zine-scene .ss-t { font-size: 15.5px; line-height: 1.4; }
+  .zine-scene .ss-you .ss-t { font-style: italic; }
+  .zine-scene .ss-cue .ss-who, .zine-scene .ss-cue .ss-t { color: var(--z-blue); }
+  .zine-scene .ss-cue .ss-t { font-weight: 560; }
+  .zine-scene .ss-page { opacity: .78; }
+  .zine-scene .ss-page .ss-t { font-size: 14px; font-style: italic; }
+  .zine-scene .ss-new { animation: ss-in .35s var(--ease-out); }
+  @keyframes ss-in { from { opacity: 0; transform: translateY(6px); } }
+  .zine-scene .ss-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+  .zine-scene .ss-foot .zp-sample { margin: 0; }
+  .zine-scene .ss-reset { flex: none; cursor: pointer; padding: 6px 10px; border: 1.5px solid currentColor; border-radius: 4px; background: none; color: inherit; font: 650 13.5px/1 var(--f-display); }
+  .zine-scene .ss-reset:hover { background: var(--z-yellow); color: #1d2f66; }
+
+  .zine-scene .st-steps { margin: 0; padding: 0; list-style: none; position: relative; }
+  .zine-scene .st-step { position: relative; margin: 0; padding: 0 0 12px 0; }
+  .zine-scene .st-step::before { content: none !important; }
+  .zine-scene .st-step + .st-step { padding-top: 10px; border-top: 1px dashed currentColor; }
+  .zine-scene .st-step h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font: 800 15px/1.2 var(--f-display); font-variation-settings: "wdth" 98; }
+  .zine-scene .st-step h4 span { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 2px solid currentColor; font: 900 12px/1 var(--f-display); }
+  .zine-scene .st-step.on h4 span { background: var(--z-blue); border-color: var(--z-blue); color: var(--z-sheet); }
+  .zine-scene .st-step.off { opacity: .6; }
+  .zine-scene .st-step p { margin: 0; font-size: 15px; line-height: 1.42; }
+  .zine-scene .st-aside, .zine-scene .st-skip { font-style: italic; font-size: 14px; }
+  .zine-scene .st-ok { color: var(--z-blue); }
+  .zine-scene .st-no { color: var(--z-pink-deep); }
+  .zine-scene .st-re { display: block; margin-top: 6px; font-size: 12.5px; white-space: normal; overflow-wrap: anywhere; }
+  .zine-scene .st-json {
+    margin: 2px 0 0; padding: 8px 10px; overflow-x: auto; max-width: 100%;
+    font: 12.5px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    background: rgb(50 85 164 / .08); border-left: 3px solid var(--z-pink); border-radius: 2px; white-space: pre;
+  }
+  .zine-scene .st-verbs, .zine-scene .st-page { margin: 0; padding: 0; list-style: none; font-size: 14.5px; line-height: 1.4; }
+  .zine-scene .st-verbs li, .zine-scene .st-page li { padding-left: 0; margin: 2px 0; }
+  .zine-scene .st-verbs li::before, .zine-scene .st-page li::before { content: none !important; }
+  .zine-scene .st-verbs .stripped { color: var(--z-pink-deep); font-weight: 600; }
+  .zine-scene .st-verbs s { text-decoration-thickness: 2px; }
+  .zine-scene .st-page li { font-style: italic; }
+  .zine-scene .st-idle p { font-style: italic; }
+
+  .zine-scene .st-box { position: relative; margin-top: 6px; padding: 12px 14px; border: 2px solid var(--z-blue); border-radius: 3px; }
+  .zine-scene .st-state { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 0; }
+  .zine-scene .st-state div { min-width: 0; }
+  .zine-scene .st-state dt { font: 700 12.5px/1.2 var(--f-display); font-variation-settings: "wdth" 100; }
+  .zine-scene .st-state dd { margin: 2px 0 0; font-size: 14.5px; line-height: 1.35; }
+  .zine-scene .st-passkey {
+    position: absolute; inset: -2px; display: grid; align-content: center; gap: 8px; padding: 12px 16px;
+    background: var(--z-blue); color: var(--z-sheet); border-radius: 3px;
+  }
+  .zine-scene .st-passkey[hidden] { display: none; }
+  .zine-scene .st-passkey p { margin: 0; font-size: 15px; }
+  .zine-scene .st-passkey .ss-chip { box-shadow: 2px 2px 0 var(--z-pink); }
+  .zine-scene .st-passkey .ss-chip:not(.ss-pk) { background: transparent; color: var(--z-sheet); border-color: var(--z-sheet); }
+  .zine-scene .st-passkey .ss-pk { background: var(--z-sheet); color: var(--z-ink); border-color: var(--z-sheet); }
+  .zine-scene .st-passkey :focus-visible { outline-color: var(--z-yellow); }
+  .zine-scene .st-pk-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .zine-scene .st-flash { animation: st-flash .6s var(--ease-out); }
+  @keyframes st-flash { from { background-color: rgb(255 72 176 / .22); } }
+</style>
+
+<script>
+  import { initial, say, passkey, exampleRun, lineHTML, traceHTML, stateHTML, type State } from './session-logic';
+
+  const talk = document.querySelector<HTMLElement>('[data-session-talk]');
+  const trace = document.querySelector<HTMLElement>('[data-session-trace]');
+  if (talk && trace) {
+    const log = talk.querySelector<HTMLElement>('[data-ss-log]')!;
+    const steps = trace.querySelector<HTMLElement>('[data-st-steps]')!;
+    const stateEl = trace.querySelector<HTMLElement>('[data-st-state]')!;
+    const pk = trace.querySelector<HTMLElement>('[data-st-passkey]')!;
+    // the page opens on a worked example (the same one the static page shows); carry on from it, or start over
+    let s: State = exampleRun().state;
+
+    const addLines = (html: string[]) => {
+      const tmp = document.createElement('ol');
+      tmp.innerHTML = html.join('');
+      [...tmp.children].forEach((li) => { li.classList.add('ss-new'); log.appendChild(li); });
+      log.scrollTop = log.scrollHeight;
+    };
+    const paint = () => {
+      stateEl.innerHTML = stateHTML(s);
+      pk.hidden = s.stage !== 'passkey';
+      if (!pk.hidden) pk.querySelector<HTMLButtonElement>('[data-pk="1"]')!.focus({ preventScroll: true });
+    };
+    const reset = () => {
+      s = initial();
+      log.innerHTML = '<li class="ss-l ss-page"><span class="ss-who">Page</span><span class="ss-t">Started over. Your gaze is resting on the Merino crew. Pick something to say.</span></li>';
+      steps.innerHTML = traceHTML(null);
+      paint();
+    };
+
+    talk.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-say]');
+      if (b) {
+        const r = say(s, b.dataset.say!);
+        s = r.state;
+        addLines(r.lines.map(lineHTML));
+        steps.innerHTML = traceHTML(r.trace);
+        steps.classList.remove('st-flash'); void steps.offsetWidth; steps.classList.add('st-flash');
+        paint();
+        return;
+      }
+      if ((e.target as HTMLElement).closest('[data-ss-reset]')) reset();
+    });
+    pk.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-pk]');
+      if (!b) return;
+      const r = passkey(s, b.dataset.pk === '1');
+      s = r.state;
+      addLines(r.lines.map(lineHTML));
+      const pageList = steps.querySelector('.st-page');
+      if (pageList && r.page) pageList.insertAdjacentHTML('beforeend', `<li>${r.page}</li>`);
+      paint();
+      talk.querySelector<HTMLButtonElement>('[data-say]')?.focus({ preventScroll: true });
+    });
+  }
+</script>
