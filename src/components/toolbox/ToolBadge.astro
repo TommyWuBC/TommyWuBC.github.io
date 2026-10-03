@@ -1,0 +1,24 @@
+---
+// A tool's logo (simple-icons) or, when there isn't one, a monogram badge.
+import type { Tool } from './skills';
+interface Props { tool: Pick<Tool, 'name' | 'icon' | 'mono'>; size?: number }
+const { tool, size = 28 } = Astro.props;
+// Brand colors that vanish on one of the two papers fall back to ink there.
+const lum = (hex: string) => {
+  const c = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+};
+const L = tool.icon ? lum(tool.icon.hex) : 0.5;
+const tone = L < 0.06 ? 'dk' : L > 0.45 ? 'lt' : '';
+---
+
+<svg class={`badge ${tone}`}width={size} height={size} viewBox="0 0 28 28" aria-hidden="true" style={tool.icon ? `--brand:#${tool.icon.hex}` : undefined}>
+  <circle cx="14" cy="14" r="13" class="badge-ring" />
+  {
+    tool.icon ? (
+      <path class="badge-logo" d={tool.icon.path} transform="translate(6.5 6.5) scale(0.625)" />
+    ) : (
+      <text class="badge-mono" x="14" y={tool.mono!.length > 2 ? 17.2 : 18.4} text-anchor="middle" font-size={tool.mono!.length > 2 ? 8.6 : 11}>{tool.mono}</text>
+    )
+  }
+</svg>

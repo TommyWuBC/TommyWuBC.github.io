@@ -1,0 +1,91 @@
+---
+// Control 5: the real architecture, drawn with orienteering symbols.
+// Facts from the apptrack README and docs/ (TommyWuBC/apptrack).
+import './apptrack.css';
+const stops = [
+  { x: 132, y: 100, name: 'Sync', d: 'Incremental Gmail sync and backfill, scope gmail.readonly, OAuth with PKCE.' },
+  { x: 210, y: 122, name: 'Normalize', d: 'MIME parsing, HTML sanitizing, quoted replies stripped, calendar invites read.' },
+  { x: 290, y: 96, name: 'Classify', d: 'L0 headers, L1 ATS templates, L2 keyword rules. L3 only if you opt in and confidence is under 0.75.' },
+  { x: 370, y: 122, name: 'Match', d: 'Weighted signals: same thread 0.95, requisition ID or job URL 0.9, recruiter address 0.5. Auto-attach needs 0.75 and a 0.2 lead; anything else goes to review.' },
+  { x: 450, y: 96, name: 'Append', d: 'One row in application_events. The log is append-only; reprocessing appends replacements only when a result changes.' },
+  { x: 530, y: 120, name: 'Reduce', d: 'A pure reducer replays events in order into the current state, then overlays your corrections.' },
+];
+const R = 15;
+const legs: [number, number, number, number][] = [];
+const pts = [[44, 96], ...stops.map((s) => [s.x, s.y]), [660, 104]];
+for (let i = 0; i < pts.length - 1; i++) {
+  const [x1, y1] = pts[i], [x2, y2] = pts[i + 1];
+  const d = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / d, uy = (y2 - y1) / d;
+  const r1 = i === 0 ? 14 : R + 3, r2 = i === pts.length - 2 ? 20 : R + 3;
+  legs.push([x1 + ux * r1, y1 + uy * r1, x2 - ux * r2, y2 - uy * r2]);
+}
+---
+
+<figure class="at at-pipe" aria-labelledby="at-pipe-cap">
+  <figcaption id="at-pipe-cap" class="at-cap">
+    <span>One email's route through the system</span>
+    <span class="at-cap-note">Drawn with map symbols: buildings are services, the lake is PostgreSQL, hatched magenta is out of bounds unless you opt in.</span>
+  </figcaption>
+  <div class="at-map">
+    <svg class="pipe-svg" viewBox="0 -30 720 390" role="img" aria-labelledby="at-pipe-desc">
+      <defs>
+        <pattern id="oob" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="7" class="oob-line" />
+        </pattern>
+      </defs>
+      <!-- the API: a large building area -->
+      <rect class="bld-area" x="92" y="22" width="500" height="160" rx="3" />
+      <text class="map-name" x="104" y="42">Fastify API</text>
+      <text class="map-sub" x="190" y="42">apps/server</text>
+      <!-- LLM: out of bounds unless you opt in -->
+      <rect class="oob" x="236" y="-26" width="116" height="30" />
+      <text class="map-sub oob-t" x="294" y="-6" text-anchor="middle">LLM, opt-in</text>
+      <line class="leg opt" x1="290" y1="58" x2="290" y2="8" />
+      <!-- PostgreSQL lake -->
+      <path class="lake" d="M300 252c18-30 86-34 136-30s96-8 128 10 26 52-6 70-86 18-134 14-96 8-118-14-22-32-6-50z" />
+      <text class="map-name lake-t" x="432" y="270" text-anchor="middle">PostgreSQL</text>
+      <text class="map-sub lake-t" x="432" y="288" text-anchor="middle">data and the job queue</text>
+      <path class="stream" d="M450 114c6 30-8 56 2 96" />
+      <path class="stream" d="M530 138c-4 30 6 50-14 80" />
+      <!-- worker: a building -->
+      <rect class="bld" x="606" y="236" width="96" height="44" />
+      <text class="map-name" x="654" y="300" text-anchor="middle">pg-boss worker</text>
+      <text class="map-sub" x="654" y="316" text-anchor="middle">apps/worker</text>
+      <text class="map-sub" x="654" y="332" text-anchor="middle">sync every 10 min,</text>
+      <text class="map-sub" x="654" y="347" text-anchor="middle">ghost check 06:00 UTC</text>
+      <path class="track" d="M620 236c-10-26-26-40-40-58" />
+      <text class="map-sub" x="596" y="214" text-anchor="end">internal HTTP</text>
+      <path class="track" d="M606 262c-14 2-22 4-38 6" />
+      <!-- review queue: a side control off Match -->
+      <path class="leg opt" d="M362 140l-14 44" />
+      <g class="kite" transform="translate(344 198)"><rect x="-9" y="-9" width="18" height="18" /><path d="M-9 -9L9 9V-9z" class="kite-f" /></g>
+      <text class="map-sub" x="328" y="203" text-anchor="end">review queue</text>
+      <!-- Gmail -->
+      <text class="map-name" x="16" y="134">Gmail</text>
+      <text class="map-sub" x="16" y="150">read-only</text>
+      <!-- the course -->
+      {legs.map(([a, b, c, d]) => <line class="leg" x1={a} y1={b} x2={c} y2={d} />)}
+      <polygon class="st" points="58,96 37,108.1 37,83.9" />
+      {
+        stops.map((s, i) => (
+          <g class="pipe-c">
+            <circle cx={s.x} cy={s.y} r={R} />
+            <text class="c-n" x={s.x} y={s.y + 5} text-anchor="middle">{i + 1}</text>
+            <text class="map-sub c-name" x={s.x} y={s.y + (i % 2 ? 34 : -22)} text-anchor="middle">{s.name}</text>
+          </g>
+        ))
+      }
+      <circle class="fin" cx="660" cy="104" r="17" /><circle class="fin" cx="660" cy="104" r="11" />
+      <text class="map-name" x="660" y="146" text-anchor="middle">React</text>
+      <text class="map-sub" x="660" y="162" text-anchor="middle">dashboard</text>
+    </svg>
+    <p id="at-pipe-desc" class="sr-only">
+      Gmail, read-only, feeds the Fastify API, where an email passes six stages: sync, normalize, classify, match, append, reduce. The
+      results go to PostgreSQL, which also holds the job queue, and reach the React dashboard. A pg-boss worker runs the schedules over
+      internal HTTP. The LLM fallback is opt-in. Ambiguous matches go to a review queue.
+    </p>
+  </div>
+  <ol class="pipe-list">
+    {stops.map((s, i) => <li><b>{i + 1}</b><span><strong>{s.name}.</strong> {s.d}</span></li>)}
+  </ol>
+</figure>

@@ -13,8 +13,57 @@ stack: [TypeScript, Fastify, pg-boss, React, PostgreSQL]
 links:
   - { label: Repository, href: "https://github.com/TommyWuBC/apptrack" }
 expansion: map
+openLabel: Unfold the course
 ---
 
-{/* Interactive write-up for the map shell. The earlier One Ink version is in git: git show redesign:src/content/projects/apptrack.mdx */}
+import Inbox from '../../components/demos/apptrack/Inbox.astro';
+import Course from '../../components/demos/apptrack/Course.astro';
+import Quiet from '../../components/demos/apptrack/Quiet.astro';
+import Reprocess from '../../components/demos/apptrack/Reprocess.astro';
+import Pipeline from '../../components/demos/apptrack/Pipeline.astro';
 
-The full write-up is being rebuilt.
+<p class="lede">When you apply at volume, a spreadsheet falls behind in a week. The facts are already in your inbox: confirmations, assessments, interviews, rejections, and the companies that never write back. apptrack reads them the same way every time, shows why it decided what it did, and keeps your mail on your own machine.</p>
+
+Each application below is an orienteering course. Emails are the controls, and the long dashed leg at the end is the part nobody tells you about.
+
+## Read the inbox, one email at a time
+
+The classifier is rules, not a model. L0 looks only at headers and decides whether a body is worth fetching. L1 knows the ATS senders and their templates, subject lines and calendar invites. L2 runs keyword rules, each with anti-patterns. The highest-confidence candidate wins, and the phrase that decided it gets highlighted.
+
+<Inbox />
+
+Email 6 is a prompt-injection canary, like the ones in the repo's fixtures. It's classified on its merits as unknown and never escalates to a model. The LLM layer is opt-in, runs only below 0.75 confidence, and sees at most 4,000 characters wrapped in `<untrusted_email>` with no tools.
+
+## Every event becomes a control
+
+A classified email is matched to an application and appended to that application's event log. The log is the source of truth. The state you see is a projection: a pure reducer replays the events in order, so mail that arrives late is just one more insert and a recompute.
+
+<Course />
+
+## Silence is an inference
+
+Companies that stop replying don't send an email to say so. After a quiet period apptrack marks an application stale, and later possibly ghosted: 45 and 90 days by default, 30 and 60 once you're interviewing, 21 and 45 for a final round. It is labelled as a guess, pauses while an interview or assessment deadline is still ahead, and resets on any meaningful email.
+
+<p class="pen">silence is an inference, not a fact.</p>
+
+<Quiet />
+
+## Your corrections win
+
+Any inference can be wrong, so every field can be corrected, and a correction can be locked. Corrections live in their own table and are laid over the machine's result after every recompute, so reprocessing with new rules never overwrites them. Undo is another row, not a delete.
+
+<Reprocess />
+
+## What's running
+
+A TypeScript monorepo for one owner per instance: a Fastify API, a pg-boss worker, a React dashboard, and PostgreSQL for both the data and the job queue. The worker syncs every 10 minutes and evaluates ghosting daily.
+
+<Pipeline />
+
+<dl class="at-facts">
+  <div><dt>Classifier eval</dt><dd>F1 0.972, precision 0.985, recall 0.986 on 69 synthetic emails covering Greenhouse, Lever, Ashby, iCIMS, SmartRecruiters and Workday. Synthetic fixtures, not a personal mailbox, so expect lower recall on real mail. That's what the review queue is for.</dd></div>
+  <div><dt>Your mail</dt><dd>In the default deterministic mode, no email content goes to any AI provider. Self-hosted, no telemetry, no shared cloud.</dd></div>
+  <div><dt>Secrets</dt><dd>Gmail OAuth with PKCE and the read-only scope. Tokens encrypted with AES-256-GCM and never returned by the API. Passwords hashed with Argon2id; only hashes of session tokens are stored.</dd></div>
+  <div><dt>Email HTML</dt><dd>Sanitized and shown in a sandboxed iframe. The app never fetches a URL it finds in an email.</dd></div>
+  <div><dt>Limits</dt><dd>Gmail only for now. Outlook and IMAP sit behind the provider interface but aren't built. Long-running use against a live inbox is still on the list.</dd></div>
+</dl>
