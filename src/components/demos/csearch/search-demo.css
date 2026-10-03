@@ -1,0 +1,146 @@
+/* csearch: the live hybrid search. Three hanging paper slips on dowels:
+   keywords on the left, meaning on the right, the fused list between them. */
+
+.cs { margin-top: var(--s6); }
+.cs-label { display: block; font-family: var(--hand); font-size: 26px; line-height: 1; color: var(--sc-pen); margin-bottom: var(--s2); }
+.cs-field { display: flex; gap: var(--s3); align-items: stretch; }
+.cs-field input {
+  flex: 1; min-width: 0; height: 52px; padding: 0 var(--s4);
+  font: inherit; font-size: 20px; color: var(--sc-ink);
+  background: var(--sc-paper-hi); border: 1.5px solid var(--sc-ink); border-radius: 3px;
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, .05);
+}
+.cs-field input:focus-visible { outline: 2px solid var(--sc-pen); outline-offset: 2px; }
+.cs-field input::-webkit-search-cancel-button { filter: grayscale(1); }
+.cs-field .sc-btn { height: 52px; padding: 0 22px; border-radius: 3px; }
+.cs-static { font-size: 20px; }
+.cs-chips { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+.cs-chip {
+  font: inherit; font-size: 15.5px; line-height: 1.2; color: var(--sc-ink-2);
+  padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  background: transparent; border: 1px solid var(--sc-rule-2);
+  transition: background-color .2s, color .2s, border-color .2s;
+}
+.cs-chip:hover { border-color: var(--sc-ink); color: var(--sc-ink); }
+.cs-chip[aria-pressed="true"] { background: var(--sc-ink); border-color: var(--sc-ink); color: var(--sc-paper); }
+.cs-scope { margin-top: var(--s3); font-size: 14.5px; font-style: italic; color: var(--sc-ink-3); }
+
+/* ---------- the three slips ---------- */
+.cs-cols { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s7); margin-top: var(--s7); align-items: start; }
+.cs-col { position: relative; }
+.cs-lex { order: 1; } .cs-fused { order: 2; } .cs-dense { order: 3; }
+.cs-dowel {
+  position: relative; z-index: 2; height: 12px; margin: 0 -12px; border-radius: 6px;
+  background:
+    linear-gradient(to bottom, rgba(255, 236, 212, .3) 0 2px, transparent 4px 60%, rgba(0, 0, 0, .35)),
+    linear-gradient(to bottom, var(--sc-wood-1), var(--sc-wood-2) 55%, var(--sc-wood-3));
+  box-shadow: 0 4px 6px -3px rgba(0, 0, 0, .5);
+}
+.cs-dowel::before, .cs-dowel::after { content: ""; position: absolute; top: -3px; width: 10px; height: 18px; border-radius: 4px; background: linear-gradient(to right, var(--sc-brass), #6d5128); }
+.cs-dowel::before { left: -6px; } .cs-dowel::after { right: -6px; }
+.cs-sheet {
+  position: relative; margin-top: -5px; padding: var(--s5) var(--s4) var(--s4);
+  background: var(--sc-paper-hi);
+  box-shadow: 0 1px 0 var(--sc-rule), 0 14px 22px -16px var(--sc-shadow);
+  min-height: 300px;
+}
+.cs-col::after { /* the weight rod at the bottom of each slip */
+  content: ""; position: absolute; z-index: 2; left: -6px; right: -6px; bottom: -5px; height: 8px; border-radius: 4px;
+  background: linear-gradient(to bottom, var(--sc-wood-1), var(--sc-wood-3));
+  box-shadow: 0 3px 5px -2px rgba(0, 0, 0, .45);
+}
+.cs-fused .cs-sheet { box-shadow: 0 0 0 1.5px var(--sc-seal), 0 14px 22px -16px var(--sc-shadow); }
+.cs-col h3 { margin: 0; font-size: 1.375rem; font-weight: 600; line-height: 1.1; }
+.cs-sub { margin-top: var(--s1); font-size: 14px; line-height: 1.45; color: var(--sc-ink-3); min-height: 4.35em; }
+.cs-parsed { min-height: calc(2.8em + var(--s3) + 1px); }
+.cs-parsed { margin-top: var(--s2); padding-bottom: var(--s3); border-bottom: 1px solid var(--sc-rule); font-size: 14px; line-height: 1.4; color: var(--sc-ink-2); overflow-wrap: anywhere; }
+.cs-parsed code { font-family: var(--sc-mono); font-size: 13.5px; background: none; padding: 0; }
+.cs-col ol { list-style: none; margin: var(--s2) 0 0; padding: 0; }
+.cs-col li + li { margin-top: 2px; }
+.cs-row {
+  display: grid; width: 100%; text-align: left; cursor: pointer;
+  grid-template-columns: 22px minmax(0, 1fr) auto; grid-template-areas: "rk nm sc" "rk loc loc" "rk math math";
+  column-gap: var(--s2); row-gap: 0; align-items: baseline;
+  padding: 6px 6px 7px; border: 0; border-radius: 2px; background: transparent; color: var(--sc-ink);
+  font: inherit; transition: background-color .15s;
+}
+.cs-row:hover, .cs-row.on { background: var(--sc-seal-wash); }
+.cs-row.sel { box-shadow: inset 2px 0 0 var(--sc-seal); }
+.cs-rk { grid-area: rk; font-size: 15px; font-weight: 600; color: var(--sc-ink-3); font-variant-numeric: lining-nums tabular-nums; }
+.cs-nm { grid-area: nm; font-family: var(--sc-mono); font-size: 14.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-loc { grid-area: loc; font-family: var(--sc-mono); font-size: 13px; color: var(--sc-ink-3); }
+.cs-sc { grid-area: sc; font-size: 15px; font-variant-numeric: lining-nums tabular-nums; color: var(--sc-ink-2); }
+.cs-math { grid-area: math; font-family: var(--sc-mono); font-size: 13px; color: var(--sc-ink-2); margin-top: 2px; font-variant-numeric: lining-nums; }
+.cs-fused li:first-child .cs-rk { /* the winner gets the seal */
+  display: grid; place-items: center; width: 22px; height: 22px; margin-top: -2px; border-radius: 2px;
+  background: var(--sc-seal); color: var(--sc-seal-ink); font-size: 14px; transform: rotate(-4deg);
+}
+.cs-none { padding: var(--s3) 6px; font-size: 15px; font-style: italic; color: var(--sc-ink-3); }
+.cs-none code { font-style: normal; }
+.cs-more { padding: 4px 6px 0 34px; font-size: 13.5px; font-style: italic; color: var(--sc-ink-3); }
+
+/* wires: which rows each fused row came from */
+.cs-wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 1; }
+.cs-wire { fill: none; stroke: var(--sc-ink-3); stroke-width: 1.2; stroke-opacity: .55; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .6s var(--sc-ease), stroke-opacity .2s, stroke-width .2s; }
+.cs-wires.drawn .cs-wire { stroke-dashoffset: 0; }
+.cs-wire.win { stroke: var(--sc-seal); stroke-opacity: .9; stroke-width: 1.8; }
+.cs-wire.on { stroke: var(--sc-seal); stroke-opacity: 1; stroke-width: 2.4; }
+
+/* unroll: the slips roll up and drop again, keywords and meaning first, then the fused list */
+.cs-cols.unroll .cs-sheet { animation: cs-unroll .62s cubic-bezier(.55, .05, .25, 1) both; }
+.cs-cols.unroll .cs-dense .cs-sheet { animation-delay: .06s; }
+.cs-cols.unroll .cs-fused .cs-sheet { animation-delay: .2s; }
+.cs-cols.unroll .cs-col::after { animation: cs-rod .62s cubic-bezier(.55, .05, .25, 1) both; }
+.cs-cols.unroll .cs-dense::after { animation-delay: .06s; }
+.cs-cols.unroll .cs-fused::after { animation-delay: .2s; }
+@keyframes cs-unroll { from { clip-path: inset(0 -8px 100% -8px); } to { clip-path: inset(0 -8px 0 -8px); } }
+@keyframes cs-rod { from { bottom: calc(100% - 14px); } to { bottom: -5px; } }
+
+/* ---------- the answer ---------- */
+.cs-answer { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--s7); margin-top: var(--s7); align-items: start; }
+.cs-cli { font-family: var(--sc-mono); font-size: 14.5px; color: var(--sc-ink-3); overflow-wrap: anywhere; }
+.cs-out { margin-top: var(--s2); font-family: var(--sc-mono); font-weight: 700; font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.15; color: var(--sc-ink); font-variant-numeric: lining-nums; overflow-wrap: anywhere; }
+.cs-out-none { color: var(--sc-seal); }
+.cs-floor { margin-top: var(--s3); font-size: 15px; line-height: 1.5; color: var(--sc-ink-2); }
+.cs-note { margin-top: var(--s4); font-size: 15px; line-height: 1.55; color: var(--sc-ink-2); padding-left: var(--s4); border-left: 2px solid var(--sc-pen); }
+.cs-note:empty { display: none; }
+.cs-note code, .cs-split code { font-family: var(--sc-mono); font-size: .92em; background: none; padding: 0; }
+.cs-split code { font-weight: 700; }
+.cs-code { margin: 0; min-width: 0; }
+.cs-code[hidden] { display: none; }
+.cs-code figcaption { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s4); align-items: baseline; justify-content: space-between; font-size: 14.5px; color: var(--sc-ink-2); margin-bottom: var(--s2); }
+.cs-file { font-family: var(--sc-mono); font-weight: 700; color: var(--sc-ink); }
+.cs-split span, .cs-split mark { font-family: var(--sc-mono); font-size: 13.5px; }
+.cs-code pre {
+  margin: 0; padding: var(--s3) 0; overflow-x: auto;
+  background: var(--sc-paper-hi); border: 1px solid var(--sc-rule-2); border-radius: 2px;
+  font-family: var(--sc-mono); font-size: 13.5px; line-height: 1.6; color: var(--sc-ink);
+  font-variant-numeric: lining-nums;
+}
+.cs-code code { display: block; min-width: max-content; background: none; padding: 0; font-size: inherit; }
+.cs-ln { display: block; padding-right: var(--s4); white-space: pre; }
+.cs-n { display: inline-block; width: 3.2em; padding-right: 1em; text-align: right; color: var(--sc-ink-3); user-select: none; }
+mark.cs-kw { background: var(--hi); color: inherit; padding: 0 1px; border-radius: 2px; }
+.cs-cn { text-decoration: underline wavy var(--sc-pen); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.cs-legend { margin-top: var(--s2); font-size: 13.5px; color: var(--sc-ink-3); }
+
+@media (max-width: 900px) {
+  .cs-cols { grid-template-columns: 1fr 1fr; gap: var(--s6) var(--s5); }
+  .cs-fused { order: 3; grid-column: 1 / -1; }
+  .cs-dense { order: 2; }
+  .cs-wires { display: none; }
+  .cs-sub, .cs-parsed { min-height: 0; }
+  .cs-answer { grid-template-columns: 1fr; gap: var(--s5); }
+}
+@media (max-width: 600px) {
+  .cs-cols { grid-template-columns: 1fr; }
+  .cs-fused { grid-column: auto; }
+  .cs-sheet { min-height: 0; }
+  .cs-field { flex-direction: column; }
+  .cs-field .sc-btn { justify-content: center; height: 44px; }
+  .cs-field input { font-size: 18px; height: 48px; }
+  .cs-chip { font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cs-cols.unroll .cs-sheet, .cs-cols.unroll .cs-col::after { animation: none; }
+}

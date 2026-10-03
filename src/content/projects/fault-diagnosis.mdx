@@ -11,9 +11,55 @@ figure:
   caption: Less manual fault-triage time. The right guidance is in the top 3 retrieved results 93% of the time.
 stack: [Python, FastAPI, PostgreSQL, ROS, LangChain, LangGraph, Chroma]
 note: Internal tool; the code is private.
+role: Software engineering intern
 expansion: scroll
 ---
 
-{/* Interactive write-up for the scroll shell. */}
+import FaultDesk from '../../components/demos/fault-diagnosis/FaultDesk.astro';
+import Figures from '../../components/demos/fault-diagnosis/Figures.astro';
+import HandScroll from '../../components/shells/scroll-shell-handscroll.astro';
 
-The full write-up is being rebuilt.
+<p class="sc-lede">When a robot stops, someone has to read its logs, work out which part failed, and find the right page of the maintenance guidance. The internal platform I deployed at Saite Robotics does that first pass and hands a technician the report.</p>
+
+## Run a fault through it
+
+Pick a fault. Its log prints on the tape, then each stage of the pipeline runs in order. Switch the LLM off to see the fallback write the report instead, or restart the machine halfway through.
+
+<FaultDesk />
+
+## What it changed
+
+<Figures />
+
+<HandScroll id="layers" title="Why it's built in layers" label="The design, one decision per panel">
+  <li class="sc-hs-panel">
+    <span class="sc-step">first</span>
+    <h3>Rules decide the subsystem</h3>
+    <p>Which part failed is answered deterministically, from the log. The same log always gets the same diagnosis, and a technician can check the lines it was based on.</p>
+  </li>
+  <li class="sc-hs-panel">
+    <span class="sc-step">then</span>
+    <h3>Ground it in the guidance</h3>
+    <p>The diagnosis becomes a retrieval query over the maintenance guidance. The right section is in the top 3 results 93% of the time, so the report quotes real procedures instead of inventing them.</p>
+  </li>
+  <li class="sc-hs-panel">
+    <span class="sc-step">on top</span>
+    <h3>An LLM writes it up</h3>
+    <p>With the rule hits and the retrieved guidance in hand, LLM analysis drafts a report a technician can act on: what happened, the likely cause, what to do.</p>
+  </li>
+  <li class="sc-hs-panel">
+    <span class="sc-step">underneath</span>
+    <h3>A fallback that needs no model</h3>
+    <p>If the LLM is unavailable, a rule-based fallback still produces a report from the rule hits and the guidance. Plainer, but never nothing.</p>
+  </li>
+  <li class="sc-hs-panel">
+    <span class="sc-step">around it</span>
+    <h3>Telemetry in one place</h3>
+    <p>Telemetry from the robots is centralized, so diagnosis and reports work from one place.</p>
+  </li>
+  <li class="sc-hs-panel">
+    <span class="sc-step">and</span>
+    <h3>It survives a reboot</h3>
+    <p>Recovery is reboot-safe: a restart doesn&rsquo;t lose the work in flight. The &ldquo;Restart mid-run&rdquo; button above illustrates the idea; the internals are private.</p>
+  </li>
+</HandScroll>

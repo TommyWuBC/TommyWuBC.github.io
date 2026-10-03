@@ -1,0 +1,119 @@
+---
+// Incremental indexing, small enough to poke: the sample files with their real
+// SHA-256 hashes. Edit a file, re-index, and only that file's chunks are
+// re-embedded. Hashes are computed at build time (node:crypto) for the static
+// page and with crypto.subtle in the browser.
+import { createHash } from 'node:crypto';
+import { SAMPLE } from './sample';
+import { CHUNKS } from './engine';
+
+const rows = SAMPLE.map((f) => ({
+  path: f.path,
+  hash: createHash('sha256').update(f.text).digest('hex'),
+  chunks: CHUNKS.filter((c) => c.file === f.path).length,
+  comment: f.lang === 'python' ? '#' : '//',
+}));
+---
+
+<div class="ix sc-wide" data-ix>
+  <div class="ix-table" role="table" aria-label="Indexed files and their SHA-256 hashes">
+    <div class="ix-tr ix-th" role="row">
+      <span role="columnheader">File</span>
+      <span role="columnheader">SHA-256, stored</span>
+      <span role="columnheader">On disk now</span>
+      <span role="columnheader"><span class="sr-only">Action</span></span>
+    </div>
+    {rows.map((r) => (
+      <div class="ix-tr" role="row" data-path={r.path} data-chunks={r.chunks} data-c={r.comment}>
+        <span role="cell" class="ix-path">{r.path} <small>{r.chunks} chunks</small></span>
+        <span role="cell" class="ix-hash" data-stored>{r.hash.slice(0, 16)}</span>
+        <span role="cell" class="ix-hash" data-now>{r.hash.slice(0, 16)}</span>
+        <span role="cell" class="ix-act"><button type="button" class="ix-edit js-only" aria-label={`Edit ${r.path}`}>Edit</button></span>
+      </div>
+    ))}
+  </div>
+  <div class="ix-foot js-only">
+    <button type="button" class="sc-btn" data-ix-run>Re-index</button>
+    <button type="button" class="sc-btn quiet" data-ix-reset>Start over</button>
+    <p class="ix-log" aria-live="polite" data-ix-log>Index is current: {SAMPLE.length} files, {CHUNKS.length} chunks. Edit a file, then re-index.</p>
+  </div>
+  <p class="sc-cap">Hashes are the first 16 hex digits of each sample file&rsquo;s real SHA-256. &ldquo;Edit&rdquo; appends a comment line in your browser and hashes the file again; the counts in the log are the fields csearch&rsquo;s own <code>IndexStats</code> reports.</p>
+</div>
+
+<script>
+  import { SAMPLE } from './sample';
+
+  const root = document.querySelector<HTMLElement>('[data-ix]');
+  if (root && crypto?.subtle) {
+    const texts = new Map(SAMPLE.map((f) => [f.path, f.text]));
+    const original = new Map(texts);
+    const log = root.querySelector<HTMLElement>('[data-ix-log]')!;
+    const rows = [...root.querySelectorAll<HTMLElement>('.ix-tr[data-path]')];
+    const sha = async (s: string) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))].map((b) => b.toString(16).padStart(2, '0')).join('');
+    let edits = 0;
+
+    async function refresh(row: HTMLElement) {
+      const now = (await sha(texts.get(row.dataset.path!)!)).slice(0, 16);
+      row.querySelector<HTMLElement>('[data-now]')!.textContent = now;
+      row.classList.toggle('changed', now !== row.querySelector<HTMLElement>('[data-stored]')!.textContent);
+    }
+    rows.forEach((row) => row.querySelector('.ix-edit')!.addEventListener('click', async () => {
+      edits++;
+      const p = row.dataset.path!;
+      texts.set(p, texts.get(p)! + `${row.dataset.c} edit ${edits}\n`);
+      await refresh(row);
+      row.classList.remove('bump'); void row.offsetWidth; row.classList.add('bump');
+      const n = rows.filter((r) => r.classList.contains('changed')).length;
+      log.textContent = `${n} file${n === 1 ? '' : 's'} changed on disk since the last index. Re-index to catch up.`;
+    }));
+    root.querySelector('[data-ix-run]')!.addEventListener('click', () => {
+      const changed = rows.filter((r) => r.classList.contains('changed'));
+      const chunks = changed.reduce((a, r) => a + +r.dataset.chunks!, 0);
+      changed.forEach((r) => {
+        r.querySelector<HTMLElement>('[data-stored]')!.textContent = r.querySelector<HTMLElement>('[data-now]')!.textContent;
+        r.classList.remove('changed');
+        r.classList.add('fresh');
+        setTimeout(() => r.classList.remove('fresh'), 1400);
+      });
+      log.textContent = `files scanned ${rows.length}, indexed ${changed.length}, skipped ${rows.length - changed.length}, removed 0, chunks embedded ${chunks}.` +
+        (changed.length ? '' : ' Nothing changed, so nothing was embedded.');
+    });
+    root.querySelector('[data-ix-reset]')!.addEventListener('click', async () => {
+      original.forEach((t, p) => texts.set(p, t));
+      for (const r of rows) {
+        r.querySelector<HTMLElement>('[data-stored]')!.textContent = (await sha(texts.get(r.dataset.path!)!)).slice(0, 16);
+        await refresh(r);
+      }
+      edits = 0;
+      log.textContent = `Index is current: ${rows.length} files. Edit a file, then re-index.`;
+    });
+  }
+</script>
+
+<style>
+  .ix-table { border-top: 2px solid var(--sc-ink); font-size: 15.5px; }
+  .ix-tr { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) 72px; gap: var(--s4); align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--sc-rule); transition: background-color .3s; }
+  .ix-th { font-size: 14px; font-style: italic; color: var(--sc-ink-3); }
+  .ix-path { font-family: var(--sc-mono); font-weight: 700; }
+  .ix-path small { font-family: var(--print); font-weight: 400; font-size: 13.5px; color: var(--sc-ink-3); margin-left: 6px; white-space: nowrap; }
+  .ix-hash { font-family: var(--sc-mono); font-size: 14px; color: var(--sc-ink-2); overflow: hidden; text-overflow: ellipsis; }
+  .ix-act { text-align: right; }
+  .ix-edit { font: inherit; font-size: 14.5px; padding: 3px 12px; border-radius: 999px; border: 1px solid var(--sc-rule-2); background: transparent; color: var(--sc-ink); cursor: pointer; }
+  .ix-edit:hover { border-color: var(--sc-ink); }
+  .ix-tr.changed { background: var(--sc-seal-wash); }
+  .ix-tr.changed [data-now] { color: var(--sc-seal); font-weight: 700; }
+  .ix-tr.fresh { background: color-mix(in srgb, var(--goal-bg), transparent 40%); }
+  .ix-tr.bump [data-now] { animation: ix-bump .5s var(--sc-spring); }
+  @keyframes ix-bump { 40% { transform: translateY(-3px); } }
+  .ix-tr [data-now] { display: inline-block; }
+  .ix-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3) var(--s3); margin-top: var(--s4); }
+  .ix-log { flex: 1 1 260px; font-size: 15px; color: var(--sc-ink-2); font-variant-numeric: lining-nums; }
+  @media (max-width: 600px) {
+    .ix-tr { grid-template-columns: minmax(0, 1fr) 64px; grid-template-areas: "p a" "s a" "n a"; row-gap: 0; }
+    .ix-th { display: none; }
+    .ix-path { grid-area: p; } .ix-act { grid-area: a; }
+    .ix-tr > [data-stored] { grid-area: s; } .ix-tr > [data-now] { grid-area: n; }
+    .ix-tr > [data-stored]::before { content: "stored "; font-family: var(--print); font-style: italic; color: var(--sc-ink-3); }
+    .ix-tr > [data-now]::before { content: "now "; font-family: var(--print); font-style: italic; color: var(--sc-ink-3); }
+  }
+</style>

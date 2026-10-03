@@ -1,0 +1,186 @@
+---
+// The fault desk: pick a SAMPLE fault, a synthetic ROS log prints on a tape,
+// and the pipeline runs where you can see it: deterministic diagnosis marks the
+// decisive lines, retrieval pulls the top 3 guidance sections, the LLM step
+// drafts the report (or the rule-based fallback writes it when the LLM is
+// switched off), and the report tears off the tape. All data is invented
+// (see desk.ts). Without JS the first scenario is shown finished.
+import './fault-desk.css';
+import { SCENARIOS, logHTML, rulesHTML, guidesHTML, reportHTML } from './desk';
+const s = SCENARIOS[0];
+---
+
+<div class="fd sc-wide" data-fd>
+  <div class="fd-controls js-only">
+    <div class="fd-pick" role="group" aria-label="Sample fault">
+      {SCENARIOS.map((x, i) => <button type="button" class="fd-pickb" data-key={x.key} aria-pressed={i === 0 ? 'true' : 'false'}>{x.label}</button>)}
+    </div>
+    <div class="fd-tools">
+      <button type="button" class="fd-switch" role="switch" aria-checked="true" data-fd-llm><span class="fd-knob" aria-hidden="true"></span>LLM available</button>
+      <button type="button" class="sc-btn quiet" data-fd-reboot>Restart mid-run</button>
+      <button type="button" class="sc-btn quiet" data-fd-again>Run again</button>
+    </div>
+  </div>
+  <p class="fd-sample">Sample data. The robot, log, rules, guidance and reports here are invented for this page; the real platform and its data are private.</p>
+
+  <div class="fd-desk" data-fd-desk>
+    <div class="fd-tape">
+      <p class="fd-tape-head">Sample log, robot SAMPLE-07 <span data-fd-label>{s.label}</span></p>
+      <ol class="fd-log" data-fd-log set:html={logHTML(s)} />
+    </div>
+
+    <ol class="fd-steps" data-fd-steps>
+      <li class="fd-step done" data-step="1">
+        <span class="fd-mark" aria-hidden="true"></span>
+        <h4>Diagnose the subsystem</h4>
+        <p class="fd-how">Deterministic rules over the log. No model involved, so the same log always gets the same answer.</p>
+        <div class="fd-out" data-out="1" set:html={rulesHTML(s)} />
+      </li>
+      <li class="fd-step done" data-step="2">
+        <span class="fd-mark" aria-hidden="true"></span>
+        <h4>Retrieve maintenance guidance</h4>
+        <p class="fd-how">The diagnosis becomes a query; the top 3 sections by similarity come back. Sample scores.</p>
+        <div class="fd-out" data-out="2" set:html={guidesHTML(s)} />
+      </li>
+      <li class="fd-step done" data-step="3">
+        <span class="fd-mark" aria-hidden="true"></span>
+        <h4><span class="fd-llm-t">Analyze with an LLM</span> <span class="fd-fb-t hand">rule-based fallback</span></h4>
+        <p class="fd-how" data-out="3">Reads the rule hits and the guidance, and drafts the report for a technician.</p>
+      </li>
+      <li class="fd-step done" data-step="4">
+        <span class="fd-mark" aria-hidden="true"></span>
+        <h4>Print the report</h4>
+        <p class="fd-how">It tears off the tape, ready for whoever goes to the robot.</p>
+      </li>
+    </ol>
+
+    <article class="fd-report torn" data-fd-report aria-label="Sample fault report" set:html={reportHTML(s, true)} />
+  </div>
+  <p class="sr-only" aria-live="polite" data-fd-status></p>
+</div>
+
+<script>
+  import { SCENARIOS, logHTML, rulesHTML, guidesHTML, reportHTML, type Scenario } from './desk';
+
+  const root = document.querySelector<HTMLElement>('[data-fd]');
+  if (root) {
+    const $ = <T extends Element = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const $$ = <T extends Element = HTMLElement>(s: string) => [...root.querySelectorAll<T>(s)];
+    const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const desk = $('[data-fd-desk]'), log = $('[data-fd-log]'), report = $('[data-fd-report]');
+    const steps = $$('.fd-step');
+    const llmBtn = $('[data-fd-llm]'), status = $('[data-fd-status]');
+    let sc: Scenario = SCENARIOS[0];
+    let token = 0, at = 0, running = false;
+    const llm = () => llmBtn.getAttribute('aria-checked') === 'true';
+    const CANCEL = Symbol('cancel');
+    const say = (m: string) => (status.textContent = m);
+
+    function setStep(n: number, state: '' | 'run' | 'done') {
+      const el = steps[n - 1];
+      el.classList.remove('run', 'done', 'kept');
+      if (state) el.classList.add(state);
+    }
+    function blank(from: number) {
+      // clear everything from step `from` on; 0 means a fresh run
+      if (from <= 0) { log.innerHTML = logHTML(sc); [...log.querySelectorAll<HTMLElement>('.fd-l')].forEach((l) => l.classList.add('fd-hide')); $('[data-fd-label]').textContent = sc.label; }
+      if (from <= 1) { [...log.querySelectorAll<HTMLElement>('.fd-l')].forEach((l) => l.classList.remove('lit')); $('[data-out="1"]').innerHTML = ''; }
+      if (from <= 2) $('[data-out="2"]').innerHTML = '';
+      if (from <= 3) { steps[2].classList.remove('fallback'); $('[data-out="3"]').textContent = 'Reads the rule hits and the guidance, and drafts the report for a technician.'; }
+      if (from <= 4) { report.classList.remove('torn', 'printed'); report.innerHTML = ''; }
+      for (let n = Math.max(1, from); n <= 4; n++) setStep(n, '');
+    }
+
+    async function run(from: number) {
+      const my = ++token;
+      running = true;
+      desk.classList.add('busy');
+      const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, reduce() ? 0 : ms)).then(() => { if (my !== token) throw CANCEL; });
+      try {
+        blank(from);
+        if (from <= 0) {
+          at = 0;
+          for (const l of [...log.querySelectorAll<HTMLElement>('.fd-l')]) { l.classList.remove('fd-hide'); await wait(70); }
+          await wait(250);
+        } else [...log.querySelectorAll<HTMLElement>('.fd-l')].forEach((l) => l.classList.remove('fd-hide'));
+
+        if (from <= 1) {
+          at = 1; setStep(1, 'run'); await wait(500);
+          for (const r of sc.rules) {
+            r.lines.forEach((n) => log.querySelector(`[data-n="${n}"]`)?.classList.add('lit'));
+            await wait(340);
+          }
+          log.querySelector(`[data-n="${sc.ruledOut.line}"]`)?.classList.add('lit');
+          $('[data-out="1"]').innerHTML = rulesHTML(sc);
+          setStep(1, 'done'); say(`Diagnosis: ${sc.subsystem}.`); await wait(500);
+        }
+        if (from <= 2) {
+          at = 2; setStep(2, 'run'); await wait(700);
+          $('[data-out="2"]').innerHTML = guidesHTML(sc);
+          const items = $$('.fd-guides li');
+          items.forEach((li) => li.classList.add('fd-hide'));
+          for (const li of items) { li.classList.remove('fd-hide'); await wait(260); }
+          setStep(2, 'done'); say('Retrieved the top 3 guidance sections.'); await wait(450);
+        }
+        if (from <= 3) {
+          at = 3; setStep(3, 'run');
+          const out = $('[data-out="3"]');
+          if (llm()) {
+            out.textContent = 'Drafting from the rule hits and the three guidance sections...';
+            await wait(1100);
+            out.textContent = 'Draft ready. It cites the log lines and guidance it used.';
+            say('Report drafted by LLM analysis.');
+          } else {
+            out.textContent = 'LLM unavailable. The rule-based fallback writes the report instead.';
+            await wait(500);
+            steps[2].classList.add('fallback');
+            say('LLM unavailable: the rule-based fallback wrote the report.');
+          }
+          setStep(3, 'done'); await wait(400);
+        }
+        at = 4; setStep(4, 'run');
+        report.innerHTML = reportHTML(sc, llm());
+        report.classList.add('printed');
+        await wait(900);
+        report.classList.add('torn');
+        setStep(4, 'done');
+        at = 5;
+      } catch (e) { if (e !== CANCEL) throw e; return; }
+      running = false;
+      desk.classList.remove('busy');
+    }
+
+    // restart mid-run: the machine goes dark, then picks up at the step it was on
+    $('[data-fd-reboot]').addEventListener('click', async () => {
+      if (!running || at >= 5) { say('Nothing is running. Run again first.'); return; }
+      token++;
+      const resumeAt = at;
+      desk.classList.add('off');
+      say(`Restarting during step ${Math.max(1, resumeAt)}.`);
+      await new Promise((r) => setTimeout(r, reduce() ? 300 : 1300));
+      desk.classList.remove('off');
+      for (let n = 1; n < resumeAt; n++) steps[n - 1].classList.add('kept');
+      say(resumeAt <= 1 ? 'Back up. The log was already saved; diagnosis starts again.' : `Back up. Steps 1 to ${resumeAt - 1} were kept; step ${resumeAt} runs again.`);
+      const keep = [...steps].map((s) => s.classList.contains('kept'));
+      await run(Math.max(1, resumeAt));
+      keep.forEach((k, i) => k && steps[i].classList.add('kept'));
+    });
+    $$<HTMLButtonElement>('.fd-pickb').forEach((b) => b.addEventListener('click', () => {
+      $$('.fd-pickb').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      sc = SCENARIOS.find((x) => x.key === b.dataset.key)!;
+      run(0);
+    }));
+    llmBtn.addEventListener('click', () => {
+      const on = !llm();
+      llmBtn.setAttribute('aria-checked', String(on));
+      llmBtn.lastChild!.textContent = on ? 'LLM available' : 'LLM unavailable';
+      if (!running || at > 3) run(3); // only the top layer changes; diagnosis and retrieval stand
+    });
+    $('[data-fd-again]').addEventListener('click', () => run(0));
+
+    const io = new IntersectionObserver((ents) => {
+      if (ents.some((e) => e.isIntersecting)) { io.disconnect(); run(0); }
+    }, { threshold: 0.2 });
+    io.observe(desk);
+  }
+</script>

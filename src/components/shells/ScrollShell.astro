@@ -1,25 +1,106 @@
 ---
 // Scroll shell: how a project with `expansion: scroll` opens from the notebook.
-// PLACEHOLDER: a plain paper panel. Replace with the real scroll scene.
+// A paper roll on the cutting mat. It unrolls once on arrival, a wooden roller
+// at the top winds the paper up as you read (and shows where you are), every
+// `## heading` in the body gets a seal pressed on when you reach it, and the
+// body can include a sideways hand scroll (scroll-shell-handscroll.astro).
 // Contract: receives the project entry; renders the MDX body (default slot)
 // inside the scene, plus a way back to the notebook (/#<project id>).
+// Styles: scroll-shell.css. Behaviour: scroll-shell.ts. Without JS it is a
+// plain, complete page on paper.
 import type { CollectionEntry } from 'astro:content';
+import './scroll-shell.css';
 
 interface Props {
   project: CollectionEntry<'projects'>;
 }
 const { project } = Astro.props;
 const d = project.data;
+const back = `/#${project.id}`;
+const year = d.date.getFullYear();
 ---
 
-<div class="shell-stub" data-shell="scroll">
-  <p><a class="pen-link" href={`/#${project.id}`}>Back to the notebook</a></p>
-  <h1>{d.title}</h1>
-  <p set:html={d.dek} />
-  <slot />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+
+<div class="sc" data-scroll-shell data-id={project.id}>
+  <script is:inline>
+    // Unroll once per project per session; skip it for deep links and reduced motion.
+    (function (s) {
+      try {
+        var k = 'unrolled:' + s.dataset.id;
+        if (location.hash || sessionStorage.getItem(k) || matchMedia('(prefers-reduced-motion: reduce)').matches || /[?&]still\b/.test(location.search)) s.classList.add('sc-no-intro');
+        sessionStorage.setItem(k, '1');
+      } catch (e) { s.classList.add('sc-no-intro'); }
+    })(document.currentScript.parentElement);
+  </script>
+
+  <header class="sc-roll" data-sc-roll>
+    <div class="sc-band" aria-hidden="true"></div>
+    <div class="sc-rod" aria-hidden="true"></div>
+    <div class="sc-wound">
+      <a class="sc-back" href={back}>
+        <svg viewBox="0 0 22 12" aria-hidden="true"><path d="M21 6.4c-6-.5-12-.3-19.2-.2M6 1.6 1.6 6.2l4.6 4.3" /></svg>
+        <span class="sc-back-t"><span class="sc-back-long">Back to the </span>notebook</span>
+      </a>
+      <p class="sc-where" aria-hidden="true"><b>{d.title}</b><i data-sc-where></i></p>
+    </div>
+    <div class="sc-curl" aria-hidden="true"></div>
+  </header>
+
+  <article class="sc-paper" aria-labelledby="sc-title">
+    <header class="sc-title">
+      <p class="sc-kicker">{d.context}, {d.when}</p>
+      <h1 id="sc-title">{d.title}</h1>
+      <p class="sc-dek" set:html={d.dek} />
+      <dl class="sc-spec">
+        {d.role && <div><dt>Role</dt><dd>{d.role}</dd></div>}
+        <div><dt>When</dt><dd>{d.when}</dd></div>
+        {d.stack.length > 0 && <div><dt>Built with</dt><dd>{d.stack.join(', ')}</dd></div>}
+        {(d.links.length > 0 || d.note) && (
+          <div>
+            <dt>{d.links.length ? 'Links' : 'Code'}</dt>
+            <dd>
+              {d.links.map((l) => <a href={l.href}>{l.label}</a>)}
+              {d.note && <span class="sc-note">{d.note}</span>}
+            </dd>
+          </div>
+        )}
+      </dl>
+    </header>
+
+    <div class="sc-body">
+      <slot />
+    </div>
+
+    <footer class="sc-end">
+      <div>
+        <h2>That&rsquo;s the end of the roll.</h2>
+        <ul class="sc-end-links">
+          {d.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+          <li><a href={back}>Back to the notebook</a></li>
+        </ul>
+        <div class="sc-end-row js-only">
+          <button class="sc-btn quiet" type="button" data-sc-rollup>Roll it back up</button>
+        </div>
+      </div>
+      <div class="sc-seal" data-sc-seal aria-hidden="true" title={`Tommy Wu, ${year}`}><span>T</span><span>W</span></div>
+    </footer>
+  </article>
+
+  <div class="sc-unroll" aria-hidden="true"><div class="sc-rod"></div></div>
+  <div class="sc-endrod" aria-hidden="true"><div class="sc-rod"></div></div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="sc-inky" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="2" seed="9" result="n" />
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.5 1.65" result="m" />
+      <feComposite in="SourceGraphic" in2="m" operator="in" />
+    </filter>
+  </svg>
 </div>
 
-<style>
-  .shell-stub { max-width: 760px; margin: 24px auto; padding: 40px; background: var(--paper); color: var(--ink); border-radius: 4px; }
-  h1 { font-size: 40px; margin: 12px 0; }
-</style>
+<script>
+  import './scroll-shell.ts';
+</script>

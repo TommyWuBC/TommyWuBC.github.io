@@ -1,0 +1,428 @@
+/* ==========================================================================
+   Scroll shell: a paper roll on the cutting mat.
+   Ported from round-2 entry "The Route" (s2), without the map: the paper
+   unrolls on arrival, a wooden roller at the top winds it up as you read,
+   sections get an ink seal when you reach them, and a hand scroll between
+   two rollers travels sideways. Every selector is scoped under .sc.
+   ========================================================================== */
+
+.sc {
+  /* paper and inks */
+  --sc-paper: #f3ecdb;
+  --sc-paper-2: #ebe2cb;
+  --sc-paper-hi: #fbf7ee;
+  --sc-ink: #1f1c17;
+  --sc-ink-2: #463f33;
+  --sc-ink-3: #62594a;
+  --sc-rule: rgba(31, 28, 23, .15);
+  --sc-rule-2: rgba(31, 28, 23, .32);
+  --sc-fiber: .07;
+  /* seal paste: the only red on the page, for stamps and for "this one wins" */
+  --sc-seal: #ad2a1c;
+  --sc-seal-ink: #fbf3e4;
+  --sc-seal-wash: rgba(173, 42, 28, .09);
+  /* the notebook's ballpoint, for handwritten notes in the margin */
+  --sc-pen: var(--pen);
+  /* turned wood and brass, same as the scroll card on the notebook page */
+  --sc-wood-1: #8b5631;
+  --sc-wood-2: #613819;
+  --sc-wood-3: #3b210e;
+  --sc-brass: #b58d4f;
+  --sc-shadow: rgba(18, 14, 6, .55);
+
+  --sc-mono: "Courier Prime", "Courier New", ui-monospace, monospace;
+
+  --sc-paper-w: 1080px;
+  --sc-gutter: 44px;
+  --sc-pad: 76px;
+  --sc-roll-h: 72px;
+  --sc-wound: 36px;
+  --sc-ease: cubic-bezier(.16, 1, .3, 1);
+  --sc-spring: cubic-bezier(.2, 1.25, .35, 1);
+
+  position: relative;
+  color: var(--sc-ink);
+  padding-bottom: var(--s8);
+}
+
+/* lamp off: the same roll on darker mulberry paper, pale ink, brighter seal */
+:root[data-theme="dark"] .sc {
+  --sc-paper: #2a2620; --sc-paper-2: #322d25; --sc-paper-hi: #36312a;
+  --sc-ink: #efe7d5; --sc-ink-2: #d0c6b1; --sc-ink-3: #ada38f;
+  --sc-rule: rgba(239, 231, 213, .13); --sc-rule-2: rgba(239, 231, 213, .28); --sc-fiber: .1;
+  --sc-seal: #e2604a; --sc-seal-ink: #24120d; --sc-seal-wash: rgba(226, 96, 74, .14);
+  --sc-wood-1: #6c4426; --sc-wood-2: #482912; --sc-wood-3: #2a1709;
+  --sc-shadow: rgba(0, 0, 0, .7);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sc {
+    --sc-paper: #2a2620; --sc-paper-2: #322d25; --sc-paper-hi: #36312a;
+    --sc-ink: #efe7d5; --sc-ink-2: #d0c6b1; --sc-ink-3: #ada38f;
+    --sc-rule: rgba(239, 231, 213, .13); --sc-rule-2: rgba(239, 231, 213, .28); --sc-fiber: .1;
+    --sc-seal: #e2604a; --sc-seal-ink: #24120d; --sc-seal-wash: rgba(226, 96, 74, .14);
+    --sc-wood-1: #6c4426; --sc-wood-2: #482912; --sc-wood-3: #2a1709;
+    --sc-shadow: rgba(0, 0, 0, .7);
+  }
+}
+@media (max-width: 900px) { .sc { --sc-pad: 44px; --sc-gutter: 28px; } }
+@media (max-width: 600px) { .sc { --sc-pad: 20px; --sc-gutter: 12px; --sc-roll-h: 60px; --sc-wound: 32px; } }
+
+/* the mat stays put while the paper moves, so the roller's top band can match it */
+body.shell-scroll { background-attachment: fixed; }
+html:has(body.shell-scroll) { scroll-padding-top: 64px; }
+
+.sc :focus-visible { outline-color: var(--sc-pen); }
+
+/* ==========================================================================
+   Rods: one recipe for the top roller, the bottom roller and the intro rod
+   ========================================================================== */
+.sc-rod {
+  position: absolute; left: 50%; top: 50%;
+  width: min(100% - 8px, var(--sc-paper-w) + 64px); height: 18px;
+  transform: translate(-50%, -50%);
+  border-radius: 9px;
+  background:
+    linear-gradient(to bottom, rgba(255, 236, 212, .3) 0 2px, transparent 5px 60%, rgba(0, 0, 0, .35)),
+    repeating-linear-gradient(92deg, transparent 0 13px, rgba(0, 0, 0, .13) 13px 14px, transparent 14px 31px, rgba(255, 220, 180, .08) 31px 33px),
+    linear-gradient(to bottom, var(--sc-wood-1), var(--sc-wood-2) 55%, var(--sc-wood-3));
+  background-position: 0 0, var(--spin, 0px) 0, 0 0;
+  box-shadow: 0 6px 10px -4px rgba(0, 0, 0, .6);
+}
+.sc-rod::before, .sc-rod::after { /* turned finials */
+  content: ""; position: absolute; top: 50%; width: 22px; height: 30px; transform: translateY(-50%);
+  border-radius: 45% / 50%;
+  background:
+    linear-gradient(to bottom, rgba(255, 240, 215, .45), transparent 35%, rgba(0, 0, 0, .45)),
+    linear-gradient(to right, var(--sc-brass), #8b6a38 60%, #5c4422);
+  box-shadow: 0 4px 8px -3px rgba(0, 0, 0, .6);
+}
+.sc-rod::before { left: -6px; }
+.sc-rod::after { right: -6px; }
+
+/* ==========================================================================
+   Top roller: sticks under the desk bar; read paper winds onto it
+   ========================================================================== */
+.sc-roll { position: sticky; top: 0; z-index: 30; height: var(--sc-roll-h); pointer-events: none; }
+.sc-band { /* the mat above the roller's centre line hides paper already wound up */
+  position: absolute; inset: 0 0 50%;
+  background-color: var(--mat);
+  background-image:
+    linear-gradient(var(--mat-line-2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-line-2) 1px, transparent 1px),
+    linear-gradient(var(--mat-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-line) 1px, transparent 1px);
+  background-size: 190px 190px, 190px 190px, 38px 38px, 38px 38px;
+  background-position: -1px -1px;
+  background-attachment: fixed;
+}
+.sc-wound {
+  position: absolute; left: 50%; top: 50%;
+  width: min(var(--sc-paper-w), 100% - 2 * var(--sc-gutter));
+  height: var(--sc-wound);
+  transform: translate(-50%, -50%);
+  display: flex; align-items: center; gap: var(--s4);
+  padding: 0 var(--s5);
+  pointer-events: auto;
+  border-radius: 7px / 50%;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, .2), rgba(255, 255, 255, .5) 22%, rgba(255, 255, 255, 0) 48%, rgba(0, 0, 0, .05) 70%, rgba(0, 0, 0, .3)),
+    var(--sc-paper);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .25);
+  color: var(--sc-ink);
+  font-size: 15px; line-height: 1.2;
+  white-space: nowrap;
+}
+:root[data-theme="dark"] .sc-wound { background: linear-gradient(to bottom, rgba(0,0,0,.35), rgba(255,255,255,.12) 22%, rgba(255,255,255,0) 48%, rgba(0,0,0,.1) 70%, rgba(0,0,0,.45)), var(--sc-paper); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sc-wound { background: linear-gradient(to bottom, rgba(0,0,0,.35), rgba(255,255,255,.12) 22%, rgba(255,255,255,0) 48%, rgba(0,0,0,.1) 70%, rgba(0,0,0,.45)), var(--sc-paper); } }
+.sc-wound::before, .sc-wound::after { /* the spiral of paper at each end of the roll */
+  content: ""; position: absolute; top: 0; bottom: 0; width: 12px; border-radius: 50%;
+  background: repeating-radial-gradient(ellipse at center, var(--sc-paper) 0 1.5px, color-mix(in srgb, var(--sc-paper), #000 16%) 1.5px 2.5px), var(--sc-paper);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18);
+}
+.sc-wound::before { left: -5px; }
+.sc-wound::after { right: -5px; }
+.sc-back {
+  display: inline-flex; align-items: center; gap: 8px; flex: none;
+  color: var(--sc-ink); text-decoration: none; font-weight: 500;
+}
+.sc-back svg { width: 22px; height: 12px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform .3s var(--sc-ease); }
+.sc-back:hover svg, .sc-back:focus-visible svg { transform: translateX(-3px); }
+.sc-back:hover .sc-back-t { text-decoration: underline; text-underline-offset: 3px; }
+.sc-where { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--sc-ink-2); text-align: right; }
+.sc-where b { font-weight: 600; color: var(--sc-ink); }
+.sc-where i { color: var(--sc-ink-3); }
+.sc-where i:not(:empty)::before { content: ", "; font-style: normal; }
+.sc-curl { /* the shadow the roll throws onto the paper below it */
+  position: absolute; left: 50%; top: calc(50% + var(--sc-wound) / 2 - 1px);
+  width: min(var(--sc-paper-w), 100% - 2 * var(--sc-gutter)); height: 26px; transform: translateX(-50%);
+  background: linear-gradient(to bottom, rgba(30, 24, 12, .28), rgba(30, 24, 12, .08) 40%, rgba(30, 24, 12, 0));
+}
+@media (max-width: 600px) {
+  .sc-wound { padding: 0 var(--s4); font-size: 14px; }
+  .sc-back-long { display: none; }
+  .sc-where b { display: none; }
+  .sc-where i::before { content: none !important; }
+}
+
+/* ==========================================================================
+   The paper
+   ========================================================================== */
+.sc-paper {
+  position: relative; z-index: 1;
+  width: min(var(--sc-paper-w), 100% - 2 * var(--sc-gutter));
+  margin: calc(var(--sc-roll-h) / -2) auto 0;
+  padding: calc(var(--sc-roll-h) / 2 + var(--s8)) var(--sc-pad) var(--s7);
+  background-color: var(--sc-paper);
+  background-image:
+    linear-gradient(90deg, rgba(90, 64, 24, .1), transparent 26px, transparent calc(100% - 26px), rgba(90, 64, 24, .1)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8 .12' numOctaves='3' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .42  0 0 0 0 .34  0 0 0 0 .2  0 0 0 1.3 -.45'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23f)' opacity='.32'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 260px 260px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .2), 0 30px 60px -24px var(--sc-shadow), 0 0 100px rgba(0, 0, 0, .18);
+  font-size: 18px; line-height: 1.62;
+  font-variant-numeric: oldstyle-nums proportional-nums;
+}
+:root[data-theme="dark"] .sc-paper { background-image: linear-gradient(90deg, rgba(0,0,0,.25), transparent 26px, transparent calc(100% - 26px), rgba(0,0,0,.25)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8 .12' numOctaves='3' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .9  0 0 0 0 .85  0 0 0 0 .75  0 0 0 1.3 -.45'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23f)' opacity='.1'/%3E%3C/svg%3E"); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sc-paper { background-image: linear-gradient(90deg, rgba(0,0,0,.25), transparent 26px, transparent calc(100% - 26px), rgba(0,0,0,.25)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8 .12' numOctaves='3' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .9  0 0 0 0 .85  0 0 0 0 .75  0 0 0 1.3 -.45'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23f)' opacity='.1'/%3E%3C/svg%3E"); } }
+.sc-paper a { color: inherit; text-decoration-color: var(--sc-pen); text-decoration-thickness: 1.5px; text-underline-offset: .18em; }
+.sc-paper a:hover { color: var(--sc-pen); }
+@media (max-width: 600px) { .sc-paper { padding-top: calc(var(--sc-roll-h) / 2 + var(--s7)); font-size: 17px; } }
+
+/* ==========================================================================
+   Title block
+   ========================================================================== */
+.sc-title { position: relative; padding-bottom: var(--s7); margin-bottom: var(--s8); border-bottom: 1px solid var(--sc-rule-2); }
+.sc-kicker { margin: 0 0 var(--s3); font-family: var(--hand); font-size: 27px; line-height: 1; color: var(--sc-pen); transform: rotate(-1.2deg); transform-origin: left; }
+.sc-title h1 {
+  margin: 0; max-width: 15ch;
+  font-size: clamp(2.75rem, 7vw, 5.5rem); font-weight: 500; line-height: .96; letter-spacing: -.022em;
+  text-wrap: balance;
+}
+.sc-dek { margin: var(--s5) 0 0; max-width: 34em; font-size: clamp(1.25rem, 2vw, 1.5rem); line-height: 1.42; font-style: italic; color: var(--sc-ink-2); text-wrap: pretty; }
+.sc-spec { margin: var(--s7) 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, max-content)); gap: var(--s4) var(--s7); }
+.sc-spec > div { border-top: 2px solid var(--sc-ink); padding-top: var(--s2); max-width: 26rem; }
+.sc-spec dt { font-size: 14px; color: var(--sc-ink-3); font-style: italic; }
+.sc-spec dd { margin: 2px 0 0; font-size: 16px; line-height: 1.45; font-weight: 500; }
+.sc-spec dd a + a::before { content: ", "; display: inline-block; white-space: pre; text-decoration: none; }
+.sc-spec .sc-note { font-weight: 400; color: var(--sc-ink-2); }
+
+/* ==========================================================================
+   Body: prose sets at a reading measure; demos (.sc-wide) take the paper
+   ========================================================================== */
+.sc-body { counter-reset: sc-sec; }
+.sc-body > p, .sc-body > ul, .sc-body > ol, .sc-body > h3, .sc-body > blockquote { max-width: 40rem; }
+.sc-body > p + p { margin-top: var(--s4); }
+.sc-body > ul, .sc-body > ol { margin: var(--s4) 0; padding-left: 1.2em; }
+.sc-body li + li { margin-top: var(--s2); }
+.sc-body strong { font-weight: 600; }
+.sc-body code { font-family: var(--sc-mono); font-size: .92em; background: var(--sc-paper-2); padding: 0 .25em; border-radius: 2px; font-variant-numeric: lining-nums; }
+.sc-body h3 { font-size: 1.375rem; font-weight: 600; margin: var(--s6) 0 var(--s2); }
+.sc-body .sc-lede { font-size: 1.3125rem; line-height: 1.5; color: var(--sc-ink); max-width: 36rem; }
+.sc-wide { margin: var(--s6) 0; }
+.sc-cap { margin-top: var(--s3); font-size: 14.5px; line-height: 1.5; color: var(--sc-ink-3); max-width: 64ch; }
+.sc-hand { font-family: var(--hand); color: var(--sc-pen); font-size: 1.45em; line-height: 1; }
+
+/* section heads, each with a seal pressed on arrival */
+.sc-body h2 {
+  position: relative; counter-increment: sc-sec;
+  margin: var(--s9) 0 var(--s5); max-width: 22ch;
+  font-size: clamp(2rem, 3.6vw, 2.75rem); font-weight: 500; line-height: 1.04; letter-spacing: -.015em;
+  scroll-margin-top: 72px;
+}
+.sc-body > h2:first-child, .sc-body > :first-child h2 { margin-top: 0; }
+.sc-body h2::before {
+  content: counter(sc-sec);
+  position: absolute; left: calc(-1 * var(--sc-pad) + 14px); top: .1em;
+  width: 40px; height: 40px; display: grid; place-items: center;
+  background: var(--sc-seal); color: var(--sc-seal-ink);
+  font-size: 24px; font-weight: 700; line-height: 1; font-variant-numeric: lining-nums;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 2px var(--sc-seal), inset 0 0 0 3.5px var(--sc-seal-ink);
+  transform: rotate(var(--sr, -4deg));
+  filter: url(#sc-inky);
+  opacity: .92;
+}
+.sc-body h2:nth-of-type(2n)::before { --sr: 3deg; }
+.sc-body h2:nth-of-type(3n)::before { --sr: -1.5deg; }
+.js .sc-body h2:not(.sc-stamped)::before { opacity: 0; transform: rotate(-14deg) scale(1.8); }
+.js .sc-body h2.sc-stamped::before { animation: sc-press .5s var(--sc-spring) both; }
+@keyframes sc-press {
+  0% { opacity: 0; transform: rotate(-14deg) scale(1.8); }
+  55% { opacity: .92; transform: rotate(var(--sr, -4deg)) scale(.93); }
+  100% { opacity: .92; transform: rotate(var(--sr, -4deg)) scale(1); }
+}
+@media (max-width: 900px) {
+  .sc-body h2 { padding-left: 54px; }
+  .sc-body h2::before { left: 0; width: 38px; height: 38px; font-size: 22px; }
+}
+@media (max-width: 600px) {
+  .sc-body h2 { margin-top: var(--s8); padding-left: 46px; }
+  .sc-body h2::before { width: 32px; height: 32px; font-size: 19px; top: .05em; }
+}
+
+/* ==========================================================================
+   Hand scroll: a strip between two rollers. Default (no JS, phones, reduced
+   motion) is a native sideways swipe strip; .pinned turns vertical scrolling
+   into sideways travel while the stage is held in place.
+   ========================================================================== */
+.sc-hs { position: relative; margin: var(--s9) calc(-1 * var(--sc-pad) + 22px) 0; }
+.sc-hs-head { margin: 0 calc(var(--sc-pad) - 22px) var(--s5); display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s5); flex-wrap: wrap; }
+.sc-hs-head h2 { margin: 0 !important; }
+.sc-hs-dek { margin: var(--s2) 0 0; max-width: 40rem; color: var(--sc-ink-2); }
+.sc-hs-hint { margin: var(--s2) 0 0; font-size: 15.5px; font-style: italic; color: var(--sc-ink-3); }
+.sc-hs-hint .when-pinned { display: none; }
+.sc-hs.pinned .sc-hs-hint .when-pinned { display: inline; }
+.sc-hs.pinned .sc-hs-hint .when-swipe { display: none; }
+.sc-hs-scale { position: relative; width: 160px; height: 16px; flex: none; margin-bottom: 6px; }
+.sc-hs-scale::before { content: ""; position: absolute; left: 0; right: 0; bottom: 2px; height: 5px; border: 1px solid var(--sc-ink); background: repeating-linear-gradient(to right, var(--sc-ink) 0 20%, transparent 20% 40%); }
+.sc-hs-scale i { position: absolute; bottom: 9px; left: 0; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 9px solid var(--sc-seal); transform: translateX(calc(var(--hp, 0) * 160px - 6px)); }
+.sc-hs-frame { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: stretch; }
+.sc-hs-roller { position: relative; width: 20px; z-index: 2; }
+.sc-hs-roller::before { /* the dowel */
+  content: ""; position: absolute; left: 50%; top: -24px; bottom: -24px; width: 14px; transform: translateX(-50%); border-radius: 7px;
+  background:
+    linear-gradient(to right, rgba(255, 235, 210, .3), transparent 30% 60%, rgba(0, 0, 0, .4)),
+    repeating-linear-gradient(to bottom, transparent 0 11px, rgba(0, 0, 0, .14) 11px 12px, transparent 12px 27px),
+    linear-gradient(to right, var(--sc-wood-1), var(--sc-wood-2) 55%, var(--sc-wood-3));
+  background-position: 0 0, 0 var(--spin, 0px), 0 0;
+  box-shadow: 4px 0 8px -3px rgba(0, 0, 0, .45);
+}
+.sc-hs-roller::after { /* brass caps top and bottom */
+  content: ""; position: absolute; left: 50%; top: -34px; bottom: -34px; width: 22px; transform: translateX(-50%); z-index: -1;
+  background: linear-gradient(var(--sc-brass), #6d5128) top / 100% 14px no-repeat, linear-gradient(#6d5128, var(--sc-brass)) bottom / 100% 14px no-repeat;
+  border-radius: 10px;
+}
+.sc-hs-roller i { /* paper wound on the dowel; thickness follows progress */
+  position: absolute; left: 50%; top: 0; bottom: 0; width: var(--wt, 22px); transform: translateX(-50%);
+  border-radius: 8px / 50%;
+  background: linear-gradient(to right, rgba(0, 0, 0, .22), rgba(255, 255, 255, .5) 25%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, .25)), var(--sc-paper-2);
+}
+.sc-hs-window { position: relative; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.sc-hs-window::-webkit-scrollbar { display: none; }
+.sc-hs-window:focus-visible { outline-offset: -3px; }
+.sc-hs-frame::before, .sc-hs-frame::after { /* shading where the strip bends round each roller */
+  content: ""; position: absolute; top: 0; bottom: 0; width: 28px; z-index: 1; pointer-events: none;
+}
+.sc-hs-frame::before { left: 20px; background: linear-gradient(to right, rgba(20, 15, 8, .26), transparent); }
+.sc-hs-frame::after { right: 20px; background: linear-gradient(to left, rgba(20, 15, 8, .26), transparent); }
+.sc-hs-strip {
+  list-style: none; margin: 0; padding: 0 var(--s3);
+  display: flex; width: max-content;
+  background-color: var(--sc-paper-2);
+  box-shadow: inset 0 10px 14px -12px rgba(0, 0, 0, .35), inset 0 -10px 14px -12px rgba(0, 0, 0, .35);
+}
+.sc-hs-panel {
+  position: relative; width: min(340px, 74vw); flex: none; scroll-snap-align: start; scroll-margin-left: 12px;
+  padding: var(--s6) var(--s5) var(--s6);
+  display: flex; flex-direction: column; gap: var(--s3);
+  /* a fold crease on the right edge of each panel */
+  background: linear-gradient(to right, transparent calc(100% - 22px), rgba(0, 0, 0, .05) calc(100% - 1px), rgba(255, 255, 255, .55) calc(100% - 1px));
+  font-size: 16.5px; line-height: 1.55; color: var(--sc-ink-2);
+}
+.sc-hs-panel:last-child { background: none; }
+.sc-hs-panel h3 { margin: 0; font-size: 1.5rem; line-height: 1.1; font-weight: 600; color: var(--sc-ink); letter-spacing: -.01em; }
+.sc-hs-panel .sc-step { font-family: var(--hand); font-size: 26px; line-height: .9; color: var(--sc-seal); transform: rotate(-3deg); transform-origin: left; width: max-content; }
+.sc-hs-panel pre, .sc-hs-panel .sc-mono { margin: 0; font-family: var(--sc-mono); font-size: 13.5px; line-height: 1.5; color: var(--sc-ink); white-space: pre-wrap; background: var(--sc-paper-hi); padding: var(--s2) var(--s3); border: 1px solid var(--sc-rule); border-radius: 2px; font-variant-numeric: lining-nums; }
+.sc-hs-panel p { margin: 0; }
+.sc-hs-panel .sc-where-code { margin-top: auto; font-size: 14px; color: var(--sc-ink-3); font-style: italic; }
+.sc-hs-panel code { font-family: var(--sc-mono); font-size: .9em; }
+
+.sc-hs.pinned .sc-hs-stage { position: sticky; top: calc(var(--sc-roll-h) / 2 + 20px); height: calc(100vh - var(--sc-roll-h) / 2 - 20px); display: flex; flex-direction: column; padding-top: var(--s5); }
+.sc-hs.pinned .sc-hs-frame { flex: 1; min-height: 0; max-height: 560px; margin-bottom: var(--s7); }
+.sc-hs.pinned .sc-hs-window { overflow: hidden; scroll-snap-type: none; }
+.sc-hs.pinned .sc-hs-strip { height: 100%; will-change: transform; transform: translate3d(calc(var(--tx, 0) * 1px), 0, 0); }
+@media (max-width: 600px) {
+  .sc-hs { margin: var(--s8) calc(-1 * var(--sc-pad) + 4px) 0; }
+  .sc-hs-head { margin: 0 calc(var(--sc-pad) - 4px) var(--s5); }
+  .sc-hs-scale { display: none; }
+  .sc-hs-roller { width: 12px; }
+  .sc-hs-roller i { width: 12px !important; }
+  .sc-hs-roller::before { width: 10px; }
+  .sc-hs-roller::after { width: 16px; }
+  .sc-hs-frame::before { left: 12px; } .sc-hs-frame::after { right: 12px; }
+  .sc-hs-panel { padding: var(--s5) var(--s4); }
+}
+
+/* ==========================================================================
+   End of the roll
+   ========================================================================== */
+.sc-end { position: relative; margin-top: var(--s9); padding-top: var(--s7); border-top: 1px solid var(--sc-rule-2); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s6); align-items: start; }
+.sc-end h2 { margin: 0; font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 500; line-height: 1.1; }
+.sc-end-links { list-style: none; margin: var(--s4) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); }
+.sc-end-links a { font-weight: 500; }
+.sc-end-row { display: flex; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s5); }
+.sc-btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px;
+  border-radius: 999px; border: 1.5px solid var(--sc-ink); background: transparent; color: var(--sc-ink);
+  font: inherit; font-size: 16px; font-weight: 500; cursor: pointer; text-decoration: none;
+  transition: background-color .2s, color .2s, transform .3s var(--sc-spring);
+}
+.sc-btn:hover { background: var(--sc-ink); color: var(--sc-paper); }
+.sc-btn:active { transform: scale(.96); }
+.sc-btn.quiet { border-color: var(--sc-rule-2); }
+.sc-btn.quiet:hover { background: var(--sc-paper-2); color: var(--sc-ink); border-color: var(--sc-ink); }
+.sc-paper a.sc-btn { text-decoration: none; }
+.sc-paper a.sc-btn:hover { color: var(--sc-paper); }
+.sc-seal {
+  width: 96px; height: 96px; display: grid; grid-template-columns: 1fr 1fr; place-items: center;
+  background: var(--sc-seal); color: var(--sc-seal-ink); border-radius: 6px;
+  font-size: 2.6rem; font-weight: 700; line-height: 1; letter-spacing: -.02em;
+  box-shadow: inset 0 0 0 4px var(--sc-seal), inset 0 0 0 6px var(--sc-seal-ink);
+  transform: rotate(-7deg); filter: url(#sc-inky); opacity: .92;
+}
+.js .sc-seal:not(.sc-stamped) { opacity: 0; transform: rotate(-20deg) scale(1.8); }
+.js .sc-seal.sc-stamped { animation: sc-seal .55s var(--sc-spring) both; }
+@keyframes sc-seal { 0% { opacity: 0; transform: rotate(-20deg) scale(1.8); } 60% { opacity: .92; transform: rotate(-7deg) scale(.93); } 100% { opacity: .92; transform: rotate(-7deg) scale(1); } }
+@media (max-width: 600px) { .sc-end { grid-template-columns: 1fr; } .sc-seal { width: 76px; height: 76px; font-size: 2rem; justify-self: end; margin-top: calc(-1 * var(--s5)); } }
+
+.sc-endrod { position: relative; z-index: 2; height: 44px; margin-top: -22px; }
+.sc-endrod .sc-rod { height: 26px; border-radius: 13px; }
+.sc-endrod .sc-rod::before, .sc-endrod .sc-rod::after { width: 26px; height: 38px; }
+
+/* ==========================================================================
+   Arrival: the paper unrolls once. Pure CSS, so it can never get stuck.
+   The paper is revealed from the top while a loaded rod drops down the page.
+   ========================================================================== */
+.sc-unroll { display: none; }
+.js .sc:not(.sc-no-intro) .sc-paper { animation: sc-reveal 1.15s .15s cubic-bezier(.55, .05, .25, 1) backwards; }
+.js .sc:not(.sc-no-intro) .sc-unroll {
+  display: block; position: absolute; z-index: 3; left: 0; right: 0; top: calc(var(--sc-roll-h) / 2); height: 0;
+  pointer-events: none;
+  animation: sc-drop 1.15s .15s cubic-bezier(.55, .05, .25, 1) both;
+}
+.sc-unroll .sc-rod { top: 0; height: 30px; border-radius: 15px; }
+.sc-unroll .sc-rod::before, .sc-unroll .sc-rod::after { width: 26px; height: 40px; }
+.sc-unroll::before { /* paper still wound on the falling rod; it thins as it unrolls */
+  content: ""; position: absolute; z-index: 1; left: 50%; top: 0; height: 40px;
+  width: min(var(--sc-paper-w), 100% - 2 * var(--sc-gutter));
+  transform: translate(-50%, -50%) scaleY(var(--thick, 1));
+  border-radius: 8px / 50%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, .2), rgba(255, 255, 255, .5) 25%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, .3)), var(--sc-paper);
+  box-shadow: 0 10px 18px -8px rgba(0, 0, 0, .5);
+  animation: sc-thin 1.15s .15s cubic-bezier(.55, .05, .25, 1) both;
+}
+@keyframes sc-reveal {
+  from { clip-path: inset(0 -60px 100% -60px); }
+  to { clip-path: inset(0 -60px calc(100% - 100vh) -60px); }
+}
+@keyframes sc-drop {
+  0% { transform: translateY(0); opacity: 1; }
+  94% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; visibility: hidden; }
+}
+@keyframes sc-thin { from { --thick: 1; } to { --thick: .55; } }
+@property --thick { syntax: "<number>"; inherits: false; initial-value: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .js .sc .sc-paper { animation: none !important; }
+  .js .sc .sc-unroll { display: none !important; }
+  .js .sc-body h2::before { opacity: .92 !important; transform: rotate(var(--sr, -4deg)) !important; animation: none !important; }
+  .js .sc-seal { opacity: .92 !important; transform: rotate(-7deg) !important; animation: none !important; }
+}
+@media print {
+  .sc-roll, .sc-unroll, .sc-endrod { display: none; }
+  .sc-paper { box-shadow: none; width: auto; margin: 0; }
+}
+@media (max-width: 600px) {
+  .sc-spec { grid-template-columns: 1fr 1fr; gap: var(--s4) var(--s5); }
+  .sc-spec > div:nth-child(3) { grid-column: 1 / -1; }
+}

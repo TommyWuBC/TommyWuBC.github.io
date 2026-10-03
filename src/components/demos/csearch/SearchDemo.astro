@@ -1,0 +1,209 @@
+---
+// The centerpiece: a live hybrid search over a small SAMPLE codebase.
+// Keywords (real BM25) on the left, meaning (a labeled stand-in for the
+// embedding leg) on the right, reciprocal rank fusion in the middle, and the
+// answer the CLI would print underneath. The build renders the default query,
+// so the page reads fine without JS.
+import './search-demo.css';
+import { CHUNKS, FILES, search, conceptsOf } from './engine';
+import { lexHTML, denseHTML, fusedHTML, answerHTML, noteHTML, codeHTML, splitHTML } from './render';
+
+const DEFAULT = 'where do we validate the checkout form';
+const CHIPS = [
+  DEFAULT,
+  'decide whether a feature switch is enabled',
+  'canonical product identifier cleanup',
+  'wait until the user stops typing',
+  'release old reservation holds',
+  'resize uploaded profile photos',
+];
+const r = search(DEFAULT);
+const top = CHUNKS[r.fused[0].id];
+const cset = new Set(r.concepts);
+const code = codeHTML(top, r.terms, (w) => conceptsOf(w).some((c) => cset.has(c)));
+---
+
+<div class="cs sc-wide" data-cs>
+  <form class="cs-q js-only" role="search" aria-label="Search the sample codebase">
+    <label class="cs-label" for="cs-input">Ask the sample codebase a question</label>
+    <div class="cs-field">
+      <input id="cs-input" name="q" type="search" value={DEFAULT} autocomplete="off" spellcheck="false" aria-describedby="cs-scope" />
+      <button class="sc-btn" type="submit">Search</button>
+    </div>
+  </form>
+  <p class="cs-static no-js">Query: <b>{DEFAULT}</b></p>
+  <div class="cs-chips js-only" role="group" aria-label="Example questions">
+    {CHIPS.map((c) => <button type="button" class="cs-chip" data-q={c} aria-pressed={c === DEFAULT ? 'true' : 'false'}>{c}</button>)}
+  </div>
+  <p class="cs-scope" id="cs-scope">
+    A sample codebase written for this page: {CHUNKS.length} functions in {FILES} files of a toy shop. Searched in your browser<span data-cs-ms></span>.
+  </p>
+
+  <div class="cs-cols" data-cs-cols>
+    <section class="cs-col cs-lex" aria-labelledby="cs-h-lex">
+      <div class="cs-dowel" aria-hidden="true"></div>
+      <div class="cs-sheet">
+        <h3 id="cs-h-lex">Keywords</h3>
+        <p class="cs-sub">BM25, like SQLite FTS5, over split names, identifiers, docstrings and comments.</p>
+        <p class="cs-parsed">Query: <code data-cs-terms>{r.terms.join(' OR ')}</code></p>
+        <ol data-cs-list="lex" set:html={lexHTML(r)} />
+      </div>
+    </section>
+    <section class="cs-col cs-fused" aria-labelledby="cs-h-fused">
+      <div class="cs-dowel" aria-hidden="true"></div>
+      <div class="cs-sheet">
+        <h3 id="cs-h-fused">Fused</h3>
+        <p class="cs-sub">Reciprocal rank fusion: each chunk scores &Sigma; 1/(60 + rank) across both lists.</p>
+        <p class="cs-parsed">Scores normalized to the best hit.</p>
+        <ol data-cs-list="fused" set:html={fusedHTML(r)} />
+      </div>
+    </section>
+    <section class="cs-col cs-dense" aria-labelledby="cs-h-dense">
+      <div class="cs-dowel" aria-hidden="true"></div>
+      <div class="cs-sheet">
+        <h3 id="cs-h-dense">Meaning, a stand-in</h3>
+        <p class="cs-sub">csearch&rsquo;s 768-d code model is too heavy for a web page, so a hand-made table of related terms plays its part.</p>
+        <p class="cs-parsed">Concepts: <span data-cs-concepts>{r.concepts.join(', ') || 'none'}</span></p>
+        <ol data-cs-list="dense" set:html={denseHTML(r)} />
+      </div>
+    </section>
+    <svg class="cs-wires" aria-hidden="true" data-cs-wires></svg>
+  </div>
+
+  <div class="cs-answer" aria-live="polite">
+    <div class="cs-verdict">
+      <p class="cs-cli"><span aria-hidden="true">$ </span>csearch query "<span data-cs-echo>{DEFAULT}</span>" -n 1</p>
+      <div data-cs-answer set:html={answerHTML(r)} />
+      <p class="cs-note" data-cs-note set:html={noteHTML(r)} />
+    </div>
+    <figure class="cs-code" data-cs-codebox>
+      <figcaption>
+        <span class="cs-file" data-cs-file>{top.file}</span>
+        <span class="cs-split" data-cs-split set:html={splitHTML(top, r.terms)} />
+      </figcaption>
+      <pre><code data-cs-code set:html={code} /></pre>
+      <p class="cs-legend"><mark class="cs-kw">highlighted</mark> matched a keyword; <span class="cs-cn">underlined</span> matched a concept. Click any row above to read that chunk.</p>
+    </figure>
+  </div>
+</div>
+
+<script>
+  import { CHUNKS, search, conceptsOf, loc, type Result } from './engine';
+  import { lexHTML, denseHTML, fusedHTML, answerHTML, noteHTML, codeHTML, splitHTML, SHOW } from './render';
+
+  const root = document.querySelector<HTMLElement>('[data-cs]');
+  if (root) {
+    const $ = <T extends Element = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const $$ = <T extends Element = HTMLElement>(s: string) => [...root.querySelectorAll<T>(s)];
+    const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const input = $<HTMLInputElement>('#cs-input');
+    const lists = { lex: $('[data-cs-list="lex"]'), dense: $('[data-cs-list="dense"]'), fused: $('[data-cs-list="fused"]') };
+    const cols = $('[data-cs-cols]');
+    const wires = $<SVGSVGElement>('[data-cs-wires]');
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    let res: Result = search(input.value);
+    let selected: number | null = null;
+    let lastQ = input.value.trim();
+
+    const show = (id: number) => {
+      const c = CHUNKS[id];
+      const cs = new Set(res.concepts);
+      $('[data-cs-code]').innerHTML = codeHTML(c, res.terms, (w) => conceptsOf(w).some((k) => cs.has(k)));
+      $('[data-cs-file]').textContent = loc(c);
+      $('[data-cs-split]').innerHTML = splitHTML(c, res.terms);
+      $$('.cs-row').forEach((b) => b.classList.toggle('sel', +b.dataset.id! === id));
+    };
+
+    function drawWires() {
+      wires.textContent = '';
+      if (getComputedStyle(wires).display === 'none') return;
+      const box = cols.getBoundingClientRect();
+      wires.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+      const at = (list: HTMLElement, id: number) => list.querySelector<HTMLElement>(`.cs-row[data-id="${id}"]`);
+      res.fused.slice(0, SHOW).forEach((h, i) => {
+        const to = at(lists.fused, h.id);
+        if (!to) return;
+        const tr = to.getBoundingClientRect();
+        const ty = tr.top + tr.height / 2 - box.top;
+        ([['lex', h.lexRank], ['dense', h.denseRank]] as const).forEach(([k, rank]) => {
+          if (!rank || rank > SHOW) return;
+          const from = at(lists[k], h.id);
+          if (!from) return;
+          const fr = from.getBoundingClientRect();
+          const fy = fr.top + fr.height / 2 - box.top;
+          const x1 = k === 'lex' ? fr.right - box.left + 4 : fr.left - box.left - 4;
+          const x2 = k === 'lex' ? tr.left - box.left - 4 : tr.right - box.left + 4;
+          const mx = (x1 + x2) / 2;
+          const p = document.createElementNS(SVGNS, 'path');
+          p.setAttribute('d', `M${x1.toFixed(1)} ${fy.toFixed(1)} C${mx.toFixed(1)} ${fy.toFixed(1)} ${mx.toFixed(1)} ${ty.toFixed(1)} ${x2.toFixed(1)} ${ty.toFixed(1)}`);
+          p.setAttribute('class', 'cs-wire' + (i === 0 && res.confident ? ' win' : ''));
+          p.dataset.id = String(h.id);
+          p.setAttribute('pathLength', '1');
+          wires.appendChild(p);
+        });
+      });
+    }
+
+    function render(animate: boolean) {
+      const t0 = performance.now();
+      res = search(input.value);
+      const ms = performance.now() - t0;
+      lists.lex.innerHTML = lexHTML(res);
+      lists.dense.innerHTML = denseHTML(res);
+      lists.fused.innerHTML = fusedHTML(res);
+      $('[data-cs-terms]').textContent = res.terms.join(' OR ') || '(nothing left after stopwords)';
+      $('[data-cs-concepts]').textContent = res.concepts.join(', ') || 'none';
+      $('[data-cs-echo]').textContent = input.value.trim();
+      $('[data-cs-answer]').innerHTML = answerHTML(res);
+      const note = noteHTML(res);
+      $('[data-cs-note]').innerHTML = note;
+      $('[data-cs-ms]').textContent = `, ${CHUNKS.length} chunks in ${ms < 1 ? ms.toFixed(2) : ms.toFixed(1)} ms`;
+      $$('.cs-chip').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.q === input.value.trim())));
+      const box = $('[data-cs-codebox]');
+      box.hidden = !res.fused.length;
+      if (res.fused.length) show(res.fused[0].id);
+      selected = null;
+      if (animate && !reduce()) {
+        cols.classList.remove('unroll');
+        wires.classList.remove('drawn');
+        void cols.offsetWidth;
+        cols.classList.add('unroll');
+        setTimeout(() => { drawWires(); requestAnimationFrame(() => wires.classList.add('drawn')); }, 760);
+      } else { drawWires(); wires.classList.add('drawn'); }
+    }
+
+    let t: ReturnType<typeof setTimeout> | undefined;
+    input.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => { const q = input.value.trim(); if (q !== lastQ) { lastQ = q; render(true); } }, 220);
+    });
+    $('form').addEventListener('submit', (e) => { e.preventDefault(); lastQ = input.value.trim(); render(true); });
+    $$<HTMLButtonElement>('.cs-chip').forEach((b) => b.addEventListener('click', () => {
+      input.value = b.dataset.q!; lastQ = input.value; render(true);
+    }));
+    // rows: hover or focus lights the same chunk in every list; click reads its code
+    const light = (id: number | null) => {
+      $$('.cs-row').forEach((r) => r.classList.toggle('on', id !== null && +r.dataset.id! === id));
+      $$('.cs-wire').forEach((w) => w.classList.toggle('on', id !== null && +(w as unknown as SVGElement).dataset.id! === id));
+    };
+    cols.addEventListener('pointerover', (e) => { const r = (e.target as HTMLElement).closest<HTMLElement>('.cs-row'); light(r ? +r.dataset.id! : selected); });
+    cols.addEventListener('pointerleave', () => light(selected));
+    cols.addEventListener('focusin', (e) => { const r = (e.target as HTMLElement).closest<HTMLElement>('.cs-row'); if (r) light(+r.dataset.id!); });
+    cols.addEventListener('click', (e) => {
+      const r = (e.target as HTMLElement).closest<HTMLElement>('.cs-row');
+      if (!r) return;
+      selected = +r.dataset.id!;
+      show(selected); light(selected);
+    });
+
+    // first view: unroll the three lists once they come into sight
+    let seen = false;
+    const io = new IntersectionObserver((ents) => {
+      if (ents.some((e) => e.isIntersecting) && !seen) { seen = true; io.disconnect(); render(true); }
+    }, { threshold: 0.25 });
+    io.observe(cols);
+    let rz: ReturnType<typeof setTimeout> | undefined;
+    addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(drawWires, 150); });
+    document.fonts?.ready.then(drawWires);
+  }
+</script>
