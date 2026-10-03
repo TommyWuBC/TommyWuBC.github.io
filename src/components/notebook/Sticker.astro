@@ -1,0 +1,35 @@
+---
+// A logo sticker stuck in the corner of a notebook entry. Die-cut (a white
+// outline traced around the logo) unless `rect`. Images: src/assets/stickers/<name>.png
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  name: string;
+  href?: string;
+  label?: string;
+  width?: number;
+  tilt?: number;
+  rect?: boolean;
+  alt?: string;
+}
+const { name, href, label, width = 64, tilt = 6, rect = false, alt } = Astro.props;
+const files = import.meta.glob<{ default: ImageMetadata }>('../../assets/stickers/*.png', { eager: true });
+const file = files[`../../assets/stickers/${name}.png`];
+if (!file) throw new Error(`No sticker image src/assets/stickers/${name}.png`);
+const img = await getImage({ src: file.default, width: Math.round(width * 2.5), format: 'webp', quality: 85 });
+const Tag = href ? 'a' : 'span';
+const text = alt ?? `${name.replace(/-/g, ' ')} logo`;
+---
+
+<Tag
+  class:list={['sticker', { 'st-rect': rect, 'st-link': href }]}
+  style={`--w:${width}px;--r:${tilt}deg`}
+  href={href}
+  target={href ? '_blank' : undefined}
+  rel={href ? 'noopener' : undefined}
+  aria-hidden={href ? undefined : 'true'}
+>
+  <img src={img.src} alt={href ? text : ''} width={width} loading="lazy" decoding="async" />
+  {label && <span class="st-label hand">{label}</span>}
+</Tag>

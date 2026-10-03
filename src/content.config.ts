@@ -9,6 +9,21 @@ import { z } from 'astro/zod';
 
 const link = z.object({ label: z.string(), href: z.string() });
 
+/**
+ * A logo sticker on the entry's notebook page: src/assets/stickers/<name>.png.
+ * With `href` it's a link (e.g. a certificate); `label` is a handwritten note beside it.
+ */
+const sticker = z.object({
+  name: z.string(),
+  href: z.string().optional(),
+  label: z.string().optional(),
+  /** Width in px on the page. */
+  width: z.number().default(64),
+  tilt: z.number().default(6),
+  /** A rectangular sticker (logo on its own background) instead of a die-cut one. */
+  rect: z.boolean().default(false),
+});
+
 /** A big number with a caption, set as a pull-figure beside an entry. */
 const figure = z.object({ value: z.string(), caption: z.string() });
 
@@ -53,6 +68,7 @@ const projects = defineCollection({
      *   map:    an orienteering map
      */
     expansion: z.enum(['folder', 'scroll', 'zine', 'map']).optional(),
+    sticker: sticker.optional(),
     /** The button label on the notebook page, e.g. "Open the folder". Defaults per shell. */
     openLabel: z.string().optional(),
     /** Case-study header: your role on the project. */
@@ -72,6 +88,7 @@ const experience = defineCollection({
     blurb: z.string().optional(),
     /** Project ids (files in src/content/projects) that came out of this role. */
     projects: z.array(z.string()).default([]),
+    sticker: sticker.optional(),
     when: z.string(),
     /** Start date, used for sorting. */
     date: z.coerce.date(),

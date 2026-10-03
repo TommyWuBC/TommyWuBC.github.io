@@ -240,7 +240,7 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 
 /* tabs */
 .tab {
-  position: absolute; top: var(--ty); width: 34px; height: 96px; padding: 0; border: 0; cursor: pointer;
+  position: absolute; top: var(--ty); width: 34px; height: 86px; padding: 0; border: 0; cursor: pointer;
   background: var(--tc); color: #1b1e25; font-family: var(--print); font-size: 15px; font-weight: 600; letter-spacing: .01em;
   writing-mode: vertical-rl; display: grid; place-items: center;
   box-shadow: 0 2px 3px rgba(0,0,0,.18);
@@ -252,7 +252,7 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .face.front .tab:hover { translate: 3px 0; }
 .face.back .tab:hover { translate: -3px 0; }
 .tab[aria-current="true"] { box-shadow: 0 2px 3px rgba(0,0,0,.18), inset 0 -3px 0 rgba(0,0,0,.18); }
-.tab.c1 { --tc: var(--tab-1); } .tab.c2 { --tc: var(--tab-2); } .tab.c3 { --tc: var(--tab-3); } .tab.c4 { --tc: var(--tab-4); }
+.tab.c0 { --tc: var(--tab-0); } .tab.c5 { --tc: var(--tab-5); } .tab.c6 { --tc: var(--tab-6); } .tab.c1 { --tc: var(--tab-1); } .tab.c2 { --tc: var(--tab-2); } .tab.c3 { --tc: var(--tab-3); } .tab.c4 { --tc: var(--tab-4); }
 
 /* turning handles and the folded corner */
 .grab { position: absolute; top: 0; height: 760px; width: 60px; z-index: 400; cursor: grab; touch-action: none; background: none; border: 0; padding: 0; }
@@ -276,7 +276,7 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .pocket .ptabs::-webkit-scrollbar { display: none; }
 .ptab { flex: 1 1 auto; height: 34px; padding: 0 6px; border: 0; border-radius: 7px 7px 0 0; background: var(--tc); color: #1b1e25; font-weight: 600; font-size: 13.5px; cursor: pointer; translate: 0 6px; white-space: nowrap; transition: translate .35s var(--spring); }
 .ptab[aria-current="true"] { translate: 0 0; box-shadow: 0 -2px 4px rgba(0,0,0,.15); }
-.ptab.c0 { --tc: #e9ebe6; } .ptab.c1 { --tc: var(--tab-1); } .ptab.c2 { --tc: var(--tab-2); } .ptab.c3 { --tc: var(--tab-3); } .ptab.c4 { --tc: var(--tab-4); }
+.ptab.c0 { --tc: var(--tab-0); } .ptab.c5 { --tc: var(--tab-5); } .ptab.c6 { --tc: var(--tab-6); } .ptab.c1 { --tc: var(--tab-1); } .ptab.c2 { --tc: var(--tab-2); } .ptab.c3 { --tc: var(--tab-3); } .ptab.c4 { --tc: var(--tab-4); }
 .spiral { position: relative; z-index: 5; height: 26px; margin: 0 4px -12px; pointer-events: none;
   background:
     radial-gradient(ellipse 5px 11px at 50% 50%, transparent 0 3px, #8d939c 3.2px 4.6px, transparent 5px) 0 0 / 20px 26px repeat-x; }
@@ -344,3 +344,28 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .e-links .e-note { flex-basis: 100%; }
 /* a page that already lists its trials has no room left for a sketch */
 .entry.feature:has(.trials) .doodle { display: none; }
+/* Photos keep their stacking order to themselves: however often one is raised,
+   it can't climb above the notebook's leaves. */
+.pile-list { isolation: isolate; }
+
+/* ---------- logo stickers (Sticker.astro) ---------- */
+.sticker {
+  position: absolute; z-index: 3; top: -16px; right: -18px; width: var(--w);
+  transform: rotate(var(--r)); transition: transform .45s var(--spring);
+  text-decoration: none;
+}
+.sticker img {
+  display: block; width: 100%; height: auto;
+  /* die-cut: a white outline traced around the logo, then a soft shadow */
+  filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)
+          drop-shadow(0 3px 4px rgba(0, 0, 0, .22));
+}
+.sticker.st-rect img { filter: none; border: 3px solid #fff; border-radius: 9px; box-shadow: 0 3px 6px rgba(0, 0, 0, .25); }
+.sticker:hover, .sticker:focus-visible { transform: rotate(calc(var(--r) * -0.4)) translateY(-3px) scale(1.06); }
+.st-label { position: absolute; top: 100%; right: 0; margin-top: 4px; white-space: nowrap; font-size: 20px; line-height: 20px; color: var(--pen); transform: rotate(calc(var(--r) * -1 - 3deg)); }
+.st-link .st-label::after { content: " ↗"; font-family: var(--print); font-size: 13px; }
+/* make room for a corner sticker so it never covers the date */
+.entry:has(> .sticker) > .e-head { padding-right: calc(var(--sw, 64px) - 6px); }
+.sticker.st-rect { top: -30px; }
+.pocket .sticker { top: -4px; right: -6px; }
+.pocket .sticker.st-rect { top: -10px; }

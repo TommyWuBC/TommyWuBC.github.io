@@ -8,6 +8,7 @@ projects: [fault-diagnosis]
 figure:
   value: "~80%"
   caption: Less manual fault-triage time. Retrieval finds the right guidance in the top 3 results 93% of the time.
+sticker: { name: saite, width: 52, tilt: -6 }
 ---
 
 - Deployed an internal diagnostic platform that turns a robot's ROS logs into fault reports a technician can act on: deterministic subsystem diagnosis first, LLM analysis on top, a rule-based fallback underneath. Centralized telemetry; recovery survives a reboot.

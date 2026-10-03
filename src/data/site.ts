@@ -21,7 +21,7 @@ export const site = {
 /** Short facts on the cover. */
 export const facts: { label: string; value: string }[] = [
   { label: 'Now', value: 'Research assistant, PAIR Lab' },
-  { label: 'Studying', value: 'B.S. Computer Science, Georgia Tech, May 2028' },
+  { label: 'Studying', value: 'B.S. Computer Science, Georgia Tech' },
   { label: 'Threads', value: 'Intelligence; Systems & Architecture' },
 ];
 
@@ -34,7 +34,7 @@ export const about: string[] = [
 ];
 
 export const education: string[] = [
-  'Georgia Tech, B.S. Computer Science, 2025 to 2028. GPA 4.0.',
+  'Georgia Tech, B.S. Computer Science, since 2025. GPA 4.0.',
   'Dulwich College, A-Levels, 2023 to 2025.',
 ];
 

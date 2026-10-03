@@ -8,6 +8,7 @@ import { render } from 'astro:content';
 import Notebook from '../layouts/Notebook.astro';
 import PhotoPile from '../components/notebook/PhotoPile.astro';
 import OpenCard from '../components/notebook/OpenCard.astro';
+import Sticker from '../components/notebook/Sticker.astro';
 import '../notebook/css/home.css';
 import '../notebook/css/openers.css';
 import { getProjects, getExperience } from '../lib/content';
@@ -90,7 +91,7 @@ const year = new Date().getFullYear();
                   <h1 id="name">{site.name}</h1>
                   <p class="plate-sub">
                     {site.fullName}. Computer science at Georgia Tech, threads in Intelligence and Systems &amp;
-                    Architecture. GPA 4.0, graduating May 2028.
+                    Architecture. GPA 4.0.
                   </p>
                   <p class="plate-ret">
                     <span class="hand">If found, please return to</span>
@@ -102,7 +103,7 @@ const year = new Date().getFullYear();
             );
           case 'index':
             return (
-              <section class="page" id="index" data-title="Index" aria-labelledby="h-index">
+              <section class="page" id="index" data-title="Index" data-tab="Home" data-tabc="0" aria-labelledby="h-index">
                 <div class="lede-wrap">
                   <p class="lede">
                     I study computer science at Georgia Tech and work on reinforcement learning research, applied LLM
@@ -161,7 +162,8 @@ const year = new Date().getFullYear();
                   const Body = jobBodies[ji];
                   const linked = pairProjects(j.projects);
                   return (
-                    <article class="entry" id={jobs[ji].id}>
+                    <article class="entry" id={jobs[ji].id} style={j.sticker ? `--sw:${j.sticker.width}px` : undefined}>
+                      {j.sticker && <Sticker {...j.sticker} />}
                       <header class="e-head"><h3>{j.role}, {j.org.split(',')[0]}</h3><p class="e-when">{j.when}</p></header>
                       <p class="e-meta">{j.org.includes(',') ? `${j.org.split(',').slice(1).join(',').trim()}. ` : ''}{j.stack.join(', ')}</p>
                       {j.blurb && <p>{j.blurb}</p>}
@@ -208,7 +210,8 @@ const year = new Date().getFullYear();
                     <svg class="uline" viewBox="0 0 180 10" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d={ULINES[2]} /></svg>
                   </h2>
                 )}
-                <article class="entry feature" id={p.id}>
+                <article class="entry feature" id={p.id} style={d.sticker ? `--sw:${d.sticker.width}px` : undefined}>
+                  {d.sticker && <Sticker {...d.sticker} />}
                   <header class="e-head"><h3 id={`t-${p.id}`}>{d.title}</h3><p class="e-when">{d.when}</p></header>
                   <p class="e-meta">{d.context}. {d.stack.slice(0, 5).join(', ')}</p>
                   {d.figure && (
@@ -261,12 +264,14 @@ const year = new Date().getFullYear();
                   Education
                   <svg class="uline" viewBox="0 0 180 10" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d={ULINES[3]} /></svg>
                 </h2>
-                <article class="entry" id="gatech">
-                  <header class="e-head"><h3>Georgia Institute of Technology</h3><p class="e-when">2025 to May 2028</p></header>
+                <article class="entry" id="gatech" style="--sw:74px">
+                  <Sticker name="gt" width={74} tilt={-6} alt="Georgia Tech logo" />
+                  <header class="e-head"><h3>Georgia Institute of Technology</h3><p class="e-when">since 2025</p></header>
                   <p>B.S. Computer Science. Threads: Intelligence, and Systems &amp; Architecture. <mark>GPA 4.0</mark>.</p>
                   <p class="e-meta" set:html={coursework} />
                 </article>
-                <article class="entry" id="dulwich">
+                <article class="entry" id="dulwich" style="--sw:54px">
+                  <Sticker name="dulwich" width={54} tilt={6} alt="Dulwich College crest" />
                   <header class="e-head"><h3>Dulwich College</h3><p class="e-when">2023 to 2025</p></header>
                   <p>A-Levels.</p>
                 </article>
@@ -283,7 +288,7 @@ const year = new Date().getFullYear();
             );
           case 'toolbox':
             return (
-              <section class="page" id="toolbox" data-title="Toolbox" aria-labelledby="h-tools">
+              <section class="page" id="toolbox" data-title="Toolbox" data-tab="Toolbox" data-tabc="5" aria-labelledby="h-tools">
                 <h2 id="h-tools">
                   Toolbox
                   <svg class="uline" viewBox="0 0 180 10" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d={ULINES[4]} /></svg>
@@ -324,7 +329,7 @@ const year = new Date().getFullYear();
             );
           case 'pocket':
             return (
-              <section class="page cover-in on-cover back-in" id="pocket" data-title="Back pocket" aria-labelledby="h-pocket">
+              <section class="page cover-in on-cover back-in" id="pocket" data-title="Back pocket" data-tab="Résumé" data-tabc="6" aria-labelledby="h-pocket">
                 <h2 id="h-pocket" class="sr-only">Back pocket</h2>
                 <p class="colophon">Set in Newsreader and Nanum Pen Script. Built with Astro, by hand. Updated {year}.</p>
                 <div class="pocket">

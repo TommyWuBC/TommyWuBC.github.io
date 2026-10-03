@@ -15,9 +15,11 @@
   const W = 1120, H = 760, PAD_X = 56, PAD_TOP = 18, PAD_BOT = 70;
   pages.forEach((p, i) => p.classList.add(i % 2 ? 'r' : 'l'));
   const spreadOf = (pi) => Math.floor(pi / 2);
-  const tabs = pages.map((p, pi) => p.dataset.tab ? { label: p.dataset.tab, c: p.dataset.tabc, pi, spread: spreadOf(pi), leaf: pi % 2 ? (pi - 1) / 2 : pi / 2 - 1 } : null).filter(Boolean);
-  const mk = (tag, cls, attrs = {}) => { const n = document.createElement(tag); n.className = cls + ' gen'; for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  // A tab rides the leaf its page is on. The inside covers aren't on a leaf, so
+  // their tabs (Home, Résumé) ride the first and last leaves instead.
+  const tabs = pages.map((p, pi) => p.dataset.tab ? { label: p.dataset.tab, c: p.dataset.tabc, pi, spread: spreadOf(pi), leaf: clamp(pi % 2 ? (pi - 1) / 2 : pi / 2 - 1, 0, L - 1) } : null).filter(Boolean);
+  const mk = (tag, cls, attrs = {}) => { const n = document.createElement(tag); n.className = cls + ' gen'; for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
 
   let mode = null, cur = 0, stage = null, leaves = [], grabs = {}, edges = {}, sheets = [], ptabs = [], raf = 0, drag = null, pendingFocus = null;
 
@@ -41,7 +43,7 @@
       const lf = leaves[t.leaf];
       for (const face of ['front', 'back']) {
         const b = mk('button', `tab c${t.c}`, { type: 'button', 'data-spread': t.spread });
-        b.style.setProperty('--ty', 70 + j * 118 + 'px');
+        b.style.setProperty('--ty', 22 + j * Math.min(118, (H - 44 - 86) / Math.max(1, tabs.length - 1)) + 'px');
         b.textContent = t.label;
         b.addEventListener('click', () => go(t.spread, { focus: pages[t.pi] }));
         lf[face].append(b); lf.tabs.push({ b, face, spread: t.spread });
@@ -183,7 +185,7 @@
   function buildPocket() {
     book.classList.add('pocket');
     const nav = mk('nav', 'ptabs', { 'aria-label': 'Sections' });
-    ptabs = [{ label: 'Index', c: 0, spread: 0, pi: 1 }, ...tabs].map((t) => {
+    ptabs = (tabs[0] && tabs[0].spread === 0 ? tabs : [{ label: 'Index', c: 0, spread: 0, pi: 1 }, ...tabs]).map((t) => {
       const b = mk('button', `ptab c${t.c}`, { type: 'button' });
       b.textContent = t.label;
       b.addEventListener('click', () => go(t.spread, { focus: pages[t.pi] }));
