@@ -1,0 +1,77 @@
+---
+// csearch's real numbers, from the repository README and its eval report.
+const evalRows = [
+  { runner: 'token_baseline', what: 'token overlap, the baseline', r1: '0.917', r5: '1.000', mrr: '0.944' },
+  { runner: 'lexical', what: 'BM25 alone', r1: '0.917', r5: '0.917', mrr: '0.917' },
+  { runner: 'dense', what: 'vectors alone', r1: '0.667', r5: '0.917', mrr: '0.767' },
+  { runner: 'hybrid', what: 'both, fused', r1: '0.917', r5: '0.917', mrr: '0.917' },
+];
+---
+
+<div class="fg sc-wide">
+  <div class="fg-figs">
+    <div class="fg-fig">
+      <p class="fg-v">91.7%</p>
+      <p class="fg-c">Recall@1 for hybrid search on the starter eval: the right chunk came back first for 11 of 12 labeled queries.</p>
+    </div>
+    <div class="fg-fig">
+      <p class="fg-v">100.3<span> ms</span></p>
+      <p class="fg-c">Median warm query on a 55,112-line, 2,132-chunk snapshot of Hugging Face Transformers. The budget is 500 ms.</p>
+    </div>
+  </div>
+
+  <div class="fg-eval">
+    <table>
+      <caption>The eval report, verbatim. Every push to the repository regenerates it.</caption>
+      <thead>
+        <tr><th scope="col">Runner</th><th scope="col" class="n">n</th><th scope="col" class="n">recall@1</th><th scope="col" class="n">recall@5</th><th scope="col" class="n">MRR</th></tr>
+      </thead>
+      <tbody>
+        {evalRows.map((r) => (
+          <tr class={r.runner === 'hybrid' ? 'me' : undefined}>
+            <th scope="row"><code>{r.runner}</code> <span>{r.what}</span></th>
+            <td class="n">12</td><td class="n">{r.r1}</td><td class="n">{r.r5}</td><td class="n">{r.mrr}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <p class="fg-pen" aria-hidden="true">ties lexical, on 12 queries</p>
+  </div>
+
+  <ul class="fg-read">
+    <li><b>A smoke test, not a verdict.</b> Twelve queries on one toy repository, five of them vocabulary-gap queries. On a set this small, hybrid ties plain keyword search and doesn&rsquo;t beat the token-overlap baseline. On the five gap queries, hybrid gets 4 right at rank 1 (0.800).</li>
+    <li><b>The CI vectors are a stand-in too.</b> To stay free of keys and downloads, CI embeds with a deterministic token-hashing function, so the dense and hybrid rows measure the plumbing, not the real model.</li>
+    <li><b>Cold indexing is the open problem.</b> Warm queries clear their budget five times over; building the index for that 55,112-line repository on a CPU doesn&rsquo;t yet finish inside its 15 minutes.</li>
+  </ul>
+</div>
+
+<style>
+  .fg-figs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s7); }
+  .fg-fig { border-top: 2px solid var(--sc-ink); padding-top: var(--s3); }
+  .fg-v { font-size: clamp(3rem, 7vw, 4.75rem); line-height: 1; font-weight: 500; letter-spacing: -.03em; font-variant-numeric: lining-nums; }
+  .fg-v span { font-size: .42em; letter-spacing: 0; margin-left: .1em; }
+  .fg-c { margin-top: var(--s3); font-size: 16.5px; line-height: 1.5; color: var(--sc-ink-2); max-width: 32ch; }
+  .fg-eval { position: relative; margin-top: var(--s7); max-width: 40rem; }
+  .fg-eval table { width: 100%; border-collapse: collapse; font-size: 16px; font-variant-numeric: lining-nums tabular-nums; }
+  .fg-eval caption { text-align: left; font-size: 15px; font-style: italic; color: var(--sc-ink-3); padding-bottom: var(--s2); }
+  .fg-eval th, .fg-eval td { padding: 9px 10px 9px 0; border-bottom: 1px solid var(--sc-rule); text-align: left; }
+  .fg-eval thead th { font-size: 14px; font-weight: 400; font-style: italic; color: var(--sc-ink-3); border-bottom: 2px solid var(--sc-ink); }
+  .fg-eval tbody th { font-weight: 400; }
+  .fg-eval tbody th code { font-family: var(--sc-mono); font-weight: 700; font-size: 14.5px; }
+  .fg-eval tbody th span { color: var(--sc-ink-3); font-size: 14.5px; margin-left: 4px; }
+  .fg-eval .n { text-align: right; }
+  .fg-eval tr.me { background: var(--sc-seal-wash); }
+  .fg-eval tr.me th, .fg-eval tr.me td { border-bottom-color: var(--sc-seal); }
+  .fg-pen { position: absolute; left: calc(100% + 18px); bottom: 2px; width: 150px; font-family: var(--hand); font-size: 25px; line-height: 1; color: var(--sc-pen); transform: rotate(-4deg); }
+  .fg-pen::before { content: ""; position: absolute; left: -20px; top: 8px; width: 16px; height: 2px; background: currentColor; border-radius: 2px; transform: rotate(14deg); }
+  .fg-read { list-style: none; margin: var(--s6) 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s5) var(--s6); }
+  .fg-read li { margin: 0 !important; font-size: 15.5px; line-height: 1.55; color: var(--sc-ink-2); }
+  .fg-read b { display: block; color: var(--sc-ink); font-weight: 600; margin-bottom: 2px; }
+  @media (max-width: 1080px) { .fg-pen { position: static; width: auto; margin-top: var(--s2); transform: rotate(-1.5deg); } .fg-pen::before { display: none; } }
+  @media (max-width: 900px) { .fg-read { grid-template-columns: 1fr; max-width: 40rem; } }
+  @media (max-width: 600px) {
+    .fg-figs { grid-template-columns: 1fr; gap: var(--s5); }
+    .fg-eval tbody th span { display: block; margin-left: 0; font-size: 13.5px; }
+    .fg-eval th, .fg-eval td { padding-right: 6px; }
+  }
+</style>

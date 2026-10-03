@@ -1,0 +1,44 @@
+---
+// A hand scroll for the scroll shell: a strip of panels between two rollers.
+// On wide screens with motion allowed, scrolling down the page moves the strip
+// sideways while it is held in place, and the rollers wind and unwind. On
+// phones, with reduced motion, or without JS, it is a native swipe strip.
+// Usage in an MDX body:
+//   import HandScroll from '../../components/shells/scroll-shell-handscroll.astro';
+//   <HandScroll id="pipeline" title="How a query travels" label="Pipeline stages">
+//     <li class="sc-hs-panel">...</li>
+//   </HandScroll>
+interface Props {
+  /** Heading id, and the section's anchor. */
+  id: string;
+  /** The section heading (becomes a stamped h2). */
+  title: string;
+  /** Accessible name for the strip. */
+  label: string;
+  /** Optional line under the heading. */
+  dek?: string;
+}
+const { id, title, label, dek } = Astro.props;
+---
+
+<section class="sc-hs" data-sc-hs aria-labelledby={id}>
+  <div class="sc-hs-stage">
+    <div class="sc-hs-head">
+      <div>
+        <h2 id={id}>{title}</h2>
+        {dek && <p class="sc-hs-dek">{dek}</p>}
+        <p class="sc-hs-hint"><span class="when-pinned">Keep scrolling: this part unrolls sideways.</span><span class="when-swipe">Swipe or scroll the strip sideways.</span></p>
+      </div>
+      <span class="sc-hs-scale" aria-hidden="true"><i></i></span>
+    </div>
+    <div class="sc-hs-frame">
+      <div class="sc-hs-roller l" aria-hidden="true"><i></i></div>
+      <div class="sc-hs-window" tabindex="0" role="region" aria-label={label}>
+        <ol class="sc-hs-strip">
+          <slot />
+        </ol>
+      </div>
+      <div class="sc-hs-roller r" aria-hidden="true"><i></i></div>
+    </div>
+  </div>
+</section>

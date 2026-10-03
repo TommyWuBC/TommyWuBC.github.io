@@ -14,8 +14,90 @@ links:
   - { label: Repository, href: "https://github.com/TommyWuBC/csearch" }
 role: Sole author
 expansion: scroll
+openLabel: Unroll it and search
 ---
 
-{/* Interactive write-up for the scroll shell. The earlier One Ink version is in git: git show redesign:src/content/projects/csearch.mdx */}
+import SearchDemo from '../../components/demos/csearch/SearchDemo.astro';
+import IndexToy from '../../components/demos/csearch/IndexToy.astro';
+import Figures from '../../components/demos/csearch/Figures.astro';
+import HandScroll from '../../components/shells/scroll-shell-handscroll.astro';
 
-The full write-up is being rebuilt.
+<p class="sc-lede">Code search fails in two opposite ways. Keywords miss synonyms. Embeddings blur exact names. csearch runs both searches and merges them by rank, so each one covers the other&rsquo;s blind spot.</p>
+
+## Ask it something
+
+Type a question, or pick one. The left list is keyword search, the right list is search by meaning, and the middle is what csearch actually returns: the two rankings fused. Hover a row to see where it came from.
+
+<SearchDemo />
+
+## The numbers, and how far to trust them
+
+<Figures />
+
+<HandScroll id="how-it-works" title="How a query travels" label="The pipeline, one stage per panel">
+  <li class="sc-hs-panel">
+    <span class="sc-step">walk</span>
+    <h3>Find the code</h3>
+    <p>Only <code>.py .ts .tsx .js .jsx</code>. It honors <code>.gitignore</code> and always skips <code>node_modules/</code>, <code>dist/</code>, <code>build/</code>, <code>.venv/</code>, lockfiles and minified bundles.</p>
+    <p class="sc-where-code">core/walk.py</p>
+  </li>
+  <li class="sc-hs-panel">
+    <span class="sc-step">chunk</span>
+    <h3>Cut along the syntax tree</h3>
+    <p>Python through the standard library&rsquo;s <code>ast</code>, TypeScript and JavaScript through tree-sitter. One chunk per module, plus one per function, class and method. Long definitions split at 1,500 tokens with 150 of overlap.</p>
+    <p class="sc-where-code">core/chunker/</p>
+  </li>
+  <li class="sc-hs-panel">
+    <span class="sc-step">index, twice</span>
+    <h3>One file, five tables</h3>
+    <p>Split names, identifiers, docstrings and comments go into an FTS5 table. A 768-d vector per chunk from <code>jina-embeddings-v2-base-code</code> goes into sqlite-vec.</p>
+    <pre>{`.csearch/csearch.db
+  files       path, sha-256
+  chunks      spans, text
+  chunks_fts  keywords
+  vectors     768-d
+  meta        model, dims`}</pre>
+    <p class="sc-where-code">core/index/store.py</p>
+  </li>
+  <li class="sc-hs-panel">
+    <span class="sc-step">embed</span>
+    <h3>Batch by length</h3>
+    <p>The first big run grouped long 8k-token chunks into one batch and tried to allocate about 103 GB. Now short texts go 16 at a time, medium 4, long ones alone, and results are put back in order.</p>
+    <p class="sc-where-code">core/index/embedder.py</p>
+  </li>
+  <li class="sc-hs-panel">
+    <span class="sc-step">query</span>
+    <h3>Ask both legs</h3>
+    <p>BM25 returns its top 40 and the vector index its nearest 40. Queries drop stopwords and are OR-joined, so filler words can&rsquo;t zero out a result.</p>
+    <pre>{`"where is the checkout form"
+  → checkout OR form`}</pre>
+    <p class="sc-where-code">core/search/retrieve.py</p>
+  </li>
+  <li class="sc-hs-panel">
+    <span class="sc-step">fuse</span>
+    <h3>Rank, not score</h3>
+    <p>BM25 scores and cosine distances live on unrelated scales, so adding them means nothing. Reciprocal rank fusion only asks how high each chunk ranked, and rewards chunks that rank well in both.</p>
+    <pre>{`1/(60+1) + 1/(60+1) = 0.0328`}</pre>
+    <p class="sc-where-code">core/search/fuse.py</p>
+  </li>
+  <li class="sc-hs-panel">
+    <span class="sc-step">answer</span>
+    <h3>A file and a line range</h3>
+    <p>One <code>file:start-end</code> per line by default. <code>--json</code> returns a frozen, versioned schema with the span, symbol, score, which legs matched and an editor command to open it.</p>
+    <pre>{`$ csearch query "checkout form" -n 1
+checkout.py:6-15`}</pre>
+    <p class="sc-where-code">core/schema.py</p>
+  </li>
+</HandScroll>
+
+## Re-indexing skips what hasn&rsquo;t changed
+
+Every file is hashed with SHA-256. Unchanged files are skipped, changed files have their chunk, keyword and vector rows replaced, and deleted files are removed. The index also records which embedding model built it, and refuses a query from a different one.
+
+<IndexToy />
+
+## What it doesn&rsquo;t do yet
+
+- Python, TypeScript and JavaScript only.
+- Cold indexing a large repository on a CPU is still slower than its own 15-minute budget. Re-indexing is cheap, because unchanged files are skipped by hash.
+- Retrieval quality isn&rsquo;t proven against a baseline on real repositories. The eval harness exists so that claim can&rsquo;t be made without evidence. The next piece of work is the labeled set it needs: at least 30 queries across at least 2 real repositories, 10 of them vocabulary-gap queries.
