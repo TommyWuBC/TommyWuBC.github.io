@@ -1,0 +1,33 @@
+---
+// Compounding error: if each step is right 85.2% of the time, how often is a whole
+// trip right? Drag the trip length. Back-of-envelope, as in the paper (0.85^14 is about 10%).
+import './vn.css';
+const p = 0.852, n0 = 14;
+const pct = (n: number) => Math.round(Math.pow(p, n) * 1000) / 10;
+---
+
+<div class="vn-comp" data-compound data-p={p}>
+  <p class="eq">Each step right <b>85.2%</b> of the time. A trip of <b data-n>{n0}</b> steps with no mistake: <b data-eq>0.852<sup>{n0}</sup></b></p>
+  <div class="steps" aria-hidden="true" data-steps>{Array.from({ length: n0 }, () => <i />)}</div>
+  <label class="js-only">Steps in the trip <input type="range" min="4" max="30" step="1" value={n0} data-range /></label>
+  <p class="out" aria-live="polite"><b data-out>{pct(n0)}%</b><span>of trips come out clean</span></p>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-compound]').forEach((box) => {
+    const p = Number(box.dataset.p);
+    const range = box.querySelector<HTMLInputElement>('[data-range]');
+    if (!range) return;
+    const set = (s: string, html: string) => {
+      const el = box.querySelector(s);
+      if (el) el.innerHTML = html;
+    };
+    range.addEventListener('input', () => {
+      const n = Number(range.value);
+      set('[data-n]', String(n));
+      set('[data-eq]', `0.852<sup>${n}</sup>`);
+      set('[data-steps]', '<i></i>'.repeat(n));
+      set('[data-out]', `${Math.round(Math.pow(p, n) * 1000) / 10}%`);
+    });
+  });
+</script>

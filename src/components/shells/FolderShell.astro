@@ -1,25 +1,132 @@
 ---
 // Folder shell: how a project with `expansion: folder` opens from the notebook.
-// PLACEHOLDER: a plain paper panel. Replace with the real folder scene.
-// Contract: receives the project entry; renders the MDX body (default slot)
-// inside the scene, plus a way back to the notebook (/#<project id>).
+// A manila folder lies open on a linoleum desk. The left flap holds the cover
+// sheet (title, dek, role, when, stack, links, and the sheets in this folder);
+// the right flap holds the project's sheets, one <FolderSheet> per section of the
+// MDX body. Divider tabs down the right edge mark the sheet you're reading.
+// On load the cover swings open (skipped under reduced motion).
+// Contract: receives the project entry; renders the MDX body (default slot).
 import type { CollectionEntry } from 'astro:content';
+import '@fontsource-variable/schibsted-grotesk/wght.css';
+import './folder-shell.css';
 
 interface Props {
   project: CollectionEntry<'projects'>;
 }
 const { project } = Astro.props;
 const d = project.data;
+
+// Render the body once, find its sheets, and number them.
+const html = await Astro.slots.render('default');
+const unescape = (s: string) =>
+  s.replace(/&quot;|&#34;/g, '"').replace(/&#39;|&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+const sheets: { id: string; title: string; tab: string }[] = [...html.matchAll(/data-sheet="([^"]*)"/g)].map((m) =>
+  JSON.parse(unescape(m[1])),
+);
+let k = 0;
+const body = html.replace(/<span class="fd-no"><\/span>/g, () => `<span class="fd-no">${++k} of ${sheets.length}</span>`);
+const label = [d.context, d.when].filter(Boolean).join(', ');
 ---
 
-<div class="shell-stub" data-shell="folder">
-  <p><a class="pen-link" href={`/#${project.id}`}>Back to the notebook</a></p>
-  <h1>{d.title}</h1>
-  <p set:html={d.dek} />
-  <slot />
+<script is:inline>
+  // Arriving at a sheet by link: skip the opening, the cover isn't in view.
+  if (location.hash) document.documentElement.classList.add('fd-no-open');
+</script>
+
+<div class="fd" data-folder>
+  <div class="fd-folder">
+    <div class="fd-flap fd-flap-l">
+      <div class="fd-face">
+        <span class="fd-label">{label}</span>
+        <article class="fd-cover" aria-labelledby="fd-title">
+          <svg class="fd-clip" viewBox="0 0 22 70" aria-hidden="true"
+            ><path d="M7 64V12a6 6 0 0 1 12 0v44a4 4 0 0 1-8 0V18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            ></path></svg
+          >
+          <a class="fd-back pen-link" href={`/#${project.id}`}
+            ><svg viewBox="0 0 26 10" aria-hidden="true"
+              ><path d="M1 5.5c7-1 14-.6 22-.4M19 1.5l4.5 3.6-4.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              ></path></svg
+            >Back to the notebook</a
+          >
+          <h1 id="fd-title">{d.title}</h1>
+          <p class="fd-dek" set:html={d.dek} />
+          <dl class="fd-meta">
+            {d.role && <div><dt>Role</dt><dd>{d.role}</dd></div>}
+            <div><dt>When</dt><dd>{d.when}</dd></div>
+            {
+              d.stack.length > 0 && (
+                <div>
+                  <dt>Stack</dt>
+                  <dd>
+                    {d.stack.map((t, i) => (
+                      <>
+                        <span class="nw">{t}</span>
+                        {i < d.stack.length - 1 && ', '}
+                      </>
+                    ))}
+                  </dd>
+                </div>
+              )
+            }
+            {
+              d.links.length > 0 && (
+                <div>
+                  <dt>Read</dt>
+                  <dd class="fd-links">
+                    {d.links.map((l) => (
+                      <a class="pen-link" href={l.href}>{l.label}</a>
+                    ))}
+                  </dd>
+                </div>
+              )
+            }
+          </dl>
+          {d.note && <p class="fd-note">{d.note}</p>}
+          {
+            sheets.length > 1 && (
+              <nav class="fd-contents" aria-label="Sheets in this folder">
+                <p>In this folder</p>
+                <ol>
+                  {sheets.map((s, i) => (
+                    <li>
+                      <a href={`#${s.id}`} data-fd-link={s.id}>
+                        <span>{i + 1}</span>
+                        {s.title}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            )
+          }
+        </article>
+      </div>
+      <div class="fd-outside" aria-hidden="true"><span>{d.title}</span></div>
+    </div>
+
+    {
+      sheets.length > 1 && (
+        <nav class="fd-tabs" aria-label="Sheet tabs">
+          <ol>
+            {sheets.map((s) => (
+              <li>
+                <a href={`#${s.id}`} data-fd-link={s.id} data-fd-tab>
+                  {s.tab}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+
+    <div class="fd-flap fd-flap-r">
+      <div class="fd-sheets"><Fragment set:html={body} /></div>
+    </div>
+  </div>
 </div>
 
-<style>
-  .shell-stub { max-width: 760px; margin: 24px auto; padding: 40px; background: var(--paper); color: var(--ink); border-radius: 4px; }
-  h1 { font-size: 40px; margin: 12px 0; }
-</style>
+<script>
+  import './folder-shell.js';
+</script>

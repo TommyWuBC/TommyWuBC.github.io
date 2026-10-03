@@ -1,0 +1,73 @@
+---
+// Success rate by layout family, in pen. chart.js redraws it at the card's real
+// width with a crosshair and a sticky-note readout; this static copy is the no-JS view.
+import './vn.css';
+
+const spec = {
+  label:
+    'Success rate by layout family. Domain-randomized PPO: 100%, 98.4%, 97.8%. Single-env PPO: 95.2%, 20%, 10%. BC plus DAgger: 18%, 6%, 10%. The BFS planner and GPT-4o-mini solved every sampled episode.',
+  categories: [
+    ['S9N1', '1 river', '42'],
+    ['S9N2', '2 rivers', '249'],
+    ['S9N3', '3 rivers', '276'],
+  ],
+  series: [
+    { key: 'many', name: 'Randomized PPO', label: 'randomized', values: [100, 98.4, 97.8] },
+    { key: 'one', name: 'Single-env PPO', label: 'single-env', values: [95.2, 20, 10] },
+    { key: 'bc', name: 'BC + DAgger', label: 'BC + DAgger', values: [18, 6, 10] },
+  ],
+  extra: [
+    { name: 'GPT-4o-mini', values: ['20/20', '20/20', '20/20'] },
+    { name: 'BFS planner', values: ['50/50', '50/50', '50/50'] },
+  ],
+};
+const W = 480, H = 300, m = { t: 34, r: 100, b: 54, l: 42 };
+const pw = W - m.l - m.r, ph = H - m.t - m.b;
+const xs = (i: number) => m.l + 26 + (i * (pw - 52)) / 2;
+const ys = (v: number) => m.t + ph - (v / 100) * ph;
+---
+
+<figure class="vn-card vn-chart" data-pen-chart aria-labelledby="vn-chart-cap">
+  <p class="vn-card-k hand" id="vn-chart-cap">Success rate as the rooms get harder</p>
+  <ul class="vn-legend" aria-label="Legend">
+    <li><i class="sw many"></i>Domain-randomized PPO</li>
+    <li><i class="sw one"></i>Single-env PPO</li>
+    <li><i class="sw bc"></i>BC + DAgger</li>
+    <li><i class="sw ceil"></i>BFS planner and GPT-4o-mini</li>
+  </ul>
+  <script type="application/json" set:html={JSON.stringify(spec)} />
+  <div class="vn-chart-svg">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={spec.label}>
+      <g class="c-grid">
+        {[0, 25, 50, 75, 100].map((t) => (
+          <>
+            <line x1={m.l} x2={W - m.r} y1={ys(t)} y2={ys(t)} class={t === 0 ? 'base' : ''} />
+            <text x={m.l - 8} y={ys(t) + 4} text-anchor="end" class="c-axis">{t}%</text>
+          </>
+        ))}
+      </g>
+      {spec.categories.map((c, i) => (
+        <>
+          <text x={xs(i)} y={H - m.b + 22} text-anchor="middle" class="c-cat">{c[0]}</text>
+          <text x={xs(i)} y={H - m.b + 40} text-anchor="middle" class="c-axis">{c[1]}</text>
+        </>
+      ))}
+      <line x1={m.l} x2={W - m.r} y1={ys(100) - 7} y2={ys(100) - 7} class="c-ceil" />
+      {spec.series.map((s) => (
+        <>
+          <polyline class={`c-line ${s.key}`} points={s.values.map((v, i) => `${xs(i)},${ys(v)}`).join(' ')} />
+          {s.values.map((v, i) => <circle cx={xs(i)} cy={ys(v)} r="5.5" class={`c-dot ${s.key}`} />)}
+          <text x={xs(2) + 14} y={ys(s.values[2]) + (s.key === 'bc' ? 22 : s.key === 'one' ? -10 : 6)} class={`c-lbl ${s.key}`}>{s.label}</text>
+        </>
+      ))}
+    </svg>
+  </div>
+  <figcaption>
+    <span class="js-only">Hover, tap, or focus the chart and use the arrow keys to read each family. </span>The two PPO lines
+    are not the same kind of test: single-env PPO never saw two or three rivers, while randomized PPO trained on all three.
+  </figcaption>
+</figure>
+
+<script>
+  import './chart.js';
+</script>

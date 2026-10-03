@@ -1,0 +1,32 @@
+---
+// The three layout families, one sample room each, sketched in pen.
+import './vn.css';
+import { S, layoutFromSeed, demoSeed } from './model.js';
+
+const c = 12;
+const rooms = [1, 2, 3].map((n) => ({ n, L: layoutFromSeed(n, demoSeed(n, 40 + n * 17)) }));
+const names: Record<number, string> = { 1: 'one river', 2: 'two rivers', 3: 'three rivers' };
+---
+
+<ul class="vn-rooms" aria-label="One sample room from each family">
+  {rooms.map(({ n, L }) => (
+    <li>
+      <svg viewBox={`${c - 2} ${c - 2} ${(S - 2) * c + 4} ${(S - 2) * c + 4}`} aria-hidden="true">
+        {Array.from({ length: S - 3 }, (_, i) => i + 2).map((i) => (
+          <>
+            <line x1={i * c} y1={c} x2={i * c} y2={(S - 1) * c} class="rm-grid" />
+            <line x1={c} y1={i * c} x2={(S - 1) * c} y2={i * c} class="rm-grid" />
+          </>
+        ))}
+        {L.g.flatMap((row: string[], y: number) =>
+          row.map((t: string, x: number) => (t === 'L' ? <rect x={x * c} y={y * c} width={c} height={c} class="rm-lava" /> : null)),
+        )}
+        <rect x={(S - 2) * c + 1.5} y={(S - 2) * c + 1.5} width={c - 3} height={c - 3} class="rm-goal" />
+        <path d={`M${c + 3} ${c + 2.5} L${c + 9.5} ${c + 6} L${c + 3} ${c + 9.5} Z`} class="rm-start" />
+        <rect x={c} y={c} width={(S - 2) * c} height={(S - 2) * c} class="rm-wall" />
+      </svg>
+      <b>S9N{n}</b>
+      <span>{names[n]}</span>
+    </li>
+  ))}
+</ul>

@@ -1,0 +1,40 @@
+---
+// One sheet in a folder. Use it in a project's MDX body, one per section:
+//   <FolderSheet id="setup" title="Setup" tab="Setup">...</FolderSheet>
+// FolderShell reads every sheet's id/title/tab to build the cover's contents
+// list and the divider tabs, and fills in "Sheet 2 of 6". Styles: folder-shell.css.
+interface Props {
+  /** Anchor id; the contents list and tabs link to #id. */
+  id: string;
+  title: string;
+  /** Short label for the divider tab. Defaults to the title. */
+  tab?: string;
+  /** Handwritten note above the title, in pen. */
+  note?: string;
+  /** One or two sentences under the title. */
+  lede?: string;
+  /** A black binder clip at the top (the first sheet usually has one). */
+  clip?: boolean;
+}
+const { id, title, tab = title, note, lede, clip = false } = Astro.props;
+const meta = JSON.stringify({ id, title, tab });
+---
+
+<section class="fd-sheet" id={id} data-sheet={meta} aria-labelledby={`${id}-h`}>
+  {
+    clip && (
+      <svg class="fd-binder" viewBox="0 0 64 40" aria-hidden="true">
+        <path d="M8 18h48l-4 20H12z" fill="#1f2426" />
+        <path d="M14 18 20 2M50 18 44 2" fill="none" stroke="#9aa1a3" stroke-width="2.4" stroke-linecap="round" />
+        <path d="M8 18h48" stroke="#3a4244" stroke-width="2" />
+      </svg>
+    )
+  }
+  <header class="fd-sheet-head">
+    <p class="fd-sheet-no">Sheet <span class="fd-no"></span></p>
+    {note && <p class="fd-sheet-note">{note}</p>}
+    <h2 id={`${id}-h`}>{title}</h2>
+    {lede && <p class="fd-sheet-lede" set:html={lede} />}
+  </header>
+  <slot />
+</section>

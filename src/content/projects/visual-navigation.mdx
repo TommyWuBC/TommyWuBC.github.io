@@ -15,10 +15,252 @@ stack: [Python, PyTorch, Stable-Baselines3, MiniGrid, GPT-4o-mini]
 links:
   - { label: "Paper, 17 pages (PDF)", href: "https://github.com/TommyWuBC/visual-navigation-rl-vlm/blob/main/paper/paper_final.pdf" }
   - { label: Repository, href: "https://github.com/TommyWuBC/visual-navigation-rl-vlm" }
+note: "My first PAIR Lab project, one part of the work there."
 role: Undergraduate research assistant
 expansion: folder
 ---
 
-{/* Interactive write-up for the folder shell. The earlier One Ink version is in git: git show redesign:src/content/projects/visual-navigation.mdx */}
+import FolderSheet from '../../components/shells/FolderSheet.astro';
+import LavaRace from '../../components/demos/visual-navigation/LavaRace.astro';
+import ResultsChart from '../../components/demos/visual-navigation/ResultsChart.astro';
+import Rooms from '../../components/demos/visual-navigation/Rooms.astro';
+import Row from '../../components/demos/visual-navigation/Row.astro';
+import Card from '../../components/demos/visual-navigation/Card.astro';
+import Bars from '../../components/demos/visual-navigation/Bars.astro';
+import Compound from '../../components/demos/visual-navigation/Compound.astro';
 
-The full write-up is being rebuilt.
+<FolderSheet id="race" title="Two agents, one lava field" tab="The race" note="Fig. 1, run it yourself" clip
+  lede="Did the agent learn to find the gap, or did it learn a route? Change the room and you find out. Press R to move the gaps.">
+  <LavaRace />
+</FolderSheet>
+
+<FolderSheet id="setup" title="Setup" tab="Setup">
+<Row>
+<div class="vn-prose">
+
+<p class="vn-lede">MiniGrid&#8217;s LavaCrossing puts an agent in a 9&#215;9 room cut by rivers of lava. Each river has exactly one gap. The agent can turn left, turn right or step forward, and it has to reach the green square without touching lava.</p>
+
+The families differ in how many rivers there are: S9N1 has one, S9N2 two, S9N3 three. Within a family, where the rivers run and where the gaps sit changes every episode.
+
+An agent that learned to *look for the gap* should carry over to a new room. One that learned a route won&#8217;t. I put five approaches through that test.
+
+<Rooms />
+
+</div>
+<Card k="Five ways across" cap="Only single-env PPO faces rooms it never trained on. The randomized agent trained on all three families, so its two- and three-river scores are in-distribution.">
+<div class="vn-table-wrap">
+<table class="vn-table">
+<tbody>
+<tr><th scope="row"><svg class="vn-key" viewBox="-12 -12 24 24" aria-hidden="true"><path class="k-one" d="M10 0 L-7 -7.5 L-7 7.5 Z" /></svg>Single-env PPO<small>Reinforcement learning in one-river rooms only, full 9&#215;9 view, CNN policy.</small></th></tr>
+<tr><th scope="row"><svg class="vn-key" viewBox="-12 -12 24 24" aria-hidden="true"><path class="k-many" d="M10 0 L-7 -7.5 L-7 7.5 Z" /></svg>Domain-randomized PPO<small>The same agent, with one, two or three rivers picked at random each episode. 40M steps.</small></th></tr>
+<tr><th scope="row">BC + DAgger<small>Copies 1,500 demonstrations from the planner, then three rounds of the planner correcting the states it actually reaches.</small></th></tr>
+<tr><th scope="row">Zero-shot GPT-4o-mini<small>No training on the task. Sees a rendered image of the room each step and picks a move.</small></th></tr>
+<tr><th scope="row">BFS planner<small>Not learned. The shortest path on the true grid: the ceiling.</small></th></tr>
+</tbody>
+</table>
+</div>
+</Card>
+</Row>
+</FolderSheet>
+
+<FolderSheet id="results" title="Results" tab="Results"
+  lede="Train in one kind of room and success collapses when a river is added. Train across all three and it barely moves.">
+<Row wide>
+<ResultsChart />
+</Row>
+<Row wide>
+<Card k="Every number, and how it was counted" r="-0.3deg">
+<div class="vn-table-wrap">
+<table class="vn-table">
+<caption>Per-pattern: every distinct layout found by sampling, each replayed 20 times. Episodes: random draws. A 20/20 means a 95% confidence interval of 83.9% to 100%, not a guarantee. The two protocols aren&#8217;t a head-to-head; the paper explains why.</caption>
+<thead><tr><th scope="col">Approach</th><th scope="col" class="num">S9N1</th><th scope="col" class="num">S9N2</th><th scope="col" class="num">S9N3</th></tr></thead>
+<tbody>
+<tr><th scope="row">Single-env PPO<small>42 layouts per-pattern, then 50 episodes each</small></th><td class="num">95.2%</td><td class="num bad">20%</td><td class="num bad">10%</td></tr>
+<tr><th scope="row">Domain-randomized PPO<small>Per-pattern over 42, 249 and 276 layouts, 40M steps</small></th><td class="num">100%</td><td class="num">98.4%</td><td class="num">97.8%</td></tr>
+<tr><th scope="row">BC + DAgger<small>50 episodes each</small></th><td class="num bad">18%</td><td class="num bad">6%</td><td class="num bad">10%</td></tr>
+<tr><th scope="row">Zero-shot GPT-4o-mini<small>20 episodes each</small></th><td class="num">20/20</td><td class="num">20/20</td><td class="num">20/20</td></tr>
+<tr><th scope="row">BFS planner<small>50 episodes each</small></th><td class="num">50/50</td><td class="num">50/50</td><td class="num">50/50</td></tr>
+</tbody>
+</table>
+</div>
+</Card>
+</Row>
+</FolderSheet>
+
+<FolderSheet id="findings" title="Findings" tab="Findings">
+<Row>
+<div class="vn-prose">
+
+<p class="vn-fno">finding 1</p>
+
+### Memorizing looks like learning until the map moves
+
+Single-env PPO solved 40 of the 42 one-river layouts, 95.2%. By the usual measure it was done. Add a second river and it succeeded 20% of the time. A third, 10%. Its wins took 13 to 17 steps, on rooms that happened to look like home.
+
+The same algorithm trained across all three families held at <mark>100%, 98.4% and 97.8%</mark> after 40M steps. Same network, same reward. What changed was what it saw. The failure was about training coverage, not reinforcement learning as such.
+
+</div>
+<Card k="How it failed in new rooms" cap="Single-env PPO on two and three rivers, rough shares of its failures from the paper. Fast: lava within 15 steps. Out of time: wandered until the 324-step limit.">
+<Bars groups={[{ bars: [
+  { label: 'Into lava, fast', value: 50, shown: '~50%', tone: 'hot' },
+  { label: 'Ran out of time', value: 50, shown: '~50%', tone: 'quiet' },
+] }]} />
+</Card>
+</Row>
+
+<Row>
+<div class="vn-prose">
+
+<p class="vn-fno">finding 2</p>
+
+### Thinking out loud made the language model worse
+
+Zero-shot, GPT-4o-mini solved 20 of 20 sampled episodes in every family, the same as the planner. Asked to reason step by step in a structured format first, it fell to 85%.
+
+The format makes it restate where the gap is at every step, and it doesn&#8217;t always say the same thing: gap on the left, then gap on the right, on a map that hasn&#8217;t changed. Then it acts on whichever it said last. Gap-position inconsistency went from 4.1% of reasoning steps to 24.3%.
+
+It wasn&#8217;t simply worse at reasoning. Direction confusion fell from 29.4% to 10.6%, and the share of coherent steps barely moved. It traded one mistake for a more fatal one.
+
+These rates come from an LLM judge (GPT-4o-mini grading the traces) that hasn&#8217;t been validated against human labels yet. Read them as a likely mechanism, not a proof.
+
+</div>
+<Card k={'<s class="tried">&#8220;Let&#8217;s think step by step.&#8221;</s>'} cap="GPT-4o-mini with the full 9&#215;9 view. Step shares from the LLM judge.">
+<Bars groups={[
+  { title: 'Success rate', bars: [
+    { label: 'Direct answer', value: 100, shown: '100%' },
+    { label: 'Step by step', value: 85, shown: '85%', tone: 'hot' },
+  ] },
+  { title: 'Gap-position inconsistency', note: '(lower is better)', bars: [
+    { label: 'Direct answer', value: 4.1, shown: '4.1%' },
+    { label: 'Step by step', value: 24.3, shown: '24.3%', tone: 'hot' },
+  ] },
+  { title: 'Direction confusion', note: '(lower is better)', bars: [
+    { label: 'Direct answer', value: 29.4, shown: '29.4%', tone: 'hot' },
+    { label: 'Step by step', value: 10.6, shown: '10.6%' },
+  ] },
+]} />
+</Card>
+</Row>
+
+<Row>
+<div class="vn-prose">
+
+<p class="vn-fno">finding 3</p>
+
+### Right steps, failed trips
+
+Behavior cloning copied a perfect planner, and DAgger added three rounds of corrections on the states the agent actually reached. It picked the planner&#8217;s next move 85.2% of the time and finished 18% of its one-river trips.
+
+That&#8217;s compounding error. One wrong turn puts the agent somewhere the demonstrations never went, and the next step is more likely to be wrong too. Fourteen steps at 85% each leaves about one trip in ten clean. Drag the slider to see how fast it falls.
+
+</div>
+<Card k="BC + DAgger, measured two ways" cap="The slider is back-of-envelope, as in the paper: it treats each step as an independent coin flip.">
+<Bars groups={[{ bars: [
+  { label: 'Steps right', value: 85.2, shown: '85.2%' },
+  { label: 'Trips finished', value: 18, shown: '18%', tone: 'hot' },
+] }]} />
+<Compound />
+</Card>
+</Row>
+</FolderSheet>
+
+<FolderSheet id="engineering" title="Engineering" tab="Engineering">
+<Row>
+<div class="vn-prose">
+
+### Eight times the frames per second
+
+40M steps is a lot of waiting at 200 frames per second. I profiled before scaling up and found three causes:
+
+<ul class="vn-ticks">
+<li>The reward wrapper rendered every observation a second time. It now reads the agent&#8217;s position directly.</li>
+<li>One environment left the GPU idle while the CPU stepped it. Now 8 run in parallel.</li>
+<li>A CNN on a 7&#215;7 input cost more in GPU overhead than it saved, so that run moved to an MLP on the CPU.</li>
+</ul>
+
+Same hyperparameters, about 1,600 frames per second.
+
+</div>
+<Card k="Training throughput, frames per second">
+<Bars groups={[{ bars: [
+  { label: 'Before', value: 12.5, shown: '~200', tone: 'quiet' },
+  { label: 'After', value: 100, shown: '~1,600', tone: 'solid' },
+] }]} />
+<p class="vn-circled" aria-hidden="true">8&#215;</p>
+</Card>
+</Row>
+
+<Row>
+<div class="vn-prose">
+
+### A reward that teaches the right thing
+
+Getting single-env PPO to 95.2% took nine training runs. Most of the work was the reward: each fix exposed a new way to score points without reaching the goal. The list on the right has the runs that taught me something.
+
+The last step was the view and the network together. A full 9&#215;9 view only helped with a CNN:
+
+<table class="vn-2x2">
+<caption class="sr-only">Single-env PPO success on one-river layouts, by view and policy network</caption>
+<thead><tr><td></td><th scope="col">7&#215;7 view</th><th scope="col">full view</th></tr></thead>
+<tbody>
+<tr><th scope="row">MLP</th><td>47.6%</td><td>29.3%</td></tr>
+<tr><th scope="row">CNN</th><td>45.3%</td><td class="win">95.2%</td></tr>
+</tbody>
+</table>
+
+</div>
+<Card k="Nine runs, the ones that taught something" r="-0.5deg">
+<ol class="vn-runs">
+<li><span class="rn">run 2</span><span>A bonus for each new cell. Training reward climbed to 0.649 while evaluation fell to 0.123: it farmed cells instead of finishing.</span></li>
+<li><span class="rn">run 6</span><span>Reward for closing straight-line distance. The straight line crosses lava, so it froze at the river&#8217;s edge.</span></li>
+<li><span class="rn">run 7</span><span>Distance measured by BFS around the lava. 47.6% with the 7&#215;7 view.</span></li>
+<li class="kept"><span class="rn">run 8</span><span>Full view and a CNN: 95.2%, 40 of 42 layouts. Kept.</span></li>
+<li><span class="rn">run 9</span><span>A penalty for revisiting cells. It settled into a fixed loop that minimized penalties.</span></li>
+</ol>
+</Card>
+</Row>
+
+<Row>
+<div class="vn-prose">
+
+### Reading the reasoning, at scale
+
+Success rates say whether the language model got there, not how. So I built an LLM-as-judge pipeline: one call per episode, every reasoning step sorted into one of five categories. It classified <mark>1,671 steps across 40 episodes</mark>, 591 answering directly and 1,080 with chain-of-thought. The CoT finding comes from there.
+
+The judge is the same model as the agent, which is why that finding carries a caveat. A small hand-labeled check is the obvious next step.
+
+</div>
+<Card k="The judge&#8217;s five categories">
+<ul class="vn-cats">
+<li><code>gap_position_inconsistency</code><span>Puts the gap somewhere the step before didn&#8217;t, on the same map.</span></li>
+<li><code>direction_confusion</code><span>Misreads which way it&#8217;s facing.</span></li>
+<li><code>goal_hallucination</code><span>Mentions a goal or feature the rest of the trace contradicts.</span></li>
+<li><code>spatial_commitment_failure</code><span>States a plan, then acts against it in the same step.</span></li>
+<li><code>correct</code><span>Coherent with the steps around it.</span></li>
+</ul>
+</Card>
+</Row>
+</FolderSheet>
+
+<FolderSheet id="limits" title="What it doesn&#8217;t show" tab="Caveats">
+<Row>
+<div class="vn-prose">
+
+<ul class="vn-caveats">
+<li>A small, static grid you can see all of, with a goal you can say in one sentence. That favors the language model. A partial view, moving parts or long horizons could change the ranking.</li>
+<li>Every RL number is one training seed.</li>
+<li>Only single-env PPO was tested on rooms it never saw. Randomized PPO trained on all three families.</li>
+<li>The language model ran 20 episodes per family. 20 of 20 means somewhere between 83.9% and 100%.</li>
+<li>Randomized PPO&#8217;s three-river score covers 276 of the 313 layouts found; the rarest couldn&#8217;t be reproduced in 20,000 tries.</li>
+<li>The chain-of-thought mechanism rests on a judge that hasn&#8217;t been checked against people.</li>
+</ul>
+
+These are findings about this setting, not a verdict on reinforcement learning against language models. It&#8217;s also one project: the first thing I built at PAIR Lab, not the whole of my work there. More of it will follow.
+
+</div>
+<Card k="Read the whole thing" cap="The paper has the method, every number here with its setup, the prompt ablation and the cost comparison.">
+<p class="vn-links"><a class="btn" href="https://github.com/TommyWuBC/visual-navigation-rl-vlm/blob/main/paper/paper_final.pdf">Paper, 17 pages (PDF)</a><a class="btn quiet" href="https://github.com/TommyWuBC/visual-navigation-rl-vlm">Code on GitHub</a></p>
+<p class="vn-back-row"><a class="vn-back pen-link" href="/#visual-navigation">back to the notebook</a></p>
+</Card>
+</Row>
+</FolderSheet>

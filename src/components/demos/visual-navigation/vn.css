@@ -1,0 +1,281 @@
+/* Visual navigation: the notebook's lab-page look (graph paper, pen, pencil, tape),
+   used inside the folder's sheets. Global tokens come from src/notebook/css/base.css.
+   Layout reacts to the sheet's width (container "sheet"), not the window. */
+
+/* ---------- rows: prose beside a taped card ---------- */
+.vn-row { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); column-gap: 52px; row-gap: 28px; align-items: start; }
+.vn-row + .vn-row { margin-top: 56px; }
+.vn-row.wide { grid-template-columns: minmax(0, 1fr); }
+.vn-prose { min-width: 0; max-width: 62ch; }
+.vn-prose > * + * { margin-top: 12px; }
+.vn-prose h3 { font-size: 25px; line-height: 30px; letter-spacing: -0.01em; font-variation-settings: "opsz" 48; margin-bottom: 4px; }
+.vn-prose h3 + p { margin-top: 8px; }
+.vn-prose ul { padding-left: 0; list-style: none; }
+.vn-fno { font-family: var(--hand); font-size: 24px; line-height: 22px; color: var(--pen); }
+.vn-prose .vn-fno + h3 { margin-top: 2px; }
+.vn-prose em { font-style: italic; }
+.vn-prose code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .86em; background: var(--pen-soft); padding: 1px 4px; border-radius: 3px; }
+.vn-lede { font-size: 19px; line-height: 29px; }
+
+/* ---------- pasted things ---------- */
+.vn-paste, .vn-card {
+  position: relative; background: var(--card); color: var(--ink);
+  box-shadow: 0 1px 2px rgba(0,0,0,.14), 0 18px 30px -18px rgba(0,0,0,.45);
+}
+.vn-card { padding: 22px 24px 20px; transform: rotate(var(--r, .6deg)); margin: 8px 0 0; min-width: 0; }
+.vn-row:nth-of-type(even) .vn-card { --r: -.5deg; }
+.vn-card::before { content: ""; position: absolute; left: calc(50% - 40px); top: -12px; width: 80px; height: 22px; transform: rotate(-3deg);
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.18) 0 3px, transparent 3px 9px), var(--tape);
+  clip-path: polygon(0 8%, 8% 0, 16% 10%, 26% 0, 36% 9%, 48% 0, 60% 8%, 72% 0, 84% 9%, 100% 0, 100% 92%, 90% 100%, 78% 91%, 64% 100%, 50% 92%, 36% 100%, 22% 91%, 10% 100%, 0 90%); }
+.vn-card-k { font-family: var(--hand); font-size: 26px; line-height: 27px; color: var(--pen); margin-bottom: 12px; }
+.vn-card figcaption, .vn-card .vn-cap { margin-top: 14px; font-size: 14.5px; line-height: 21px; font-style: italic; color: var(--ink-3); }
+.vn-card-k s.tried { color: var(--ink-2); }
+.vn-card-k s.tried::before { display: none; }
+.vn-card-k s.tried::after { background: var(--lava); height: 2.4px; }
+
+/* ---------- Fig. 1: the race ---------- */
+.vn-race { padding: 28px 30px 22px; transform: rotate(-0.35deg); margin: 6px 0 0; }
+.vn-race-grid { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); gap: 34px; align-items: start; }
+.vn-board-wrap { position: relative; cursor: pointer; border-radius: 2px; }
+.vn-field { display: block; width: 100%; height: auto; aspect-ratio: 1; }
+.vn-status { margin-top: 10px; min-height: 44px; font-size: 14.5px; line-height: 22px; color: var(--ink-3); font-style: italic; }
+.vn-intro { color: var(--ink-2); font-size: 16.5px; line-height: 25px; }
+.vn-agents { list-style: none; margin-top: 14px; padding: 0; }
+.vn-agents li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 11px 0; border-top: 1px solid var(--rule); font-size: 15.5px; line-height: 22px; }
+.vn-agents li:last-child { border-bottom: 1px solid var(--rule); }
+.vn-key { width: 22px; height: 22px; margin-top: 1px; overflow: visible; }
+.k-one { fill: var(--card); stroke: var(--ink); stroke-width: 2.4; stroke-linejoin: round; }
+.k-many { fill: var(--pen); stroke: var(--pen); stroke-width: 2; stroke-linejoin: round; }
+.vn-said { display: block; font-family: var(--hand); font-size: 22px; line-height: 23px; color: var(--pen); min-height: 46px; margin-top: 6px; opacity: 0; transform: translateY(4px); transition: opacity .3s, transform .45s var(--spring); }
+.vn-said.shown { opacity: 1; transform: none; }
+.vn-said.bad { color: color-mix(in srgb, var(--lava) 82%, var(--ink)); }
+.js .vn-ctrls.js-only { display: flex !important; }
+.vn-ctrls { flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.vn-ctrls .btn { height: 34px; padding: 0 12px; font-size: 15px; }
+.vn-seg { display: inline-flex; align-items: center; height: 34px; border: 1.5px solid var(--ink); border-radius: 999px; padding: 0 2px 0 13px; gap: 1px; }
+.vn-seg-k { font-size: 15px; margin-right: 5px; color: var(--ink-2); }
+.vn-seg button { width: 30px; height: 28px; border: 0; border-radius: 999px; background: none; cursor: pointer; font-weight: 600; font-size: 15px; transition: background-color .2s, color .2s; }
+.vn-seg button:hover { background: var(--pen-soft); }
+.vn-seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.vn-believe {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 36px; padding: 6px 12px; border-radius: 6px; cursor: pointer; text-align: left;
+  font-size: 15px; line-height: 20px; color: color-mix(in srgb, var(--lava) 82%, var(--ink)); background: transparent;
+  border: 1.5px dashed color-mix(in srgb, var(--lava) 60%, transparent);
+  transition: background-color .2s, border-color .2s;
+}
+.vn-believe:hover { background: color-mix(in srgb, var(--lava) 8%, transparent); }
+.vn-believe[aria-pressed="true"] { border-style: solid; background: color-mix(in srgb, var(--lava) 10%, transparent); }
+.vn-believe kbd, .vn-ctrls kbd { font-size: 12px; border-radius: 4px; border: 1px solid currentColor; padding: 1px 5px; font-family: var(--print); opacity: .7; }
+.vn-tally { width: 100%; margin-top: 16px; border-collapse: collapse; font-size: 15px; line-height: 22px; }
+.vn-tally th, .vn-tally td { text-align: left; padding: 8px 8px 8px 0; border-top: 1px solid var(--rule); vertical-align: middle; font-weight: 400; }
+.vn-tally thead th { font-family: var(--hand); font-size: 21px; color: var(--ink-3); border-top: 0; padding-bottom: 2px; }
+.vn-tally tbody th { font-weight: 600; white-space: nowrap; }
+.vn-tally tbody th .vn-key { width: 16px; height: 16px; vertical-align: -3px; margin-right: 8px; }
+.vn-tally .num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
+.vn-tally td[data-paper] { font-weight: 600; }
+.t-none { color: var(--ink-3); font-style: italic; }
+.vn-tally .marks { display: inline-flex; gap: 6px; vertical-align: middle; margin-right: 8px; flex-wrap: wrap; }
+.vn-tally .marks svg { height: 18px; width: auto; overflow: visible; }
+.vn-tally .marks path { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; }
+.t-txt { color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vn-race-note { margin-top: 18px; padding-top: 12px; border-top: 1px dashed var(--rule); font-size: 14.5px; line-height: 22px; color: var(--ink-3); }
+.vn-race-note em { font-style: normal; font-weight: 600; color: var(--ink-2); }
+
+/* field drawing */
+.vn-field .g-lines line { stroke: var(--ink); stroke-opacity: .1; stroke-width: 1; }
+.vn-field .g-wall { fill: #4a4e57; }
+:root[data-theme="dark"] .vn-field .g-wall { fill: #3d424b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .vn-field .g-wall { fill: #3d424b; } }
+.vn-field .g-lava-bg { fill: var(--lava-bg); }
+.vn-field .g-hatch { stroke: var(--lava); stroke-width: 1.7; stroke-linecap: round; }
+.vn-field .g-goal { fill: var(--goal-bg); stroke: var(--goal); stroke-width: 2; }
+.vn-field .g-trail { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.vn-field .g-trail.many { stroke: var(--pen); stroke-width: 3; stroke-opacity: .5; }
+.vn-field .g-trail.one { stroke: var(--ink); stroke-width: 2.2; stroke-dasharray: 5 6; stroke-opacity: .55; }
+.vn-field .g-plan { fill: none; stroke: var(--ink); stroke-opacity: .3; stroke-width: 2.6; stroke-dasharray: .1 7; stroke-linecap: round; stroke-linejoin: round; }
+.vn-field .g-agent path { stroke-linejoin: round; }
+.vn-field .g-agent.one path { fill: var(--card); stroke: var(--ink); stroke-width: 2.6; }
+.vn-field .g-agent.many path { fill: var(--pen); stroke: var(--pen); stroke-width: 2; }
+.vn-field .g-agent.dead { opacity: .45; }
+.vn-field .g-x { fill: none; stroke: var(--lava); stroke-width: 3.2; stroke-linecap: round; }
+.vn-field .g-ring { fill: none; stroke: var(--lava); stroke-width: 2; }
+.vn-field .g-ghost { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-dasharray: 4 4; stroke-opacity: .7; }
+.vn-field .g-check { fill: none; stroke: var(--goal); stroke-width: 3.6; stroke-linecap: round; stroke-linejoin: round; }
+.vn-field .g-note { font-family: var(--hand); font-size: 21px; fill: var(--pen); }
+.vn-field .g-note-bg { fill: var(--card); fill-opacity: .94; stroke: var(--pen); stroke-opacity: .25; stroke-width: 1; }
+.vn-field .g-arrow { fill: none; stroke: var(--pen); stroke-width: 1.8; stroke-linecap: round; }
+/* what the hollow agent expects: the lava it believes is floor, papered over */
+.vn-field .g-belief rect { fill: var(--card); stroke: var(--lava); stroke-width: 1.6; stroke-dasharray: 3 3; }
+.vn-field .g-belief { opacity: 0; transition: opacity .35s; pointer-events: none; }
+.believing .vn-field .g-belief { opacity: .94; }
+.vn-field .draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: vn-draw .45s var(--ease) forwards; }
+@keyframes vn-draw { to { stroke-dashoffset: 0; } }
+.vn-field .pop { transform-box: fill-box; transform-origin: center; animation: vn-pop .5s var(--spring) both; }
+@keyframes vn-pop { from { transform: scale(.4); opacity: 0; } }
+
+/* ---------- tables ---------- */
+.vn-table-wrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+.vn-table { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 21px; }
+.vn-table caption { caption-side: bottom; text-align: left; margin-top: 12px; font-size: 14px; line-height: 20px; font-style: italic; color: var(--ink-3); }
+.vn-table th, .vn-table td { padding: 10px 8px 10px 0; border-top: 1px solid var(--rule); text-align: left; vertical-align: top; font-weight: 400; }
+.vn-table thead th { border-top: 0; font-family: var(--hand); font-size: 21px; line-height: 22px; color: var(--ink-3); padding-top: 0; }
+.vn-table tbody th { font-weight: 600; }
+.vn-table tbody th .vn-key { width: 15px; height: 15px; vertical-align: -2px; margin-right: 6px; }
+.vn-table small { display: block; font-weight: 400; font-size: 13.5px; line-height: 19px; color: var(--ink-3); font-style: italic; }
+.vn-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 10px; }
+.vn-table .bad { color: color-mix(in srgb, var(--lava) 82%, var(--ink)); font-weight: 600; }
+.vn-table sup { font-size: 11px; color: var(--pen); font-weight: 600; margin-left: 1px; }
+
+/* ---------- the chart ---------- */
+.vn-chart { padding-bottom: 18px; }
+.vn-legend { list-style: none; padding: 0; margin: -4px 0 10px; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--ink-2); }
+.vn-legend li { display: inline-flex; align-items: center; gap: 7px; }
+.sw { display: inline-block; width: 22px; height: 0; border-top: 2.6px solid var(--pen); vertical-align: middle; }
+.sw.one { border-top: 2.6px dashed var(--ink); }
+.sw.bc { border-top: 2.6px dotted var(--ink-3); }
+.sw.ceil { border-top: 1.6px dashed var(--goal); }
+.vn-chart-svg { position: relative; }
+.vn-chart-svg svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+.vn-chart-svg svg:focus-visible { outline: 2px solid var(--pen); outline-offset: 6px; }
+.vn-chart .c-grid line { stroke: var(--ink); stroke-opacity: .12; }
+.vn-chart .c-grid line.base { stroke-opacity: .5; }
+.vn-chart .c-axis { font-family: var(--print); font-size: 13px; fill: var(--ink-3); }
+.vn-chart .c-cat { font-family: var(--print); font-size: 14px; font-weight: 600; fill: var(--ink); }
+.vn-chart .c-line { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.vn-chart .c-line.many { stroke: var(--pen); }
+.vn-chart .c-line.one { stroke: var(--ink); stroke-dasharray: 7 6; }
+.vn-chart .c-line.bc { stroke: var(--ink-3); stroke-dasharray: .1 6; stroke-width: 3; }
+.vn-chart .c-ceil { stroke: var(--goal); stroke-width: 1.6; stroke-dasharray: 3 5; }
+.vn-chart .c-dot.many { fill: var(--pen); }
+.vn-chart .c-dot.one { fill: var(--card); stroke: var(--ink); stroke-width: 2.2; }
+.vn-chart .c-dot.bc { fill: var(--card); stroke: var(--ink-3); stroke-width: 2; }
+.vn-chart .c-dot { transition: r .3s var(--spring); }
+.vn-chart .c-dot.on { r: 7.5px; }
+.vn-chart .c-lbl { font-family: var(--hand); font-size: 21px; fill: var(--ink-2); }
+.vn-chart .c-lbl.many { fill: var(--pen); }
+.vn-chart .c-lbl.ceil { fill: var(--ink-2); font-size: 19px; }
+.vn-chart .c-guide { stroke: var(--pen); stroke-width: 1.5; stroke-dasharray: 3 4; opacity: 0; transition: opacity .2s; }
+.vn-chart .c-guide.on { opacity: .8; }
+.vn-chart .c-note { font-family: var(--hand); font-size: 22px; fill: color-mix(in srgb, var(--lava) 82%, var(--ink)); }
+.vn-chart .c-arrow { fill: none; stroke: var(--lava); stroke-width: 1.7; stroke-linecap: round; }
+.vn-chart .c-band { fill: var(--pen-soft); opacity: 0; transition: opacity .2s; }
+.vn-chart .c-band.on { opacity: 1; }
+/* lines draw themselves in once, when the card comes into view */
+.js .vn-chart .c-draw { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); }
+.js .vn-chart.drawn .c-draw { transition: stroke-dashoffset 1.3s var(--ease); stroke-dashoffset: 0; }
+.js .vn-chart .c-line.one.c-draw, .js .vn-chart .c-line.bc.c-draw { stroke-dasharray: none; }
+.js .vn-chart.drawn .c-line.one.c-draw { stroke-dasharray: 7 6; }
+.js .vn-chart.drawn .c-line.bc.c-draw { stroke-dasharray: .1 6; }
+.js .vn-chart:not(.drawn) .c-line.one, .js .vn-chart:not(.drawn) .c-line.bc { opacity: 0; }
+.js .vn-chart .c-line.one, .js .vn-chart .c-line.bc { transition: opacity .9s .3s var(--ease); }
+.vn-tip {
+  position: absolute; z-index: 5; pointer-events: none; min-width: 200px;
+  background: var(--sticky); color: var(--sticky-ink); padding: 8px 12px 10px; font-size: 14px; line-height: 20px;
+  box-shadow: 0 10px 16px -10px rgba(0,0,0,.5);
+  opacity: 0; transform: translate(-50%, calc(-100% - 14px)) rotate(-1.5deg) scale(.92); transform-origin: 50% 100%;
+  transition: opacity .15s, transform .35s var(--spring), left .3s var(--spring), top .3s var(--spring);
+}
+.vn-tip.on { opacity: 1; transform: translate(-50%, calc(-100% - 14px)) rotate(-1.5deg); }
+.vn-tip strong { display: block; font-family: var(--hand); font-weight: 400; font-size: 22px; line-height: 21px; margin-bottom: 3px; }
+.vn-tip span { display: flex; justify-content: space-between; gap: 14px; font-variant-numeric: tabular-nums; }
+.vn-tip span.foot { margin-top: 3px; padding-top: 3px; border-top: 1px solid rgba(47,42,18,.25); }
+.vn-tip em { font-style: normal; display: inline-flex; align-items: center; gap: 6px; }
+.vn-tip .sw { width: 14px; }
+.vn-tip .sw.many { border-top-color: #2445a6; }
+.vn-tip .sw.one, .vn-tip .sw.bc { border-top-color: #2f2a12; }
+.vn-tip b { font-weight: 700; }
+
+/* ---------- pen bars ---------- */
+.vn-bars-h { font-size: 15px; font-weight: 600; margin: 4px 0 4px; }
+.vn-bar + .vn-bars-h { margin-top: 16px; }
+.vn-bars-h em { font-weight: 400; color: var(--ink-3); }
+.vn-bar { display: grid; grid-template-columns: 124px 1fr 62px; gap: 12px; align-items: center; font-size: 15px; line-height: 22px; padding: 4px 0; }
+.vn-bar .bl { color: var(--ink-2); }
+.vn-bar .track { position: relative; height: 18px; border-bottom: 1.5px solid var(--ink); }
+.vn-bar .fill { position: absolute; left: 0; bottom: 0; height: 14px; width: var(--v); border: 1.6px solid var(--pen); border-bottom: 0; border-radius: 2px 2px 0 0;
+  background: repeating-linear-gradient(-50deg, var(--pen) 0 1.3px, transparent 1.3px 6px); }
+.vn-bar .fill.hot { border-color: var(--lava); background: repeating-linear-gradient(-50deg, var(--lava) 0 1.3px, transparent 1.3px 6px); }
+.vn-bar .fill.solid { background: var(--pen); }
+.vn-bar .fill.quiet { border-color: var(--ink-3); background: repeating-linear-gradient(-50deg, var(--ink-3) 0 1.3px, transparent 1.3px 6px); }
+.vn-bar .bv { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.vn-circled { position: absolute; right: -14px; top: -30px; width: 86px; height: 70px; display: grid; place-items: center; font-family: var(--hand); font-size: 46px; color: var(--pen); transform: rotate(-8deg); }
+.vn-circled::before { content: ""; position: absolute; inset: 0; border: 2.2px solid var(--pen); border-radius: 50% 46% 52% 44%; transform: rotate(6deg); }
+
+/* ---------- lists ---------- */
+.vn-ticks { list-style: none; padding: 0; }
+.vn-ticks li { position: relative; padding-left: 26px; }
+.vn-ticks li + li { margin-top: 6px; }
+.vn-ticks li::before { content: ""; position: absolute; left: 2px; top: 9px; width: 12px; height: 7px; border-left: 2px solid var(--pen); border-bottom: 2px solid var(--pen); transform: rotate(-48deg); }
+.vn-caveats { list-style: none; padding: 0; }
+.vn-caveats li { position: relative; padding-left: 26px; }
+.vn-caveats li + li { margin-top: 8px; }
+.vn-caveats li::before { content: ""; position: absolute; left: 3px; top: 13px; width: 13px; height: 2px; border-radius: 2px; background: var(--pen); transform: rotate(-6deg); }
+.vn-runs { list-style: none; padding: 0; font-size: 15.5px; line-height: 22px; }
+.vn-runs li { display: grid; grid-template-columns: 58px 1fr; gap: 10px; padding: 8px 0; border-top: 1px solid var(--rule); }
+.vn-runs li:first-child { border-top: 0; padding-top: 0; }
+.vn-runs .rn { font-family: var(--hand); font-size: 21px; line-height: 22px; color: var(--pen); }
+.vn-runs .kept { font-weight: 600; }
+.vn-runs .kept .rn::after { content: ""; display: inline-block; width: 11px; height: 6px; margin-left: 6px; vertical-align: 4px; border-left: 2px solid var(--pen); border-bottom: 2px solid var(--pen); transform: rotate(-48deg); }
+
+/* 2x2 */
+.vn-2x2 { border-collapse: collapse; font-size: 15.5px; line-height: 21px; margin-top: 10px; min-width: 300px; }
+.vn-2x2 th, .vn-2x2 td { padding: 8px 14px; border-top: 1px solid var(--rule); text-align: right; font-variant-numeric: tabular-nums; font-weight: 400; }
+.vn-2x2 thead th, .vn-2x2 thead td { font-family: var(--hand); font-size: 21px; color: var(--ink-3); border-top: 0; padding-bottom: 4px; }
+.vn-2x2 tbody th { text-align: left; font-weight: 600; padding-left: 0; }
+.vn-2x2 .win { font-weight: 700; color: var(--pen); position: relative; }
+.vn-2x2 .win::before { content: ""; position: absolute; inset: 2px 4px; border: 2px solid var(--pen); border-radius: 50% 46% 52% 44%; transform: rotate(-4deg); }
+
+/* the judge's categories */
+.vn-cats { list-style: none; padding: 0; font-size: 15px; line-height: 21px; }
+.vn-cats li { padding: 7px 0; border-top: 1px solid var(--rule); }
+.vn-cats li:first-child { border-top: 0; }
+.vn-cats code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; color: var(--pen); }
+.vn-cats span { display: block; color: var(--ink-3); font-size: 14px; }
+
+/* ---------- compounding error ---------- */
+.vn-comp .eq { font-size: 15.5px; line-height: 24px; color: var(--ink-2); }
+.vn-comp .eq b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.vn-comp .steps { display: flex; flex-wrap: wrap; gap: 4px; margin: 12px 0 10px; min-height: 22px; }
+.vn-comp .steps i { width: 16px; height: 18px; border: 1.5px solid var(--pen); border-radius: 2px; position: relative; }
+.vn-comp .steps i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 7px; height: 4px; border-left: 1.6px solid var(--pen); border-bottom: 1.6px solid var(--pen); transform: rotate(-48deg); }
+.vn-comp label { display: flex; align-items: center; gap: 12px; font-size: 15px; color: var(--ink-2); }
+.vn-comp input[type="range"] { flex: 1; accent-color: var(--pen); min-width: 0; }
+.vn-comp .out { display: flex; align-items: baseline; gap: 10px; margin-top: 10px; }
+.vn-comp .out b { font-size: 34px; line-height: 38px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.vn-comp .out span { font-family: var(--hand); font-size: 22px; color: var(--pen); line-height: 22px; }
+
+/* ---------- three rooms (setup) ---------- */
+.vn-rooms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; list-style: none; padding: 0; margin: 0; }
+.vn-rooms li { text-align: center; }
+.vn-rooms svg { display: block; width: 100%; height: auto; }
+.vn-rooms .rm-wall { fill: none; stroke: var(--ink); stroke-width: 3; }
+.vn-rooms .rm-lava { fill: var(--lava-bg); stroke: var(--lava); stroke-width: 1.4; }
+.vn-rooms .rm-goal { fill: var(--goal-bg); stroke: var(--goal); stroke-width: 1.6; }
+.vn-rooms .rm-start { fill: var(--pen); }
+.vn-rooms .rm-grid { stroke: var(--ink); stroke-opacity: .08; }
+.vn-rooms b { display: block; margin-top: 6px; font-size: 15px; }
+.vn-rooms span { display: block; font-family: var(--hand); font-size: 20px; line-height: 20px; color: var(--pen); }
+
+/* ---------- end of the folder ---------- */
+.vn-links { display: flex; flex-wrap: wrap; gap: 10px; }
+.vn-back-row { margin-top: 18px; }
+.vn-back { font-family: var(--hand); font-size: 24px; color: var(--pen); }
+
+/* ---------- narrow sheets ---------- */
+@container sheet (max-width: 660px) {
+  .vn-race-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .vn-board { max-width: 440px; }
+  .vn-row { grid-template-columns: minmax(0, 1fr); row-gap: 30px; }
+  .vn-row + .vn-row { margin-top: 44px; }
+  .vn-said { min-height: 0; }
+}
+@container sheet (max-width: 520px) {
+  .vn-race { padding: 18px 14px 16px; transform: none; margin: 0 -6px; }
+  .vn-card { padding: 20px 16px 18px; }
+  .vn-bar { grid-template-columns: 92px 1fr 54px; gap: 8px; }
+  .vn-circled { right: -4px; top: -40px; transform: rotate(-8deg) scale(.85); }
+  .vn-prose h3 { font-size: 23px; line-height: 28px; }
+  .vn-lede { font-size: 18px; line-height: 27px; }
+  .vn-ctrls .btn kbd, .vn-believe kbd { display: none; }
+}

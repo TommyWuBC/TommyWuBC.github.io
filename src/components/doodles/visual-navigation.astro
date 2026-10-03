@@ -1,0 +1,48 @@
+---
+// Pen sketch for the notebook page: a tiny lava room with two rivers, one gap
+// each. The solid route finds both gaps; the dotted one crosses the first and
+// walks straight into the second. Drawn in currentColor (the ballpoint blue).
+---
+
+<svg viewBox="0 0 460 200" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" role="img"
+  aria-label="Pen sketch: a small grid with two lava rivers. A solid route goes through both gaps to the goal; a dotted route crosses the first gap and ends in an X in the second river.">
+  <!-- the room, a little wobbly -->
+  <path d="M24 22 C70 20.5 120 23 168 21.5 S 214 22 218 23 C217.5 70 219 130 218 182 C170 183.5 110 181 62 182.5 L22.5 182 C23.5 140 21.5 90 24 22Z" stroke-width="2.2" />
+  <!-- faint cells -->
+  <g stroke-width="0.8" opacity=".3">
+    <path d="M56 23v159M88 22v160M120 23v159M152 22v160M185 23v159" />
+    <path d="M23 55h195M23 88h195M23 120h195M23 152h195" />
+  </g>
+  <!-- river 1: gap low down -->
+  <path d="M56.5 23 C56 60 56.5 95 56 120 M88 23 C88.5 60 87.5 95 88.5 120 M56 152 L56.5 182 M88.5 152 L88 182 M56 120 L88.5 120 M56 152 L88.5 152" stroke-width="1.5" />
+  <g stroke-width="1.2">
+    <path d="M58 30 L86 44 M58 44 L86 58 M58 58 L86 72 M58 72 L86 86 M58 86 L86 100 M58 100 L86 114" />
+    <path d="M58 158 L86 172 M58 170 L80 181" />
+  </g>
+  <!-- river 2: gap at the top -->
+  <path d="M152 55 C152.5 100 151.5 140 152.5 182 M184.5 55 C184 100 185 140 184 182 M152 55 L184.5 55" stroke-width="1.5" />
+  <g stroke-width="1.2">
+    <path d="M154 62 L182 76 M154 76 L182 90 M154 90 L182 104 M154 104 L182 118 M154 118 L182 132 M154 132 L182 146 M154 146 L182 160 M154 160 L182 174" />
+  </g>
+  <!-- goal -->
+  <path d="M190 157 L212 156.5 L212.5 178 L190.5 178.5 Z" stroke-width="1.6" />
+  <path d="M194.5 167.5 l5 5 l10 -12" stroke-width="2.2" />
+  <!-- start -->
+  <path d="M31 31 L45 38 L31 45 Z" stroke-width="1.8" />
+  <!-- solid route: down, through gap 1, up, through gap 2, down to the goal -->
+  <path d="M38 47 C37.5 90 38.5 120 38 140 C60 139.5 90 140.5 118 139.5 C119 110 117.5 70 119 38 C140 38.5 170 37.5 201 38.5 C200 80 202 120 200.5 150" stroke-width="2.4" />
+  <!-- dotted route: through gap 1, then straight on into river 2 -->
+  <path d="M44 46 C44.5 80 43.5 110 44.5 131 C80 130.5 120 131.5 160 131" stroke-width="2.4" stroke-dasharray="0.1 6.5" />
+  <!-- the X where it walked in -->
+  <path d="M161 124 L175 138 M175 124 L161 138" stroke-width="2.6" />
+  <!-- labels -->
+  <g fill="currentColor" stroke="none" font-family="var(--hand)" font-size="22">
+    <text x="252" y="50">solid: found both gaps</text>
+    <text x="252" y="128">dotted: knew one river,</text>
+    <text x="252" y="151">walked into the next</text>
+  </g>
+  <path d="M248 44 C234 42 222 40 208 39" stroke-width="1.5" />
+  <path d="M214 34.5 L207 39 L214 43.5" stroke-width="1.5" />
+  <path d="M248 124 C228 126 200 130 182 131" stroke-width="1.5" />
+  <path d="M188 126.5 L181 131 L188 135.5" stroke-width="1.5" />
+</svg>

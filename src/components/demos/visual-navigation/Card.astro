@@ -1,0 +1,20 @@
+---
+// A card taped onto the graph paper: a handwritten label, then anything.
+import './vn.css';
+interface Props {
+  /** The handwritten label at the top. HTML allowed (e.g. a struck-through phrase). */
+  k?: string;
+  /** Small italic caption under the card's content. HTML allowed. */
+  cap?: string;
+  /** Tilt, e.g. "-0.8deg". */
+  r?: string;
+  class?: string;
+}
+const { k, cap, r, class: cls } = Astro.props;
+---
+
+<figure class:list={['vn-card', cls]} style={r ? `--r:${r}` : undefined}>
+  {k && <p class="vn-card-k" set:html={k} />}
+  <slot />
+  {cap && <figcaption set:html={cap} />}
+</figure>

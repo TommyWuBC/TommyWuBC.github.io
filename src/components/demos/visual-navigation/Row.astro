@@ -1,0 +1,9 @@
+---
+// Prose beside a taped card, the notebook lab page's two-column row.
+// Stacks when the sheet is narrow (container queries in vn.css).
+import './vn.css';
+interface Props { wide?: boolean; id?: string }
+const { wide = false, id } = Astro.props;
+---
+
+<div class:list={['vn-row', { wide }]} id={id}><slot /></div>

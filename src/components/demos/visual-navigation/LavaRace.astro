@@ -1,0 +1,151 @@
+---
+// Fig. 1: two agents on one MiniGrid LavaCrossing field, taped onto the sheet.
+// The server draws one finished round, so the figure reads without JavaScript;
+// race.js takes over and runs new rounds. See model.js for what each agent does.
+import './vn.css';
+import { S, C, PAPER, demoSeed, layoutFromSeed, truePath, believedPath, cut, fellIn, beliefCells, centre, riverOf } from './model.js';
+
+const n = 2;
+const seed = demoSeed(n);
+const L = layoutFromSeed(n, seed);
+const many = truePath(L);
+const one = cut(L, believedPath(L));
+const fell = fellIn(L, one);
+const end = one[one.length - 1];
+const cells = L.g.flatMap((row: string[], y: number) => row.map((t: string, x: number) => ({ t, x, y })));
+const pts = (p: number[][], who: string) => p.map((c) => centre(c, who).join(',')).join(' ');
+const head = (p: number[][]) => {
+  const a = p[Math.max(0, p.length - 2)], b = p[p.length - 1];
+  return (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI;
+};
+const [ex, ey] = [end[0] * C + C / 2, end[1] * C + C / 2];
+const [mx, my] = centre(many[many.length - 1], 'many');
+const [ox, oy] = centre(end, 'one');
+const gp = (S - 2) * C + C / 2;
+const hex = (s: number) => (s >>> 0).toString(16).toUpperCase().padStart(4, '0').slice(-4);
+const status = `Layout ${hex(seed)}, ${n} rivers: the solid agent reached the goal in ${many.length - 1} moves; the hollow one ${
+  fell ? `stepped into lava after ${one.length - 1}` : `reached it in ${one.length - 1}`
+}.`;
+const saidOne = fell
+  ? `Crossed the first river, then walked into the ${riverOf(L, end)} on move ${one.length - 1}, right where its training room had open floor.`
+  : `Made it in ${one.length - 1} moves.`;
+const saidMany = `Found both gaps. Goal in ${many.length - 1} moves.`;
+const TRI = 'M11 0 L-8 -8.5 L-8 8.5 Z';
+---
+
+<figure class="vn-paste vn-race" data-lava data-seed={seed} aria-label="Fig. 1, two agents racing across a lava field">
+  <span class="tape" style="left:-18px;top:16px;transform:rotate(-38deg)"></span>
+  <span class="tape" style="right:-20px;top:12px;transform:rotate(36deg)"></span>
+  <span class="tape" style="left:44%;bottom:-11px;transform:rotate(-2deg)"></span>
+  <div class="vn-race-grid">
+    <div class="vn-board">
+      <div class="vn-board-wrap" data-stage>
+        <svg class="vn-field" viewBox="20 20 320 320" role="img"
+          aria-label="A 9 by 9 room crossed by rivers of lava, each with one gap. Two agents start in the top-left corner and race to the green goal in the bottom-right.">
+          <defs>
+            <pattern id="vn-hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(-40)">
+              <rect width="10" height="10" class="g-lava-bg"></rect><line x1="0" y1="5" x2="10" y2="5" class="g-hatch"></line>
+            </pattern>
+          </defs>
+          <g>
+            {cells.map(({ t, x, y }) =>
+              t === 'W' ? <rect x={x * C} y={y * C} width={C} height={C} class="g-wall" />
+              : t === 'L' ? <rect x={x * C} y={y * C} width={C} height={C} fill="url(#vn-hatch)" />
+              : null)}
+            <rect x={(S - 2) * C + 4} y={(S - 2) * C + 4} width={C - 8} height={C - 8} rx="3" class="g-goal" />
+          </g>
+          <g class="g-lines">
+            {Array.from({ length: S - 1 }, (_, i) => i + 1).map((i) => (
+              <>
+                <line x1={i * C} y1={C} x2={i * C} y2={(S - 1) * C} />
+                <line x1={C} y1={i * C} x2={(S - 1) * C} y2={i * C} />
+              </>
+            ))}
+          </g>
+          <g class="g-belief">
+            {beliefCells(L).map(([x, y]) => <rect x={x * C + 3} y={y * C + 3} width={C - 6} height={C - 6} rx="2" />)}
+          </g>
+          <g>
+            <polyline class="g-trail one" points={pts(one, 'one')} />
+            <polyline class="g-trail many" points={pts(many, 'many')} />
+          </g>
+          <g>
+            <g class={`g-agent one${fell ? ' dead' : ''}`} transform={`translate(${ox} ${oy}) rotate(${head(one)})`}><path d={TRI} /></g>
+            <g class="g-agent many" transform={`translate(${mx} ${my}) rotate(${head(many)})`}><path d={TRI} /></g>
+          </g>
+          <g>
+            {fell && (
+              <>
+                <circle cx={ex} cy={ey} r="15" class="g-ring" />
+                <path d={`M${ex - 8} ${ey - 9} L${ex + 9} ${ey + 8} M${ex + 8} ${ey - 8} L${ex - 9} ${ey + 9}`} class="g-x" />
+              </>
+            )}
+            <path d={`M${gp - 10} ${gp} l7 8 l14 -17`} class="g-check" />
+          </g>
+        </svg>
+      </div>
+      <p class="vn-status" data-status aria-live="polite">{status}</p>
+    </div>
+
+    <div class="vn-side">
+      <p class="vn-intro">Both start top left and head for the green square. Each river of lava has one gap. Touch lava and the run is over.</p>
+      <ul class="vn-agents">
+        <li>
+          <svg class="vn-key" viewBox="-12 -12 24 24" aria-hidden="true"><path class="k-one" d="M10 0 L-7 -7.5 L-7 7.5 Z" /></svg>
+          <span><b>Single-env PPO</b>, trained only in one-river rooms. It knows how to find one gap.
+            <span class={`vn-said shown${fell ? ' bad' : ''}`} data-said="one">{saidOne}</span></span>
+        </li>
+        <li>
+          <svg class="vn-key" viewBox="-12 -12 24 24" aria-hidden="true"><path class="k-many" d="M10 0 L-7 -7.5 L-7 7.5 Z" /></svg>
+          <span><b>Domain-randomized PPO</b>, trained on rooms with one, two and three rivers. It looks before it walks.
+            <span class="vn-said shown" data-said="many">{saidMany}</span></span>
+        </li>
+      </ul>
+
+      <div class="vn-ctrls js-only">
+        <div class="vn-seg" role="group" aria-label="Number of lava rivers">
+          <span class="vn-seg-k">Rivers</span>
+          <button type="button" data-rivers="1" aria-pressed="false" aria-keyshortcuts="1">1</button><button
+            type="button" data-rivers="2" aria-pressed="true" aria-keyshortcuts="2">2</button><button
+            type="button" data-rivers="3" aria-pressed="false" aria-keyshortcuts="3">3</button>
+        </div>
+        <button type="button" class="btn" data-next aria-keyshortcuts="N">New layout <kbd>N</kbd></button>
+        <button type="button" class="btn quiet" data-move aria-keyshortcuts="R">Move the gaps <kbd>R</kbd></button>
+        <button type="button" class="btn quiet" data-play aria-pressed="false" aria-keyshortcuts="P">Pause <kbd>P</kbd></button>
+        <button type="button" class="vn-believe" data-believe aria-pressed="false" aria-keyshortcuts="E"
+          ><span data-believe-label>Show what the hollow agent expects</span> <kbd>E</kbd></button
+        >
+      </div>
+
+      <table class="vn-tally">
+        <caption class="sr-only">Runs that reached the goal on this page, next to the paper's success rate for this many rivers</caption>
+        <thead>
+          <tr><th scope="col">Reached the goal</th><th scope="col">On this page</th><th scope="col" class="num">Paper, <span data-variant>S9N{n}</span></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row"><svg class="vn-key" viewBox="-12 -12 24 24" aria-hidden="true"><path class="k-one" d="M10 0 L-7 -7.5 L-7 7.5 Z" /></svg>Single-env</th>
+            <td data-tally="one"><span class="t-none">no runs yet</span></td>
+            <td class="num" data-paper="one">{PAPER.one[n]}</td>
+          </tr>
+          <tr>
+            <th scope="row"><svg class="vn-key" viewBox="-12 -12 24 24" aria-hidden="true"><path class="k-many" d="M10 0 L-7 -7.5 L-7 7.5 Z" /></svg>Randomized</th>
+            <td data-tally="many"><span class="t-none">no runs yet</span></td>
+            <td class="num" data-paper="many">{PAPER.many[n]}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <figcaption class="vn-race-note">
+    A sketch of the behavior, not the trained networks. The solid agent plans on the real map. The hollow one crosses the
+    first river properly, then treats the rest of the room as open floor, the way its training rooms always were. <em>Move the gaps</em> keeps the rivers and moves their openings, and the hollow agent replays the route that worked
+    last time. In the paper, about half of its real failures were lava within 15 steps; the other half wandered until the
+    324-step limit. The paper column: single-env PPO over 42 one-river layouts, then 50 episodes each with two and three
+    rivers; randomized PPO after 40M steps, over 42, 249 and 276 layouts.
+  </figcaption>
+</figure>
+
+<script>
+  import './race.js';
+</script>

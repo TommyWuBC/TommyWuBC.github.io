@@ -1,0 +1,23 @@
+---
+// Pen-drawn bars: a hatched fill on a ruled baseline. Static, no JavaScript.
+import './vn.css';
+interface Bar { label: string; value: number; shown: string; tone?: 'hot' | 'solid' | 'quiet' }
+interface Group { title?: string; note?: string; bars: Bar[] }
+interface Props { groups: Group[]; max?: number }
+const { groups, max = 100 } = Astro.props;
+---
+
+<div class="vn-bars">
+  {groups.map((g) => (
+    <>
+      {g.title && <p class="vn-bars-h">{g.title}{g.note && <em> {g.note}</em>}</p>}
+      {g.bars.map((b) => (
+        <div class="vn-bar">
+          <span class="bl">{b.label}</span>
+          <span class="track" aria-hidden="true"><span class:list={['fill', b.tone]} style={`--v:${(b.value / max) * 100}%`} /></span>
+          <span class="bv">{b.shown}</span>
+        </div>
+      ))}
+    </>
+  ))}
+</div>
