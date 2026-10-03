@@ -340,3 +340,7 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 /* a project's pen sketch, under its entry (src/components/doodles/<id>.astro) */
 .doodle { margin-top: 18px; color: var(--pen); }
 .doodle svg { display: block; width: 100%; height: auto; max-height: 240px; overflow: visible; }
+.e-links { flex-wrap: wrap; row-gap: 2px; }
+.e-links .e-note { flex-basis: 100%; }
+/* a page that already lists its trials has no room left for a sketch */
+.entry.feature:has(.trials) .doodle { display: none; }
