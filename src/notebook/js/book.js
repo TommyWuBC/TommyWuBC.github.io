@@ -106,6 +106,10 @@
   function render(lf, i, moving) {
     const a = lf.a, t = Math.sin((-a / 180) * Math.PI);
     lf.el.style.transform = `rotateY(${a.toFixed(2)}deg)`;
+    // Safari can leak transformed/filter-layer children (notably stickers)
+    // through a face's back side. Switch faces explicitly at the page edge.
+    lf.front.style.visibility = a <= -90 ? 'hidden' : 'visible';
+    lf.back.style.visibility = a <= -90 ? 'visible' : 'hidden';
     lf.front.style.setProperty('--sh', (t * 0.95).toFixed(3));
     lf.back.style.setProperty('--sh', (t * 0.7).toFixed(3));
     lf.el.style.setProperty('--lift', t.toFixed(3));

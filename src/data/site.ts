@@ -12,6 +12,8 @@ export const site = {
   /** The cover paragraph under the name. */
   dek: 'Bingchang Wu, Tommy to most people. I study computer science at Georgia Tech and work on reinforcement learning, LLM systems and the web, usually on problems where you can measure whether it worked.',
   email: 'bwu368@gatech.edu',
+  phone: '+14042027200',
+  phoneDisplay: '+1 404 202 7200',
   github: 'https://github.com/TommyWuBC',
   linkedin: 'https://www.linkedin.com/in/bingchang-wu-017474274',
   resume: '/resume.pdf',

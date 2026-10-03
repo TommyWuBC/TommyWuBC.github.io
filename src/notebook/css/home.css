@@ -87,7 +87,9 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .ck { width: 84px; font-family: var(--hand); font-size: 23px; color: var(--ink-3); }
 .contact .big { font-size: 21px; font-weight: 500; }
 .contact .btn { height: 30px; font-size: 14.5px; margin-left: auto; }
+.contact-note { margin-left: auto; color: var(--pen); font-size: 20px; line-height: 20px; transform: rotate(-2deg); }
 #contact .margin-note { margin-top: 28px; }
+.mobile-note { display: none; }
 
 /* ---------- the covers (inside front, inside back) ---------- */
 .cover-in {
@@ -194,6 +196,7 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 @media (max-width: 899px) {
   .book { grid-template-columns: 1fr; max-width: 560px; }
   .book > .page { min-height: 0; }
+  .mobile-note { display: block; margin: -4px 0 12px 4px; max-width: 28ch; color: var(--pen); font-size: 20px; line-height: 21px; transform: rotate(-1deg); }
 }
 
 /* ============================================================
@@ -352,6 +355,7 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .sticker {
   position: absolute; z-index: 3; top: -16px; right: -18px; width: var(--w);
   transform: rotate(var(--r)); transition: transform .45s var(--spring);
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
   text-decoration: none;
 }
 .sticker img {

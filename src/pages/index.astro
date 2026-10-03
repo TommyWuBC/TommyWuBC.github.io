@@ -91,7 +91,7 @@ const year = new Date().getFullYear();
                   <h1 id="name">{site.name}</h1>
                   <p class="plate-sub">
                     {site.fullName}. Computer science at Georgia Tech, threads in Intelligence and Systems &amp;
-                    Architecture. GPA 4.0.
+                    Architecture. Usually building something, breaking it, and writing down what happened.
                   </p>
                   <p class="plate-ret">
                     <span class="hand">If found, please return to</span>
@@ -114,6 +114,7 @@ const year = new Date().getFullYear();
                     research assistant at PAIR Lab, Georgia Tech
                   </div>
                 </div>
+                <p class="mobile-note hand">A small note: this notebook is best viewed on a desktop.</p>
                 <h2 id="h-index">
                   Index
                   <svg class="uline" viewBox="0 0 180 10" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d={ULINES[0]} /></svg>
@@ -312,11 +313,10 @@ const year = new Date().getFullYear();
                 <p class="lede">Email is the fastest way to reach me. I'm based in {site.location}.</p>
                 <ul class="contact">
                   <li><span class="ck">Email</span><a class="pen-link big" href={`mailto:${site.email}`}>{site.email}</a><button class="btn quiet js-only copy" type="button" data-copy>Copy</button></li>
+                  <li><span class="ck">Phone</span><a class="pen-link" href={`sms:${site.phone}`}>{site.phoneDisplay}</a><span class="contact-note hand">text preferred</span></li>
                   <li><span class="ck">GitHub</span><a class="pen-link" href={site.github}>github.com/TommyWuBC</a></li>
                   <li><span class="ck">LinkedIn</span><a class="pen-link" href={site.linkedin}>linkedin.com/in/bingchang-wu-017474274</a></li>
-                  <li><span class="ck">Résumé</span><a class="pen-link" href={site.resume}>resume.pdf</a></li>
                 </ul>
-                <p class="margin-note hand">the résumé is in the back pocket, too.</p>
                 <span class="pno">{n}</span>
               </section>
             );
