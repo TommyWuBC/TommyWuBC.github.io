@@ -15,7 +15,9 @@
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource-variable/newsreader": "^5.3.0",
     "@fontsource-variable/schibsted-grotesk": "^5.3.0",
-    "astro": "^7.3.5"
+    "@fontsource/nanum-pen-script": "^5.3.0",
+    "astro": "^7.3.5",
+    "simple-icons": "^16.33.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

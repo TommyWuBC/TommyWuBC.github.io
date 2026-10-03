@@ -1,54 +1,352 @@
 ---
-import Base from '../layouts/Base.astro';
-import Cover from '../components/Cover.astro';
-import Opener from '../components/Opener.astro';
-import ProjectEntry from '../components/ProjectEntry.astro';
-import JobEntry from '../components/JobEntry.astro';
-import Archive from '../components/Archive.astro';
-import About from '../components/About.astro';
-import Contact from '../components/Contact.astro';
-import LavaFigure from '../components/figures/LavaFigure.astro';
-import { getProjects, getExperience, countWord } from '../lib/content';
+// The notebook. Every page is generated from content, in this order:
+//   inside cover (photos) · index · work · projects (one per page) ·
+//   smaller things · education · toolbox · contact · inside back cover.
+// book.js binds them into leaves on wide screens and a pocket notebook on phones.
+// It needs an even page count, so a blank "next" page is added when it's odd.
+import { render } from 'astro:content';
+import Notebook from '../layouts/Notebook.astro';
+import PhotoPile from '../components/notebook/PhotoPile.astro';
+import OpenCard from '../components/notebook/OpenCard.astro';
+import '../notebook/css/home.css';
+import '../notebook/css/openers.css';
+import { getProjects, getExperience } from '../lib/content';
+import { site, education, honors, languages, skills, coursework } from '../data/site';
 
 const { featured, archive } = await getProjects();
+// Optional pen sketch for a project's notebook page: src/components/doodles/<project id>.astro
+const doodles = import.meta.glob<{ default: any }>('../components/doodles/*.astro', { eager: true });
+const doodleFor = (id: string) => doodles[`../components/doodles/${id}.astro`]?.default;
 const jobs = await getExperience();
-const years = featured.map((p) => p.data.date.getFullYear());
-const span = Math.min(...years) === Math.max(...years) ? `${Math.max(...years)}` : `${Math.min(...years)} to ${Math.max(...years)}`;
+const jobBodies = await Promise.all(jobs.map(async (j) => (await render(j)).Content));
+const byId = Object.fromEntries([...featured, ...archive].map((p) => [p.id, p]));
+
+// Work: the first job gets a page to itself; the rest share pages, two at a time.
+const workPages: number[][] = [[0]];
+for (let i = 1; i < jobs.length; i += 2) workPages.push(jobs.slice(i, i + 2).map((_, k) => i + k));
+
+type Page =
+  | { kind: 'cover' }
+  | { kind: 'index' }
+  | { kind: 'work'; jobs: number[]; first: boolean }
+  | { kind: 'project'; i: number; first: boolean }
+  | { kind: 'archive' }
+  | { kind: 'education' }
+  | { kind: 'toolbox' }
+  | { kind: 'contact' }
+  | { kind: 'blank' }
+  | { kind: 'pocket' };
+
+const pages: Page[] = [
+  { kind: 'cover' },
+  { kind: 'index' },
+  ...workPages.map((js, k) => ({ kind: 'work' as const, jobs: js, first: k === 0 })),
+  ...featured.map((_, i) => ({ kind: 'project' as const, i, first: i === 0 })),
+  { kind: 'archive' },
+  { kind: 'education' },
+  { kind: 'toolbox' },
+  { kind: 'contact' },
+];
+if ((pages.length + 1) % 2) pages.push({ kind: 'blank' });
+pages.push({ kind: 'pocket' });
+
+// Page numbers for the index: the page each section/project starts on.
+const pno = (pred: (p: Page) => boolean) => pages.findIndex(pred);
+const pWork = pno((p) => p.kind === 'work');
+const pProjects = pno((p) => p.kind === 'project');
+const pProject = (i: number) => pno((p) => p.kind === 'project' && p.i === i);
+const pArchive = pno((p) => p.kind === 'archive');
+const pEdu = pno((p) => p.kind === 'education');
+const pTools = pno((p) => p.kind === 'toolbox');
+const pContact = pno((p) => p.kind === 'contact');
+const pPocket = pages.length - 1;
+
+const href = (p: (typeof featured)[number]) => (p.data.expansion ? `/work/${p.id}/` : null);
+const pairProjects = (ids: string[]) => ids.map((id) => byId[id]).filter(Boolean);
+const ULINES = [
+  'M2 6 C 40 2, 80 9, 120 5 S 170 3, 178 6',
+  'M2 5 C 50 8, 90 2, 130 6 S 168 4, 178 5',
+  'M2 6 C 40 3, 90 9, 130 5 S 170 4, 178 6',
+  'M2 5 C 40 8, 90 3, 128 6 S 170 5, 178 4',
+  'M2 6 C 50 3, 90 8, 130 5 S 168 6, 178 5',
+  'M2 5 C 40 2, 90 9, 130 6 S 170 3, 178 6',
+];
+const stickyTilt = (i: number) => ['2.5deg', '-2.5deg', '3deg', '-2deg'][i % 4];
+const year = new Date().getFullYear();
 ---
 
-<Base home>
-  <Cover
-    contents={[
-      ['2', 'Finding the gap', '#research'],
-      ['3', 'Selected work', '#work'],
-      ['4', 'Experience', '#experience'],
-      ['5', 'About', '#about'],
-      ['6', 'Contact', '#contact'],
-    ]}
-  />
+<Notebook home bodyClass="home">
+  <p class="desk-hint on-mat js-only" id="book-hint">Drag a page corner, click a tab, or use the arrow keys.</p>
 
-  <section class="plate-band" id="research" data-head="Finding the gap" data-folio="2" aria-labelledby="research-h">
-    <Opener folio="2" kicker="Research, PAIR Lab" id="research-h">
-      Can an agent find the gap in a lava wall when the wall moves?
-    </Opener>
-    <LavaFigure more={{ href: '/work/visual-navigation/', label: 'Read the case study' }} />
-  </section>
+  <div class="book" id="book" aria-roledescription="notebook" aria-label="Tommy Wu's notebook">
+    {
+      pages.map((pg, n) => {
+        switch (pg.kind) {
+          case 'cover':
+            return (
+              <section class="page cover-in on-cover" id="cover" data-title="Cover" aria-labelledby="name">
+                <div class="plate">
+                  <p class="plate-k">This notebook belongs to</p>
+                  <h1 id="name">{site.name}</h1>
+                  <p class="plate-sub">
+                    {site.fullName}. Computer science at Georgia Tech, threads in Intelligence and Systems &amp;
+                    Architecture. GPA 4.0, graduating May 2028.
+                  </p>
+                  <p class="plate-ret">
+                    <span class="hand">If found, please return to</span>
+                    <a href={`mailto:${site.email}`}>{site.email}</a>
+                  </p>
+                </div>
+                <PhotoPile />
+              </section>
+            );
+          case 'index':
+            return (
+              <section class="page" id="index" data-title="Index" aria-labelledby="h-index">
+                <div class="lede-wrap">
+                  <p class="lede">
+                    I study computer science at Georgia Tech and work on reinforcement learning research, applied LLM
+                    systems and full-stack web. This is where I keep the work: what I tried, what broke, and the numbers.
+                  </p>
+                  <div class="sticky now" style="--r:2.5deg">
+                    <span class="now-k">Now</span>
+                    research assistant at PAIR Lab, Georgia Tech
+                  </div>
+                </div>
+                <h2 id="h-index">
+                  Index
+                  <svg class="uline" viewBox="0 0 180 10" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d={ULINES[0]} /></svg>
+                </h2>
+                <ol class="toc">
+                  <li class="toc-sec">
+                    <a href="#work"><span>Work</span><i /><b>{pWork}</b></a>
+                    <p class="toc-sub">{jobs.map((j) => j.data.org.split(',')[0]).join(', ')}</p>
+                  </li>
+                  <li class="toc-sec">
+                    <a href="#projects"><span>Projects</span><i /><b>{pProjects}</b></a>
+                    <ol>
+                      {featured.map((p, i) => (
+                        <li><a href={`#${p.id}`}><span>{p.data.title}</span><i /><b>{pProject(i)}</b></a></li>
+                      ))}
+                      <li><a href="#archive"><span>Smaller things</span><i /><b>{pArchive}</b></a></li>
+                    </ol>
+                  </li>
+                  <li class="toc-sec"><a href="#education"><span>Education and honors</span><i /><b>{pEdu}</b></a></li>
+                  <li class="toc-sec"><a href="#toolbox"><span>Toolbox</span><i /><b>{pTools}</b></a></li>
+                  <li class="toc-sec"><a href="#contact"><span>Contact</span><i /><b>{pContact}</b></a></li>
+                  <li class="toc-sec"><a href="#pocket"><span>Résumé, in the back pocket</span><i /><b>{pPocket}</b></a></li>
+                </ol>
+                <span class="pno">{n}</span>
+              </section>
+            );
+          case 'work':
+            return (
+              <section
+                class="page"
+                id={pg.first ? 'work' : `work-${n}`}
+                data-title={pg.first ? 'Work' : 'Work, continued'}
+                data-tab={pg.first ? 'Work' : undefined}
+                data-tabc={pg.first ? '1' : undefined}
+                aria-labelledby={pg.first ? 'h-work' : undefined}
+                aria-label={pg.first ? undefined : 'Work, continued'}
+              >
+                {pg.first && (
+                  <h2 id="h-work">
+                    Work
+                    <svg class="uline" viewBox="0 0 180 10" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d={ULINES[1]} /></svg>
+                  </h2>
+                )}
+                {pg.jobs.map((ji) => {
+                  const j = jobs[ji].data;
+                  const Body = jobBodies[ji];
+                  const linked = pairProjects(j.projects);
+                  return (
+                    <article class="entry" id={jobs[ji].id}>
+                      <header class="e-head"><h3>{j.role}, {j.org.split(',')[0]}</h3><p class="e-when">{j.when}</p></header>
+                      <p class="e-meta">{j.org.includes(',') ? `${j.org.split(',').slice(1).join(',').trim()}. ` : ''}{j.stack.join(', ')}</p>
+                      {j.blurb && <p>{j.blurb}</p>}
+                      <div class="e-list md"><Body /></div>
+                      {j.figure && (
+                        <div class="sticky stat" style={`--r:${stickyTilt(ji)}`}>
+                          <Fragment set:html={j.figure.value} /> <b set:html={j.figure.caption.split('. ')[0]} />
+                        </div>
+                      )}
+                      {linked.length > 0 && (
+                        <p class="margin-note hand">
+                          {linked.map((p, k) => (
+                            <>
+                              {k > 0 && ', '}
+                              <a href={href(p) ?? `#${p.id}`}>{p.data.title.toLowerCase()}</a>
+                            </>
+                          ))}
+                          {jobs[ji].id === 'pair-lab' ? ' is the first project here. more PAIR work will land on these pages.' : ' has its own page.'}
+                        </p>
+                      )}
+                    </article>
+                  );
+                })}
+                <span class="pno">{n}</span>
+              </section>
+            );
+          case 'project': {
+            const p = featured[pg.i];
+            const d = p.data;
+            const h = href(p);
+            const Doodle = doodleFor(p.id);
+            return (
+              <section
+                class="page"
+                id={pg.first ? 'projects' : `projects-${pg.i + 1}`}
+                data-title={pg.first ? 'Projects' : d.title}
+                data-tab={pg.first ? 'Projects' : undefined}
+                data-tabc={pg.first ? '2' : undefined}
+                aria-labelledby={pg.first ? 'h-projects' : `t-${p.id}`}
+              >
+                {pg.first && (
+                  <h2 id="h-projects">
+                    Projects
+                    <svg class="uline" viewBox="0 0 180 10" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d={ULINES[2]} /></svg>
+                  </h2>
+                )}
+                <article class="entry feature" id={p.id}>
+                  <header class="e-head"><h3 id={`t-${p.id}`}>{d.title}</h3><p class="e-when">{d.when}</p></header>
+                  <p class="e-meta">{d.context}. {d.stack.slice(0, 5).join(', ')}</p>
+                  {d.figure && (
+                    <div class="sticky stat" style={`--r:${stickyTilt(pg.i)}`}>
+                      <Fragment set:html={d.figure.value} /> <b set:html={d.figure.caption.split('.')[0]} />
+                    </div>
+                  )}
+                  <p set:html={d.summary ?? d.dek} />
+                  {d.trials.length > 0 && (
+                    <ol class="trials">
+                      {d.trials.map((t) => (
+                        <li>{t.struck && <s class="tried">{t.struck}</s>} <Fragment set:html={t.text} /></li>
+                      ))}
+                    </ol>
+                  )}
+                  {d.quote && <p class="quote hand">&ldquo;{d.quote.text}&rdquo;</p>}
+                  {h && d.expansion && <OpenCard kind={d.expansion} href={h} label={d.openLabel} />}
+                  <p class="e-links">
+                    {d.links.map((l) => <a class="pen-link" href={l.href}>{l.label}</a>)}
+                    {d.note && <span class="e-note">{d.note}</span>}
+                  </p>
+                  {Doodle && <div class="doodle" aria-hidden="true"><Doodle /></div>}
+                </article>
+                <span class="pno">{n}</span>
+              </section>
+            );
+          }
+          case 'archive':
+            return (
+              <section class="page" id="archive" data-title="Smaller things" aria-labelledby="h-archive">
+                <section class="entry archive">
+                  <h3 id="h-archive">Smaller things</h3>
+                  <ul class="arch">
+                    {archive.map((a) => (
+                      <li>
+                        <span>{a.data.links[0] ? <a class="pen-link" href={a.data.links[0].href}>{a.data.title}</a> : a.data.title}</span>
+                        <em set:html={`${a.data.dek} ${a.data.stack.join(', ')}.`} />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+                <p class="margin-note hand end-note">more of these on GitHub, as TommyWuBC</p>
+                <span class="pno">{n}</span>
+              </section>
+            );
+          case 'education':
+            return (
+              <section class="page" id="education" data-title="Education" data-tab="Education" data-tabc="3" aria-labelledby="h-edu">
+                <h2 id="h-edu">
+                  Education
+                  <svg class="uline" viewBox="0 0 180 10" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d={ULINES[3]} /></svg>
+                </h2>
+                <article class="entry" id="gatech">
+                  <header class="e-head"><h3>Georgia Institute of Technology</h3><p class="e-when">2025 to May 2028</p></header>
+                  <p>B.S. Computer Science. Threads: Intelligence, and Systems &amp; Architecture. <mark>GPA 4.0</mark>.</p>
+                  <p class="e-meta" set:html={coursework} />
+                </article>
+                <article class="entry" id="dulwich">
+                  <header class="e-head"><h3>Dulwich College</h3><p class="e-when">2023 to 2025</p></header>
+                  <p>A-Levels.</p>
+                </article>
+                <article class="entry" id="honors">
+                  <h3>Honors</h3>
+                  <ul class="plain">{honors.map((h) => <li set:html={h} />)}</ul>
+                </article>
+                <article class="entry" id="languages">
+                  <h3>Languages</h3>
+                  <p>{languages}</p>
+                </article>
+                <span class="pno">{n}</span>
+              </section>
+            );
+          case 'toolbox':
+            return (
+              <section class="page" id="toolbox" data-title="Toolbox" aria-labelledby="h-tools">
+                <h2 id="h-tools">
+                  Toolbox
+                  <svg class="uline" viewBox="0 0 180 10" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d={ULINES[4]} /></svg>
+                </h2>
+                <dl class="tools">
+                  {skills.map((s) => (
+                    <div><dt>{s.label}</dt><dd>{s.items.replace(/\.$/, '')}</dd></div>
+                  ))}
+                </dl>
+                <OpenCard kind="map" href="/toolbox/" label="Unfold the skill map" kicker="every tool, and where I used it" />
+                <span class="pno">{n}</span>
+              </section>
+            );
+          case 'contact':
+            return (
+              <section class="page" id="contact" data-title="Contact" data-tab="Contact" data-tabc="4" aria-labelledby="h-contact">
+                <h2 id="h-contact">
+                  Contact
+                  <svg class="uline" viewBox="0 0 180 10" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d={ULINES[5]} /></svg>
+                </h2>
+                <p class="lede">Email is the fastest way to reach me. I'm based in {site.location}.</p>
+                <ul class="contact">
+                  <li><span class="ck">Email</span><a class="pen-link big" href={`mailto:${site.email}`}>{site.email}</a><button class="btn quiet js-only copy" type="button" data-copy>Copy</button></li>
+                  <li><span class="ck">GitHub</span><a class="pen-link" href={site.github}>github.com/TommyWuBC</a></li>
+                  <li><span class="ck">LinkedIn</span><a class="pen-link" href={site.linkedin}>linkedin.com/in/bingchang-wu-017474274</a></li>
+                  <li><span class="ck">Résumé</span><a class="pen-link" href={site.resume}>resume.pdf</a></li>
+                </ul>
+                <p class="margin-note hand">the résumé is in the back pocket, too.</p>
+                <span class="pno">{n}</span>
+              </section>
+            );
+          case 'blank':
+            return (
+              <section class="page" id="next" data-title="Next" aria-label="A blank page">
+                <p class="margin-note hand blank-note">room for what's next.</p>
+                <span class="pno">{n}</span>
+              </section>
+            );
+          case 'pocket':
+            return (
+              <section class="page cover-in on-cover back-in" id="pocket" data-title="Back pocket" aria-labelledby="h-pocket">
+                <h2 id="h-pocket" class="sr-only">Back pocket</h2>
+                <p class="colophon">Set in Newsreader and Nanum Pen Script. Built with Astro, by hand. Updated {year}.</p>
+                <div class="pocket">
+                  <a class="resume-card" href={site.resume}>
+                    <span class="rc-k hand">résumé</span>
+                    <span class="rc-t">{site.fullName.replace(' ', ' (Tommy) ')}</span>
+                    <span class="rc-s">Open the PDF</span>
+                    <span class="rc-lines" aria-hidden="true" />
+                  </a>
+                  <span class="pocket-front" aria-hidden="true" />
+                </div>
+              </section>
+            );
+        }
+      })
+    }
+  </div>
 
-  <section class="section" id="work" data-head="Selected work" data-folio="3" aria-labelledby="work-h">
-    <Opener folio="3" kicker={`${countWord(featured.length, 'project')}, ${span}`} id="work-h">Selected work</Opener>
-    <div class="entries">
-      {featured.map((p) => <ProjectEntry project={p} />)}
-    </div>
-    <Archive items={archive} />
-  </section>
+  <p class="sr-only" aria-live="polite" id="book-status"></p>
 
-  <section class="section" id="experience" data-head="Experience" data-folio="4" aria-labelledby="exp-h">
-    <Opener folio="4" kicker="Lab, industry, teaching" id="exp-h">Experience</Opener>
-    <div class="entries">
-      {jobs.map((j) => <JobEntry job={j} />)}
-    </div>
-  </section>
-
-  <About folio="5" />
-  <Contact folio="6" />
-</Base>
+  <script>
+    import '../notebook/js/book.js';
+    import '../notebook/js/pile.js';
+  </script>
+</Notebook>

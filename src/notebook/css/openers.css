@@ -1,0 +1,67 @@
+/* The "open" cards on notebook pages. One object per shell:
+   folder = manila case file, scroll = a rolled paper strip, zine = a stapled
+   riso booklet, map = a folded orienteering map. Same anatomy everywhere:
+   .oc-k (handwritten kicker) and .oc-t (the action, with an arrow). */
+
+.opencard {
+  position: relative; display: block; margin: 20px 0 12px; padding: 14px 18px 16px;
+  text-decoration: none; color: #2b2410;
+  transition: transform .45s var(--spring), box-shadow .3s;
+}
+.oc-k { display: block; font-size: 22px; line-height: 20px; }
+.oc-t { position: relative; z-index: 1; display: block; font-size: 20px; line-height: 26px; font-weight: 600; margin-top: 2px; }
+.oc-arrow { display: inline-block; width: 26px; height: 10px; margin-left: 10px; vertical-align: 1px; background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 10'%3E%3Cpath d='M1 5.5c7-1 14-.6 22-.4M19 1.5l4.5 3.6-4.6 3.4' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
+  transition: transform .3s var(--ease); }
+.opencard:hover .oc-arrow, .opencard:focus-visible .oc-arrow { transform: translateX(5px); }
+
+/* folder: manila, with a tab */
+.oc-folder {
+  background: #ead9ab; border-radius: 2px 10px 2px 2px; transform: rotate(-1deg);
+  box-shadow: 0 1px 1px rgba(60,40,0,.2), 0 10px 18px -12px rgba(40,30,0,.6);
+}
+.oc-folder::before { content: ""; position: absolute; right: 18px; top: -12px; width: 120px; height: 14px; background: #ead9ab; border-radius: 6px 6px 0 0; }
+.oc-folder .oc-k { color: #6a5517; }
+.oc-folder:hover, .oc-folder:focus-visible { transform: rotate(0deg) translateY(-3px); box-shadow: 0 1px 1px rgba(60,40,0,.2), 0 18px 26px -14px rgba(40,30,0,.6); }
+
+/* scroll: a cream strip with a wooden roller on each end */
+.oc-scroll {
+  margin-left: 16px; margin-right: 16px; color: #3a2a12;
+  background: linear-gradient(90deg, rgba(120,90,40,.12), transparent 8%, transparent 92%, rgba(120,90,40,.12)), #f4ead2;
+  box-shadow: 0 8px 16px -12px rgba(40,30,0,.55); transform: rotate(.6deg);
+}
+.oc-scroll::before, .oc-scroll::after {
+  content: ""; position: absolute; top: -6px; bottom: -6px; width: 14px; border-radius: 7px;
+  background: linear-gradient(90deg, #7a4a24, #b97c45 45%, #6d4020); box-shadow: 0 4px 8px -4px rgba(0,0,0,.5);
+}
+.oc-scroll::before { left: -12px; }
+.oc-scroll::after { right: -12px; }
+.oc-scroll .oc-k { color: #8a5a22; }
+.oc-scroll:hover, .oc-scroll:focus-visible { transform: rotate(0deg) scaleX(1.025); }
+
+/* zine: riso blue and pink, a little out of register, two staples */
+.oc-zine {
+  color: #1d2a8f; background: #f7f3ea; transform: rotate(-1.4deg);
+  box-shadow: 4px 4px 0 #ff5fa2, 0 10px 18px -12px rgba(0,0,0,.4);
+  border: 2px solid #1d2a8f;
+}
+.oc-zine .oc-k { color: #e0388a; }
+.oc-staples { position: absolute; left: 50%; top: -3px; width: 70px; height: 4px; transform: translateX(-50%);
+  background: linear-gradient(90deg, #9aa0ad 0 14px, transparent 14px 56px, #9aa0ad 56px); }
+.oc-zine:hover, .oc-zine:focus-visible { transform: rotate(0deg) translate(-2px, -2px); box-shadow: 6px 6px 0 #ff5fa2, 0 16px 22px -14px rgba(0,0,0,.45); }
+
+/* map: folded paper with contour lines and a magenta control circle */
+.oc-map {
+  color: #2a2318; background-color: #fbf6e8; transform: rotate(1deg);
+  background-image:
+    radial-gradient(circle at 86% 40%, transparent 13px, #c0306b 13px 15px, transparent 15px),
+    repeating-radial-gradient(ellipse at 78% 60%, transparent 0 9px, rgba(176,108,52,.38) 9px 10px);
+  box-shadow: 0 10px 18px -12px rgba(40,30,0,.55);
+}
+.oc-folds { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent 33%, rgba(0,0,0,.06) 33.3%, transparent 34%, transparent 66%, rgba(0,0,0,.06) 66.3%, transparent 67%); }
+.oc-map .oc-k { color: #c0306b; }
+.oc-map:hover, .oc-map:focus-visible { transform: rotate(0deg) translateY(-3px); }
+
+:root[data-theme="dark"] .opencard { filter: brightness(.88); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .opencard { filter: brightness(.88); } }

@@ -12,62 +12,10 @@ figure:
 stack: [Python, tree-sitter, SQLite FTS5, sqlite-vec, Sentence Transformers]
 links:
   - { label: Repository, href: "https://github.com/TommyWuBC/csearch" }
-caseStudy: true
 role: Sole author
+expansion: scroll
 ---
 
-<Section n="§1" title="Why two searches">
-<Row>
+{/* Interactive write-up for the scroll shell. The earlier One Ink version is in git: git show redesign:src/content/projects/csearch.mdx */}
 
-<p class="lede">Code search fails in two opposite ways, and each fix is good exactly where the other is bad.</p>
-
-**Keywords miss synonyms.** One of the eval queries is &#8220;decide whether a feature switch is enabled&#8221;. The answer is a function called `coerce_boolean_flag`. None of the words match.
-
-**Embeddings blur exact names.** Ask for a specific function by name and a pure vector search can hand back three things that are merely about the same topic. BM25 over split identifiers, docstrings and comments is sharp exactly where embeddings are soft.
-
-So csearch runs both and merges them by rank, not by score.
-
-</Row>
-
-<Row wide>
-<SearchPipeline />
-</Row>
-</Section>
-
-<Section n="§2" title="How it works">
-<Row note="<sup>1</sup> Texts are batched by length (16, 4, then 1) after a single long-context batch tried to allocate about 103 GB.">
-
-**Chunking.** Python goes through the standard library&#8217;s `ast`; TypeScript and JavaScript through tree-sitter. Every file gets one module chunk plus one chunk per function, class and method. Long definitions are split at 1,500 tokens with 150 tokens of overlap.
-
-**Keywords.** Identifiers are split on camelCase, snake_case, kebab-case and digit boundaries, so `checkCheckoutFields` is also found as &#8220;check checkout fields&#8221;. Queries drop stopwords and are OR-joined, so filler words don&#8217;t zero out the results.
-
-**Meaning.** Each chunk is embedded with a 768-dimensional code model that runs locally.<Mark n="1" /> After the first download, everything works offline.
-
-**Fusion.** Each leg returns its top 40. Reciprocal rank fusion scores a chunk by Σ&#8202;1&#8202;/&#8202;(60&#8202;+&#8202;rank) across both lists, which only asks whether it ranked near the top of either, and rewards chunks that rank well in both. Below a raw-score floor, csearch prints &#8220;No confident match.&#8221; instead of pretending.
-
-**Incremental.** Every file is hashed with SHA-256. Unchanged files are skipped; changed files have their rows replaced; deleted files are removed. The index records which embedding model built it and refuses a query from a different one.
-
-</Row>
-</Section>
-
-<Section n="§3" title="Numbers, and how much to trust them">
-<Finding value="91.7%" caption="Recall@1 for the hybrid retriever on the labeled starter set.">
-
-The eval harness runs four retrievers over labeled queries and regenerates its report on every push. Hybrid finds the right chunk first 91.7% of the time on the starter set.
-
-</Finding>
-
-<Finding value="100.3 ms" caption="Median warm query on a 55,112-line, 2,132-chunk codebase.">
-
-The performance budget asks for a warm-query median under 500 ms on a repository of at least 50,000 lines. On a snapshot of a large open-source Python codebase it comes in at about a fifth of that.
-
-</Finding>
-
-<Row>
-
-That is the good news. The honest part: the starter set is twelve queries on one toy repository, and on a set that small hybrid ties plain keyword search instead of beating it. The CI embedder is also a deterministic stand-in, so it measures the plumbing, not the real model. Cold indexing of large repositories on a CPU is still too slow for its own fifteen-minute budget.
-
-The project&#8217;s actual quality gate needs at least 30 queries across at least two real repositories before it will call a result. Building that labeled set is the next piece of work. The harness exists so that &#8220;hybrid is better&#8221; can&#8217;t be claimed without evidence, including by me.
-
-</Row>
-</Section>
+The full write-up is being rebuilt.

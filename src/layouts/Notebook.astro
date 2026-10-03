@@ -1,0 +1,97 @@
+---
+// Every page: the cutting mat, the desk bar (name, résumé, copy email, ⌘K,
+// lamp), the ⌘K index card and the toast. Pages put their own scene in the slot.
+import '@fontsource-variable/newsreader/opsz.css';
+import '@fontsource-variable/newsreader/opsz-italic.css';
+import '@fontsource/nanum-pen-script/400.css';
+import '../notebook/css/base.css';
+import { site } from '../data/site';
+import { buildCommands } from '../lib/commands';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** True on the notebook (home) page. */
+  home?: boolean;
+  type?: 'website' | 'article';
+  /** Extra class on <body>, e.g. the shell's scene. */
+  bodyClass?: string;
+}
+const { title, description = site.description, home = false, type = 'website', bodyClass } = Astro.props;
+const pageTitle = title ? `${title}, ${site.name}` : `${site.name}, Georgia Tech`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const commands = await buildCommands(home);
+const data = JSON.stringify({ email: site.email, commands });
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={site.fullName} />
+    <link rel="canonical" href={canonical} />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#2c3f37" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL('/og.png', Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      try {
+        var t = localStorage.getItem('theme');
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+    <slot name="head" />
+  </head>
+  <body class={bodyClass}>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="deskbar on-mat">
+      <a class="who" href="/">{site.name} <small>Georgia Tech, CS</small></a>
+      <nav aria-label="Quick links">
+        <slot name="nav" />
+        <a class="lnk wide" href={site.resume}>Résumé</a>
+        <button class="lnk wide js-only copy" type="button" data-copy>Copy email</button>
+        <a class="lnk wide no-js" href={`mailto:${site.email}`}>Email</a>
+        <button class="lnk js-only" type="button" data-cmdk-open aria-haspopup="dialog" aria-label="Open the command menu"
+          ><span aria-hidden="true">Menu</span><span aria-hidden="true"><kbd data-mod>⌘</kbd> <kbd>K</kbd></span></button
+        >
+        <button class="lnk lamp js-only" type="button" aria-label="Switch theme">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"
+            ><path d="M8 3h8l3 7H5z"></path><path d="M12 10v7M8 21h8M12 17v4"></path><path class="glow" d="M7 13l-2 3M17 13l2 3M12 12.5v1.5" stroke-dasharray="1.6 2.2"></path></svg
+          >
+        </button>
+      </nav>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <dialog class="cmdk" id="cmdk" aria-label="Command menu">
+      <div class="cmdk-search">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5 14 14"></path></svg>
+        <input type="text" placeholder="Turn to a page, open a project, copy email" aria-label="Search commands" role="combobox"
+          aria-expanded="true" aria-controls="cmdk-list" aria-autocomplete="list" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="cmdk-list" id="cmdk-list" role="listbox"><div class="cmdk-hl" aria-hidden="true"></div></div>
+      <div class="cmdk-foot" aria-hidden="true">
+        <span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span class="push"><kbd>esc</kbd> close</span>
+      </div>
+    </dialog>
+    <div class="toast" role="status" aria-live="polite"><span></span></div>
+
+    <script type="application/json" id="site-data" set:html={data} />
+    <script>
+      import '../notebook/js/chrome.js';
+    </script>
+  </body>
+</html>

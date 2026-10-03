@@ -4,6 +4,7 @@ org: Saite Robotics
 when: May to Aug 2026
 date: 2026-05-15
 stack: [Python, FastAPI, PostgreSQL, ROS, LangChain, Chroma]
+projects: [fault-diagnosis]
 figure:
   value: "~80%"
   caption: Less manual fault-triage time. Retrieval finds the right guidance in the top 3 results 93% of the time.

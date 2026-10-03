@@ -28,8 +28,13 @@ const projects = defineCollection({
     summary: z.string().optional(),
     /** Pull-figure beside the entry. Use sparingly, they stop being special fast. */
     figure: figure.optional(),
-    /** Or a pull-quote instead of a figure. */
+    /** Or a quote instead of a figure. */
     quote: z.object({ text: z.string(), caption: z.string() }).optional(),
+    /**
+     * Numbered attempts shown on the notebook page. `struck` is crossed out
+     * (what didn't work), `text` follows it.
+     */
+    trials: z.array(z.object({ struck: z.string().optional(), text: z.string() })).default([]),
     stack: z.array(z.string()).default([]),
     links: z.array(link).default([]),
     /** Shown after the links, e.g. "Internal tool; code is private." */
@@ -39,8 +44,17 @@ const projects = defineCollection({
      * archive:  one line under "Also, from earlier".
      */
     tier: z.enum(['featured', 'archive']).default('featured'),
-    /** If true, the file body is a case study published at /work/<id>/. */
-    caseStudy: z.boolean().default(false),
+    /**
+     * How the project opens from the notebook. If set, the file body is an
+     * interactive write-up published at /work/<id>/, wrapped in that shell:
+     *   folder: a manila folder opened on the desk
+     *   scroll: a paper roll that unrolls
+     *   zine:   a riso-printed, stapled zine
+     *   map:    an orienteering map
+     */
+    expansion: z.enum(['folder', 'scroll', 'zine', 'map']).optional(),
+    /** The button label on the notebook page, e.g. "Open the folder". Defaults per shell. */
+    openLabel: z.string().optional(),
     /** Case-study header: your role on the project. */
     role: z.string().optional(),
     /** Lower numbers first within the same tier; ties fall back to date. */
@@ -54,6 +68,10 @@ const experience = defineCollection({
   schema: z.object({
     role: z.string(),
     org: z.string(),
+    /** A line under the role, e.g. what the lab works on. */
+    blurb: z.string().optional(),
+    /** Project ids (files in src/content/projects) that came out of this role. */
+    projects: z.array(z.string()).default([]),
     when: z.string(),
     /** Start date, used for sorting. */
     date: z.coerce.date(),

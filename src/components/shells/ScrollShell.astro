@@ -1,0 +1,25 @@
+---
+// Scroll shell: how a project with `expansion: scroll` opens from the notebook.
+// PLACEHOLDER: a plain paper panel. Replace with the real scroll scene.
+// Contract: receives the project entry; renders the MDX body (default slot)
+// inside the scene, plus a way back to the notebook (/#<project id>).
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+const { project } = Astro.props;
+const d = project.data;
+---
+
+<div class="shell-stub" data-shell="scroll">
+  <p><a class="pen-link" href={`/#${project.id}`}>Back to the notebook</a></p>
+  <h1>{d.title}</h1>
+  <p set:html={d.dek} />
+  <slot />
+</div>
+
+<style>
+  .shell-stub { max-width: 760px; margin: 24px auto; padding: 40px; background: var(--paper); color: var(--ink); border-radius: 4px; }
+  h1 { font-size: 40px; margin: 12px 0; }
+</style>

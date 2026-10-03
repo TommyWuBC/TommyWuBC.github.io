@@ -1,0 +1,24 @@
+---
+// The card on a notebook page that opens a project in its shell. Each shell
+// has its own object: a manila folder, a rolled paper scroll, a stapled zine,
+// a folded map. Styles in src/notebook/css/openers.css.
+import { SHELLS, type ShellKind } from '../../lib/shells';
+
+interface Props {
+  kind: ShellKind;
+  href: string;
+  label?: string;
+  /** The small handwritten kicker, e.g. "case study". */
+  kicker?: string;
+}
+const { kind, href, label, kicker } = Astro.props;
+const text = label ?? SHELLS[kind].open;
+---
+
+<a class={`opencard oc-${kind}`} href={href} data-shell={kind}>
+  <span class="oc-k hand">{kicker ?? SHELLS[kind].noun}</span>
+  <span class="oc-t">{text}<span class="oc-arrow" aria-hidden="true"></span></span>
+  {kind === 'scroll' && <span class="oc-roll" aria-hidden="true" />}
+  {kind === 'zine' && <span class="oc-staples" aria-hidden="true" />}
+  {kind === 'map' && <span class="oc-folds" aria-hidden="true" />}
+</a>

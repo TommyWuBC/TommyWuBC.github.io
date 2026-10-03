@@ -1,0 +1,14 @@
+---
+// The skill map, opened from the notebook's Toolbox page.
+// PLACEHOLDER: replace with the orienteering-style skill map.
+import Notebook from '../layouts/Notebook.astro';
+import { skills } from '../data/site';
+---
+
+<Notebook title="Toolbox" description="Every tool Tommy Wu works with, and where he used it." bodyClass="shell shell-map">
+  <div style="max-width:760px;margin:24px auto;padding:40px;background:var(--paper);color:var(--ink)">
+    <p><a class="pen-link" href="/#toolbox">Back to the notebook</a></p>
+    <h1>Toolbox</h1>
+    <dl>{skills.map((s) => <><dt>{s.label}</dt><dd>{s.items}</dd></>)}</dl>
+  </div>
+</Notebook>

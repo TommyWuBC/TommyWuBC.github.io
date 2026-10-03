@@ -1,0 +1,62 @@
+---
+// The four photos on the inside cover. Behavior lives in src/notebook/js/pile.js.
+import { getImage } from 'astro:assets';
+import desk from '../../assets/photos/desk.jpg';
+import lake from '../../assets/photos/lake.jpg';
+import lavender from '../../assets/photos/lavender.jpg';
+import oldProfile from '../../assets/photos/old-profile.jpg';
+
+const photos = [
+  {
+    k: 'desk', cls: 'polaroid', src: desk, w: 639, h: 720, pos: '--x:1%;--y:9%;--r:-7deg',
+    alt: 'Tommy at his desk, smiling and holding up a peace sign',
+    cap: 'at the desk', back: 'Desk, laptop, the stairs behind. Most of this notebook happened here.',
+    tape: 'left:34%;top:-10px;transform:rotate(-4deg)',
+  },
+  {
+    k: 'lake', cls: 'print-p', src: lake, w: 540, h: 720, pos: '--x:33%;--y:0%;--r:5deg',
+    alt: 'Tommy standing at a wide, calm lake, mountains and a big blue sky behind him',
+    cap: 'still water', back: 'A huge, very calm lake. Mostly sky.',
+    tape: 'right:-18px;top:14px;transform:rotate(58deg);width:60px',
+  },
+  {
+    k: 'lavender', cls: 'print-l', src: lavender, w: 720, h: 540, pos: '--x:27%;--y:43%;--r:-3deg',
+    alt: 'Selfie of Tommy in a trench coat, hair in the wind, in a lavender field with mountains',
+    cap: 'lavender, very windy', back: 'Lavender field, mountains, a lot of wind.',
+  },
+  {
+    k: 'old-profile', cls: 'passport', src: oldProfile, w: 549, h: 720, pos: '--x:3%;--y:56%;--r:4deg',
+    alt: 'Headshot of Tommy in glasses and a white polo against a plain wall',
+    back: 'The old headshot. Kept for the record.', clip: true,
+  },
+];
+const imgs = await Promise.all(photos.map((p) => getImage({ src: p.src, width: p.w, height: p.h, format: 'webp', quality: 78 })));
+---
+
+<div class="pile" id="pile" aria-label="Four photos, piled up">
+  <ul class="pile-list">
+    {
+      photos.map((p, i) => (
+        <li class={`photo ${p.cls}`} data-k={p.k} style={p.pos}>
+          <button type="button" class="ph" aria-describedby="pile-help">
+            <span class="ph-flip">
+              <span class="ph-front">
+                <img src={imgs[i].src} alt={p.alt} width={p.w} height={p.h} loading="eager" decoding="async" />
+                {p.cap && <span class="cap hand">{p.cap}</span>}
+              </span>
+              <span class="ph-back"><span class="hand">{p.back}</span></span>
+            </span>
+          </button>
+          {p.tape && <span class="tape" style={p.tape} />}
+          {p.clip && <span class="clip" aria-hidden="true" />}
+        </li>
+      ))
+    }
+  </ul>
+  <p class="pile-note hand" id="pile-help">
+    Four photos. Drag them, tap one to flip it.<span class="sr-only"> With the keyboard: Enter flips, arrow keys move.</span>
+  </p>
+  <div class="pile-ctl js-only">
+    <button type="button" class="pile-btn" data-pile="fan" aria-pressed="false">Spread them out</button>
+  </div>
+</div>

@@ -12,7 +12,7 @@ export async function getProjects() {
   return {
     featured: all.filter((p) => p.data.tier === 'featured').sort(byOrderThenDate),
     archive: all.filter((p) => p.data.tier === 'archive').sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()),
-    caseStudies: all.filter((p) => p.data.caseStudy),
+    expanded: all.filter((p) => p.data.expansion),
   };
 }
 
