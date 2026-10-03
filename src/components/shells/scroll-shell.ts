@@ -1,3 +1,4 @@
+export {};
 // Scroll shell behaviour. Ported from round-2 "The Route" (s2/scroll.js).
 //   1. Top roller: the paper winds onto it as you read; it names the section you're in.
 //   2. Seals: each section head gets its seal pressed when you reach it.

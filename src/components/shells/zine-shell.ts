@@ -1,3 +1,4 @@
+export {};
 // The zine's moving parts. Everything here enhances pages that already read
 // fine laid flat without it.
 //   1. The masthead: set to measure on the font's width axis, printed into
