@@ -1,0 +1,54 @@
+---
+// The feed, nearest first. RSVP is optimistic: the count and button change at
+// once, the "server" confirms a moment later, and a dropped save rolls back.
+import { START_PIN, rank, walkMin, span } from './data';
+const items = rank(START_PIN);
+---
+
+<div class="bz-feed" data-bz-feed data-noturn>
+  <ol class="bz-list" data-bz-list aria-label="Sample events, nearest first">
+    {items.map((e, i) => (
+      <li class="bz-ev" data-ev={e.id}>
+        <span class="bz-n" data-n aria-hidden="true">{i + 1}</span>
+        <div class="bz-main">
+          <p class="bz-t">{e.title}</p>
+          <p class="bz-m"><span class="bz-cat">{e.cat}</span> At {e.place}, {span(e.start, e.end)}</p>
+          <p class="bz-s"><span data-count>{e.going}</span> going{e.friends > 0 && <>, {e.friends} {e.friends === 1 ? 'friend' : 'friends'}</>}<span class="bz-status" data-status role="status"></span></p>
+        </div>
+        <div class="bz-side">
+          <p class="bz-walk"><b data-walk>{walkMin(e, START_PIN)}</b> min</p>
+          <button type="button" class="bz-rsvp" data-rsvp aria-pressed="false" aria-label={`RSVP to ${e.title}`}>RSVP</button>
+        </div>
+      </li>
+    ))}
+  </ol>
+  <label class="bz-drop"><input type="checkbox" data-bz-drop /> Drop the next save, to see the rollback</label>
+</div>
+
+<style is:global>
+  .zine-scene .bz-list { margin: 4px 0 0; padding: 0; list-style: none; border-top: 3px solid var(--z-blue); }
+  .zine-scene .bz-ev { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: start; margin: 0; padding: 10px 0 9px; border-bottom: 1px dashed currentColor; background: var(--z-sheet); position: relative; }
+  .zine-scene .bz-ev::before { content: none !important; }
+  .zine-scene .bz-ev.hot .bz-n { background: var(--z-blue); color: var(--z-sheet); }
+  .zine-scene .bz-n { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--z-blue); font: 900 14px/1 var(--f-display); color: var(--z-blue); margin-top: 2px; }
+  .zine-scene .bz-main { min-width: 0; }
+  .zine-scene .bz-main p { margin: 0; }
+  .zine-scene .bz-t { font: 760 16.5px/1.2 var(--f-display); font-variation-settings: "wdth" 94; }
+  .zine-scene .bz-m { font-size: 14.5px; line-height: 1.35; margin-top: 2px !important; }
+  .zine-scene .bz-cat { display: inline-block; padding: 1px 6px 0; margin-right: 4px; border-radius: 3px; background: var(--z-pink); color: #2b0f4f; font: 700 11.5px/1.5 var(--f-display); vertical-align: 1px; }
+  .zine-scene .bz-s { font-size: 13.5px; font-style: italic; margin-top: 2px !important; color: var(--z-ink-2); }
+  .zine-scene .bz-status { margin-left: 8px; font-style: normal; font: 700 12px/1 var(--f-display); }
+  .zine-scene .bz-status.saving { color: var(--z-ink-2); }
+  .zine-scene .bz-status.saved { color: var(--z-blue); padding: 2px 5px; border: 2px solid currentColor; border-radius: 3px; display: inline-block; rotate: -4deg; }
+  .zine-scene .bz-status.failed { color: var(--z-pink-deep); }
+  .zine-scene .bz-side { display: grid; justify-items: end; gap: 6px; }
+  .zine-scene .bz-walk { margin: 0; font: 650 12.5px/1 var(--f-display); white-space: nowrap; }
+  .zine-scene .bz-walk b { font: 900 26px/.8 var(--f-display); font-variation-settings: "wdth" 60; color: var(--z-blue); }
+  .zine-scene .bz-rsvp { cursor: pointer; min-width: 74px; padding: 6px 10px 5px; border: 2px solid var(--z-blue); border-radius: 4px; background: transparent; color: var(--z-ink); font: 750 13.5px/1 var(--f-display); box-shadow: 2px 2px 0 var(--z-pink); }
+  .zine-scene .bz-rsvp[aria-pressed="true"] { background: var(--z-blue); color: var(--z-sheet); }
+  .zine-scene .bz-rsvp:active { transform: translate(2px, 2px); box-shadow: none; }
+  .zine-scene .bz-rsvp.pending { border-style: dashed; }
+  .zine-scene .bz-drop { display: flex; align-items: center; gap: 8px; margin-top: 12px; font: 600 13.5px/1.3 var(--f-display); cursor: pointer; }
+  .zine-scene .bz-drop input { accent-color: var(--z-pink-deep); width: 16px; height: 16px; }
+  html:not(.js) .zine-scene .bz-rsvp, html:not(.js) .zine-scene .bz-drop { display: none; }
+</style>

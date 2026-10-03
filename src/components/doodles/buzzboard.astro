@@ -1,0 +1,33 @@
+---
+// Pen sketch under BuzzBoard's notebook entry: a little campus map with event
+// pins, you, and walking rings.
+---
+
+<svg viewBox="0 0 460 200" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Sketch: a small campus map with event pins ranked by distance from you">
+  <!-- paths -->
+  <path d="M10 118 C 90 112, 170 122, 300 114 C 350 111, 400 116, 452 112" stroke-width="1.5" stroke-dasharray="1 6" />
+  <path d="M168 12 C 164 60, 172 120, 166 190" stroke-width="1.5" stroke-dasharray="1 6" />
+  <!-- buildings -->
+  <path d="M40 40 l70 -2 l1 44 l-71 2 z" stroke-width="1.8" />
+  <path d="M206 30 l82 1 l-1 40 l-82 -1 z" stroke-width="1.8" />
+  <path d="M330 138 l60 -1 l1 42 l-61 1 z" stroke-width="1.8" />
+  <path d="M52 148 l40 0 l0 36 l-40 0 z M98 148 l36 1 l-1 35 l-35 0 z" stroke-width="1.6" />
+  <!-- quad, hatched -->
+  <path d="M212 132 l92 -2 l1 52 l-92 2 z" stroke-width="1.4" />
+  <path d="M220 178 l20 -40 M236 180 l22 -46 M254 180 l24 -48 M272 180 l24 -48 M290 178 l12 -26" stroke-width="1" />
+  <!-- you, with rings -->
+  <circle cx="186" cy="98" r="5" fill="currentColor" stroke="none" />
+  <circle cx="186" cy="98" r="34" stroke-width="1.3" stroke-dasharray="4 5" />
+  <circle cx="186" cy="98" r="70" stroke-width="1.1" stroke-dasharray="4 6" opacity=".7" />
+  <text x="194" y="92" font-size="20" fill="currentColor" stroke="none" style="font-family: var(--hand)">you</text>
+  <!-- pins, numbered nearest first -->
+  {[[230, 112, 1], [128, 88, 2], [258, 60, 3], [356, 128, 4]].map(([x, y, n]) => (
+    <g transform={`translate(${x} ${y})`}>
+      <path d="M0 0 C -6 -8, -9 -12, -9 -17 A 9 9 0 1 1 9 -17 C 9 -12, 6 -8, 0 0 Z" stroke-width="1.8" />
+      <text y="-12.5" font-size="15" text-anchor="middle" fill="currentColor" stroke="none" style="font-family: var(--hand)">{n}</text>
+    </g>
+  ))}
+  <text x="330" y="40" font-size="21" fill="currentColor" stroke="none" style="font-family: var(--hand)">nearest first</text>
+  <path d="M326 44 c -22 8, -40 18, -52 30" stroke-width="1.3" />
+  <path d="M276 66 l-3 9 l9 -2" stroke-width="1.3" />
+</svg>

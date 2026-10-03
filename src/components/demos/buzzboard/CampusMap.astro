@@ -1,0 +1,95 @@
+---
+// A riso-printed campus map. Invented layout and sample events. Drag the pink
+// "you" pin (or focus it and use the arrow keys) and the feed re-ranks.
+import { EVENTS, START_PIN, rank, METERS_PER_UNIT, WALK_M_PER_MIN } from './data';
+const order = rank(START_PIN).map((e) => e.id);
+const ring = (min: number) => (min * WALK_M_PER_MIN) / METERS_PER_UNIT;
+const buildings = [
+  { x: 72, y: 62, w: 116, h: 74, t: 'Library', lx: 82, ly: 154 },
+  { x: 300, y: 40, w: 132, h: 66, t: 'Student center', lx: 310, ly: 124 },
+  { x: 452, y: 72, w: 104, h: 96, t: 'Engineering', lx: 462, ly: 186 },
+  { x: 60, y: 238, w: 96, h: 56, t: 'Dining', lx: 70, ly: 228 },
+  { x: 92, y: 318, w: 54, h: 66 , t: 'Residence halls', lx: 62, ly: 404 },
+  { x: 166, y: 318, w: 54, h: 66, t: '', lx: 0, ly: 0 },
+  { x: 440, y: 258, w: 50, h: 40, t: 'Rec center', lx: 444, ly: 250 },
+];
+---
+
+<figure class="bz-map" data-bz-map data-noturn>
+  <svg viewBox="0 0 600 420" role="group" aria-label="Sample campus map with six event pins and your location pin">
+    <defs>
+      <pattern id="bz-dots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.7" class="dot-p" /></pattern>
+      <pattern id="bz-dots-b" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="3" cy="3" r="1.3" class="dot-b" /></pattern>
+    </defs>
+    <!-- lawns and fields, printed pink as a halftone -->
+    <rect x="214" y="160" width="182" height="114" rx="6" fill="url(#bz-dots)" class="lawn" />
+    <rect x="430" y="300" width="148" height="92" rx="40" fill="url(#bz-dots)" class="lawn" />
+    <!-- streets: paper left blank between blue tint -->
+    <g class="streets">
+      <path d="M0 202 C 120 196, 180 206, 214 214 M 396 220 C 470 226, 530 214, 600 210" />
+      <path d="M262 0 C 258 60, 262 120, 270 160 M 268 274 C 262 330, 250 380, 246 420" />
+      <path d="M0 312 C 160 306, 300 304, 420 300" />
+      <path d="M418 0 L 424 420" />
+    </g>
+    <path class="walk" d="M214 270 C 260 230, 340 250, 396 166" />
+    <g class="bldg">
+      {buildings.map((b) => <rect x={b.x} y={b.y} width={b.w} height={b.h} />)}
+    </g>
+    <g class="bldg-p" aria-hidden="true">
+      {buildings.map((b) => <rect x={b.x + 2} y={b.y + 1.5} width={b.w} height={b.h} />)}
+    </g>
+    <g class="labels" aria-hidden="true">
+      {buildings.filter((b) => b.t).map((b) => <text x={b.lx} y={b.ly}>{b.t}</text>)}
+      <text x="276" y="222">Quad</text>
+      <text x="472" y="356">Rec field</text>
+    </g>
+    <g class="rings" data-bz-rings transform={`translate(${START_PIN.x} ${START_PIN.y})`} aria-hidden="true">
+      <circle r={ring(5)} /><circle r={ring(10)} />
+      <text x={ring(5) * 0.72 + 4} y={-ring(5) * 0.72}>5 min</text>
+      <text x={ring(10) * 0.72 + 4} y={-ring(10) * 0.72}>10 min</text>
+    </g>
+    {EVENTS.map((e) => (
+      <g class="pin" data-pin={e.id} transform={`translate(${e.x} ${e.y})`}>
+        <title>{e.title}</title>
+        <path d="M0 0 C -10 -12, -13 -18, -13 -24 A 13 13 0 1 1 13 -24 C 13 -18, 10 -12, 0 0 Z" />
+        <text y="-19" data-pin-n>{order.indexOf(e.id) + 1}</text>
+      </g>
+    ))}
+    <g class="you" data-bz-you transform={`translate(${START_PIN.x} ${START_PIN.y})`} tabindex="0" role="button"
+      aria-label="Your location. Drag it, or use the arrow keys to move it." aria-describedby="bz-map-cap">
+      <circle r="22" class="you-hit" />
+      <circle r="11" class="you-p" />
+      <circle r="11" class="you-b" />
+      <circle r="3.5" class="you-c" />
+      <text x="14" y="30">you</text>
+    </g>
+  </svg>
+  <figcaption class="zp-cap" id="bz-map-cap">Sample campus, drawn for this zine. Distances are straight-line walking time on this map.</figcaption>
+</figure>
+
+<style is:global>
+  .zine-scene .bz-map { margin: 6px 0 0; }
+  .zine-scene .bz-map svg { display: block; width: 100%; height: auto; border: 2px solid var(--z-blue); border-radius: 3px; background: color-mix(in srgb, var(--z-sheet) 92%, var(--z-blue)); touch-action: pan-y; }
+  .zine-scene .bz-map .dot-p { fill: var(--z-pink); opacity: .55; }
+  .zine-scene .bz-map .streets path { fill: none; stroke: var(--z-sheet); stroke-width: 13; stroke-linecap: round; }
+  .zine-scene .bz-map .walk { fill: none; stroke: var(--z-blue); stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; opacity: .7; }
+  .zine-scene .bz-map .bldg rect { fill: var(--z-blue); opacity: .82; }
+  .zine-scene .bz-map .bldg-p rect { fill: none; stroke: var(--z-pink); stroke-width: 1.5; mix-blend-mode: var(--z-plate); }
+  .zine-scene .bz-map .labels text { font: 700 12.5px var(--f-display); fill: var(--z-ink); }
+  .zine-scene .bz-map .rings circle { fill: none; stroke: var(--z-pink-deep); stroke-width: 1.5; stroke-dasharray: 5 5; }
+  .zine-scene .bz-map .rings text { font: 400 17px var(--hand); fill: var(--z-pink-deep); }
+  .zine-scene .bz-map .pin path { fill: var(--z-sheet); stroke: var(--z-blue); stroke-width: 2.5; }
+  .zine-scene .bz-map .pin text { font: 900 14px var(--f-display); fill: var(--z-blue); text-anchor: middle; }
+  .zine-scene .bz-map .pin.hot path { fill: var(--z-blue); }
+  .zine-scene .bz-map .pin.hot text { fill: var(--z-sheet); }
+  .zine-scene .bz-map .pin.going path { stroke: var(--z-pink-deep); stroke-width: 3.5; }
+  .zine-scene .bz-map .you { cursor: grab; outline: none; }
+  .zine-scene .bz-map .you.dragging { cursor: grabbing; }
+  .zine-scene .bz-map .you-hit { fill: transparent; touch-action: none; }
+  .zine-scene .bz-map .you-b { fill: var(--z-pink); }
+  .zine-scene .bz-map .you-p { fill: var(--z-blue); transform: translate(2px, 1.5px); opacity: .7; }
+  .zine-scene .bz-map .you-c { fill: var(--z-sheet); }
+  .zine-scene .bz-map .you text { font: 400 22px var(--hand); fill: var(--z-pink-deep); }
+  .zine-scene .bz-map .you:focus-visible .you-hit { stroke: var(--z-pink-deep); stroke-width: 3; stroke-dasharray: 4 3; }
+  html:not(.js) .zine-scene .bz-map .you { cursor: default; }
+</style>

@@ -1,0 +1,41 @@
+---
+// Before and after, each pair set at sizes proportional to its values: the
+// "before" number is full size and the "after" shrinks by the same ratio.
+// From round-2 entry Z4's case-study opener.
+interface Row { label: string; before: number; after: number; unit: string }
+interface Props { rows: Row[]; caption: string }
+const { rows, caption } = Astro.props;
+const fmt = (n: number) => n.toLocaleString('en-US');
+---
+
+<table class="zsized">
+  <caption class="zp-cap">{caption}</caption>
+  <thead>
+    <tr><th scope="col"><span class="sr-only">Measure</span></th><th scope="col">Before</th><th scope="col">After</th></tr>
+  </thead>
+  <tbody>
+    {rows.map((r) => (
+      <tr>
+        <th scope="row">{r.label}</th>
+        <td><span class="zs-n ink" data-ink={fmt(r.before)} style="--v: 1">{fmt(r.before)}</span><span class="zs-u">{r.unit}</span></td>
+        <td><span class:list={['zs-n ink', { small: r.after / r.before < 0.5 }]} data-ink={fmt(r.after)} style={`--v: ${(r.after / r.before).toFixed(3)}`}>{fmt(r.after)}</span><span class="zs-u">{r.unit}</span></td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+<style>
+  .zsized { width: 100%; border-collapse: collapse; margin: 6px 0 4px; border-top: 3px solid var(--z-blue); }
+  caption { caption-side: bottom; text-align: left; padding-top: 6px; }
+  thead th { font: 700 13px/1 var(--f-display); font-variation-settings: "wdth" 100; text-align: left; padding: 8px 0 2px; }
+  tbody th { width: 34%; text-align: left; vertical-align: bottom; padding: 10px 10px 8px 0; font: 750 15px/1.2 var(--f-display); font-variation-settings: "wdth" 94; }
+  tbody tr + tr { border-top: 1px dashed currentColor; }
+  td { vertical-align: bottom; padding: 8px 8px 8px 0; white-space: nowrap; }
+  .zs-n {
+    font: 900 max(30px, calc(var(--v) * 14cqw))/.8 var(--f-display); font-variation-settings: "wdth" 52;
+    letter-spacing: -.01em;
+    -webkit-mask: var(--z-speckle); mask: var(--z-speckle); -webkit-mask-size: 220px; mask-size: 220px;
+  }
+  .zs-n.small { -webkit-mask: none; mask: none; font-variation-settings: "wdth" 70; }
+  .zs-u { margin-left: 3px; font: 700 13px/1 var(--f-display); }
+</style>
