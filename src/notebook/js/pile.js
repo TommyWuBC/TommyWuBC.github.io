@@ -8,9 +8,10 @@
   let topZ = items.length, fanned = false;
   const rnd = (a, b) => a + Math.random() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const baseZ = (el, i) => ({ lavender: 1, desk: 2 }[el.dataset.k] ?? i + 1);
   const st = new Map(items.map((el, i) => {
     const r0 = parseFloat(el.style.getPropertyValue('--r')) || 0;
-    el.style.setProperty('--z', i + 1);
+    el.style.setProperty('--z', baseZ(el, i));
     return [el, { dx: 0, dy: 0, r: r0, r0 }];
   }));
   const apply = (el) => {
@@ -110,7 +111,7 @@
       } else {
         s.dx = 0; s.dy = 0; s.r0 = s.r = parseFloat(el.dataset.r0); el.style.transitionDelay = (items.length - i) * 50 + 'ms';
       }
-      el.style.setProperty('--z', i + 1);
+      el.style.setProperty('--z', baseZ(el, i));
       apply(el);
       setTimeout(() => (el.style.transitionDelay = ''), 600);
     });
