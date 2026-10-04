@@ -158,9 +158,6 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .clip::after { content: ""; position: absolute; left: 1.6px; top: 6px; width: 5px; height: 26px; border: 2.2px solid #c9ced6; border-bottom: 0; border-radius: 5px 5px 0 0; }
 .photo .tape { z-index: 2; }
 .pile-note { position: absolute; right: 0; top: 34%; width: 112px; font-size: 22px; line-height: 23px; color: var(--cover-ink-2); transform: rotate(-3deg); text-align: right; }
-.pile-ctl { position: absolute; right: 0; bottom: 0; }
-.pile-btn { background: none; border: 0; padding: 4px 2px; cursor: pointer; font-family: var(--hand); font-size: 23px; color: #ffe27a; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
-.pile-btn:hover { color: #fff1b0; }
 
 /* ---------- inside back cover: pocket and résumé ---------- */
 .back-in { display: flex; flex-direction: column; }
@@ -373,3 +370,23 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .sticker.st-rect { top: -30px; }
 .pocket .sticker { top: -4px; right: -6px; }
 .pocket .sticker.st-rect { top: -10px; }
+
+/* LinkedIn and GitHub as two die-cut stickers stuck on the inside cover */
+.pile-links { position: absolute; right: 0; bottom: 0; display: flex; gap: 14px; align-items: flex-end; }
+.link-sticker {
+  display: grid; place-items: center; gap: 2px; width: 66px; height: 66px; border-radius: 50%;
+  background: #fff; color: #fff; text-decoration: none;
+  box-shadow: 0 0 0 3px #fff, 0 4px 8px rgba(0,0,0,.35);
+  transform: rotate(var(--r, -6deg)); transition: transform .45s var(--spring), box-shadow .3s;
+}
+.link-sticker svg { width: 26px; height: 26px; margin-top: 8px; }
+.link-sticker span { font-size: 15px; line-height: 1; margin-bottom: 8px; }
+.ls-in { background: #0a66c2; --r: -8deg; }
+.ls-gh { background: #1f2328; --r: 7deg; border-radius: 14px; }
+.link-sticker:hover, .link-sticker:focus-visible { transform: rotate(0deg) translateY(-4px) scale(1.07); box-shadow: 0 0 0 3px #fff, 0 10px 16px rgba(0,0,0,.4); }
+.pocket .pile-links { right: 0; bottom: 4px; }
+
+/* desktop: the cursor is a pencil */
+@media (hover: hover) and (pointer: fine) {
+  html { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cg transform='rotate(45 14 14)'%3E%3Cpath d='M11 3h6v17l-3 6-3-6z' fill='%23f4c430' stroke='%231b1e25' stroke-width='1.2' stroke-linejoin='round'/%3E%3Cpath d='M11 3h6v3h-6z' fill='%23e88c9a' stroke='%231b1e25' stroke-width='1.2'/%3E%3Cpath d='M11 6h6v1.6h-6z' fill='%23b9bec7' stroke='%231b1e25' stroke-width='1'/%3E%3Cpath d='M11 20h6l-3 6z' fill='%23f1d9b5' stroke='%231b1e25' stroke-width='1.2' stroke-linejoin='round'/%3E%3Cpath d='M12.9 23.8h2.2L14 26z' fill='%231b1e25'/%3E%3C/g%3E%3C/svg%3E") 4 24, auto; }
+}
