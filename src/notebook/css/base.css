@@ -132,7 +132,6 @@ ul, ol { margin: 0; padding: 0; }
   color: var(--mat-ink);
 }
 .deskbar .who { white-space: nowrap; font-size: 18px; font-weight: 600; text-decoration: none; letter-spacing: 0.005em; display: inline-flex; align-items: baseline; gap: 10px; }
-.deskbar .who small { font-weight: 400; color: var(--mat-ink-2); font-size: 15px; }
 .deskbar nav { display: flex; align-items: center; gap: var(--s2); }
 .deskbar a.lnk, .deskbar button.lnk {
   display: inline-flex; align-items: center; gap: 8px;
@@ -285,7 +284,7 @@ s.tried::before {
 
 @media (max-width: 640px) {
   .deskbar { padding: 0 var(--s4); height: 52px; }
-  .deskbar .who small, .js .deskbar .lnk.wide, .deskbar .lnk.wide { display: none !important; }
+  .js .deskbar .lnk.wide, .deskbar .lnk.wide { display: none !important; }
   .deskbar .lnk kbd, .deskbar .wide-t { display: none; }
   .deskbar a.lnk, .deskbar button.lnk { padding: 0 9px; }
 }

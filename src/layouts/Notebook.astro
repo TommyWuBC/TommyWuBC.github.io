@@ -76,7 +76,7 @@ const data = JSON.stringify({ email: site.email, commands });
   <body class={bodyClass}>
     <a class="skip" href="#main">Skip to content</a>
     <header class="deskbar on-mat">
-      <a class="who" href="/">{site.name} <small>Georgia Tech, CS</small></a>
+      <a class="who" href="/">{site.name}</a>
       <nav aria-label="Quick links">
         <slot name="nav" />
         <a class="lnk wide" href={site.resume}>Résumé</a>

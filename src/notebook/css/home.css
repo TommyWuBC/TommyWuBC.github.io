@@ -314,8 +314,8 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .pocket .plate { padding: 18px 20px 20px; }
 .pocket .plate h1 { font-size: 48px; line-height: 50px; }
 .pocket .plate-photo { width: 62px; padding: 4px; right: -8px; top: -20px; }
-.pocket .pile { height: 400px; }
-.pocket .pile-note { top: auto; bottom: 2px; left: 0; right: auto; width: 150px; font-size: 20px; line-height: 20px; text-align: left; transform: rotate(-2deg); }
+.pocket .pile { height: 400px; margin-bottom: 44px; }
+.pocket .pile-note { top: auto; bottom: -42px; left: 0; right: auto; width: 150px; font-size: 20px; line-height: 20px; text-align: left; transform: rotate(-2deg); }
 .pocket .pocket { height: 300px; }
 .pocket .end-note { position: static; margin-top: 24px; }
 .pocket .back-in { min-height: 420px; }

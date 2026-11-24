@@ -21,7 +21,7 @@
   const tabs = pages.map((p, pi) => p.dataset.tab ? { label: p.dataset.tab, c: p.dataset.tabc, pi, spread: spreadOf(pi), leaf: clamp(pi % 2 ? (pi - 1) / 2 : pi / 2 - 1, 0, L - 1) } : null).filter(Boolean);
   const mk = (tag, cls, attrs = {}) => { const n = document.createElement(tag); n.className = cls + ' gen'; for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
 
-  let mode = null, cur = 0, stage = null, leaves = [], edges = {}, sheets = [], ptabs = [], raf = 0, drag = null, pending = null, pendingFocus = null, hintEl = null;
+  let mode = null, cur = 0, stage = null, leaves = [], edges = {}, sheets = [], ptabs = [], raf = 0, drag = null, pending = null, pendingFocus = null, hintEl = null, flip = 0;
   // things a press should reach instead of turning the page
   const INTERACTIVE = 'a, button, input, select, textarea, label, summary, iframe, video, canvas, [contenteditable], [tabindex]:not([tabindex="-1"]), .photo, .front-cover';
   const ZONE = 0.24; // outer share of each page where a click turns it
@@ -318,7 +318,9 @@
 
   function pocketGo(k, prev, instant) {
     const out = sheets[prev], inn = sheets[k];
-    sheets.forEach((s) => s.getAnimations().forEach((a) => a.finish()));
+    // a newer turn supersedes a running one: cancel it (no onfinish) so its late cleanup can't hide the new sheet
+    const id = ++flip;
+    sheets.forEach((s, j) => { s.getAnimations().forEach((a) => a.cancel()); s.classList.remove('flying'); s.hidden = j !== prev && j !== k; });
     if (instant || reduce() || prev === k || !out.animate) {
       sheets.forEach((s, j) => { s.hidden = j !== k; s.classList.remove('flying'); });
       return settled();
@@ -334,7 +336,7 @@
         { transform: 'rotateX(-80deg)', opacity: 1, offset: 0.8 },
         { transform: 'rotateX(-96deg)', opacity: 0 },
       ], opts);
-      a.onfinish = () => { out.hidden = true; out.classList.remove('flying'); settled(); };
+      a.onfinish = () => { if (id !== flip) return; out.hidden = true; out.classList.remove('flying'); settled(); };
     } else {
       inn.classList.add('flying');
       const a = inn.animate([
@@ -342,7 +344,7 @@
         { transform: 'rotateX(-80deg)', opacity: 1, offset: 0.2 },
         { transform: 'rotateX(0deg)', opacity: 1 },
       ], opts);
-      a.onfinish = () => { inn.classList.remove('flying'); out.hidden = true; settled(); };
+      a.onfinish = () => { if (id !== flip) return; inn.classList.remove('flying'); out.hidden = true; settled(); };
     }
   }
 
