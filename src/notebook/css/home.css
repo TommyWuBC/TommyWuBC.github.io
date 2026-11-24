@@ -267,6 +267,8 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .stage.turnable { cursor: pointer; }
 .stage.turning, .stage.turning * { cursor: grabbing; -webkit-user-select: none; user-select: none; }
 .pocket .sheets { touch-action: pan-y pinch-zoom; }
+/* touch screens: a press-and-drag on a page shouldn't start text selection or the callout menu */
+@media (pointer: coarse) { .stage { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; } }
 
 /* first-visit hint (book.js showHint) */
 .turn-hint { position: absolute; z-index: 450; pointer-events: none; opacity: 0; transition: opacity .45s, translate .45s var(--spring); translate: 0 8px; }
@@ -338,10 +340,11 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 
 /* opening: the closed notebook swings open once per visit */
 .book.desk.closed { --shift: calc(-280px * var(--s)); }
-.desk .cover { transition: clip-path 1s cubic-bezier(.6,.05,.25,1); clip-path: inset(-120px); }
-.desk.closed .cover { clip-path: inset(-120px -120px -120px 50%); }
-.desk > .page.l, .desk .ribbon, .desk .edge-l { transition: opacity .35s .55s; }
-.desk.closed > .page.l, .desk.closed .ribbon, .desk.closed .edge-l { opacity: 0; transition-delay: 0s; }
+/* the left half of the board appears only once the turning cover has landed there (no transition: it's hidden under the cover) */
+.desk .cover { clip-path: inset(-120px); }
+.desk.opening .cover { clip-path: inset(-120px -120px -120px 50%); }
+.desk > .page.l, .desk .ribbon, .desk .edge-l { transition: opacity .2s; }
+.desk.opening .ribbon, .desk.opening .edge-l { opacity: 0; transition: none; }
 .front-cover { z-index: 500 !important; }
 .front-cover .face { border-radius: 0 6px 6px 0; overflow: hidden; }
 .fc-out, .fc-in { position: absolute; inset: -14px -14px -14px 0; background: var(--cover);

@@ -24,7 +24,10 @@
   let mode = null, cur = 0, stage = null, leaves = [], edges = {}, sheets = [], ptabs = [], raf = 0, drag = null, pending = null, pendingFocus = null, hintEl = null, flip = 0;
   // things a press should reach instead of turning the page
   const INTERACTIVE = 'a, button, input, select, textarea, label, summary, iframe, video, canvas, [contenteditable], [tabindex]:not([tabindex="-1"]), .photo, .front-cover';
+  // a drag may start on a link (the index is mostly links); only real controls are off limits
+  const NO_DRAG = 'button, input, select, textarea, label, summary, iframe, video, canvas, [contenteditable], .photo, .front-cover';
   const ZONE = 0.24; // outer share of each page where a click turns it
+  let swallowClick = false;
 
   /* ---------------- desk ---------------- */
   function buildDesk() {
@@ -60,6 +63,16 @@
     stage.addEventListener('pointermove', onHover);
     stage.addEventListener('pointerleave', () => setPeek(null));
     stage.addEventListener('dragstart', (e) => { if (pending || drag) e.preventDefault(); });
+    stage.addEventListener('click', (e) => { if (swallowClick) { e.preventDefault(); e.stopPropagation(); } }, true);
+    // iPad Safari: claim a sideways drag at its first touchmove. Otherwise Safari starts panning and
+    // rubber-banding the whole page, cancels the pointer, and the page turn never happens (or shakes).
+    stage.addEventListener('touchmove', (e) => {
+      if (e.touches.length !== 1) return;
+      if (drag) return e.preventDefault();
+      if (!pending) return;
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - pending.x0) >= Math.abs(t.clientY - pending.y0)) e.preventDefault();
+    }, { passive: false });
     if (hint) hint.textContent = 'Click near a page edge or drag a page to turn it. Tabs and arrow keys work too.';
     fit();
   }
@@ -73,22 +86,38 @@
     const front = mk('div', 'face front'), back = mk('div', 'face back');
     front.innerHTML = '<div class="fc-out"><div class="fc-label"><b>Tommy Wu</b><span>notes and work, 2025 to now</span></div></div>';
     back.innerHTML = '<div class="fc-in"></div>';
+    // the inside cover (page 0) rides on the back of the turning cover, like in a real notebook:
+    // its contents are there the whole way and it simply lands in place, nothing pops in afterwards
+    const inside = pages[0], home = inside.nextSibling;
+    back.append(inside);
     lf.append(front, back); book.append(lf);
-    book.classList.add('no-tr', 'closed');
+    // 'opening' keeps the left half of the board (and ribbon) hidden until the cover lands there
+    book.classList.add('no-tr', 'closed', 'opening');
     book.getBoundingClientRect();
     book.classList.remove('no-tr');
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      book.insertBefore(inside, home);
+      lf.remove();
+      book.classList.remove('closed', 'opening');
+    };
     const t0 = performance.now() + 380, dur = 1050;
     const step = (now) => {
+      if (done) return;
       const p = Math.max(0, Math.min(1, (now - t0) / dur));
       if (p > 0 && book.classList.contains('closed')) book.classList.remove('closed');
       const a = -180 * ease(p);
       lf.style.transform = `rotateY(${a}deg)`;
+      // switch faces explicitly at the edge: Safari can leak a face through its back mid-turn
+      front.style.visibility = a <= -90 ? 'hidden' : 'visible';
+      back.style.visibility = a <= -90 ? 'visible' : 'hidden';
       front.style.setProperty('--sh', Math.sin(p * Math.PI) * 0.6);
-      back.style.opacity = p > 0.82 ? String(1 - (p - 0.82) / 0.18) : '1';
-      if (p < 1) requestAnimationFrame(step); else lf.remove();
+      if (p < 1) requestAnimationFrame(step); else finish();
     };
     requestAnimationFrame(step);
-    lf.addEventListener('pointerdown', () => { lf.remove(); book.classList.remove('closed'); });
+    lf.addEventListener('pointerdown', finish);
     return true;
   }
 
@@ -171,10 +200,11 @@
     setPeek(free(e) ? zoneAt(e.clientX) : null);
   }
   function onDown(e) {
-    dismissHint();
-    if (e.button > 0 || drag || !free(e)) return;
+    if (hintShown()) dismissHint();
+    if (e.button > 0 || drag || book.classList.contains('closed') || e.target.closest(NO_DRAG)) return;
     const r = book.getBoundingClientRect();
-    pending = { id: e.pointerId, x0: e.clientX, y0: e.clientY, zone: zoneAt(e.clientX), right: e.clientX > r.left + r.width / 2 };
+    // a plain click on a link follows the link; only a click on bare page near the edge turns it
+    pending = { id: e.pointerId, x0: e.clientX, y0: e.clientY, zone: free(e) ? zoneAt(e.clientX) : null, right: e.clientX > r.left + r.width / 2 };
     const move = (ev) => {
       if (!pending || ev.pointerId !== pending.id) return;
       const dx = ev.clientX - pending.x0, dy = ev.clientY - pending.y0;
@@ -226,6 +256,8 @@
       if (frame) { cancelAnimationFrame(frame); paint(); }
       removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', up);
       stage.classList.remove('turning');
+      // the drag may have started on a link: don't let the click that follows open it
+      swallowClick = true; setTimeout(() => (swallowClick = false), 0);
       const d = drag; drag = null;
       const a = lf.a;
       const commit = side === 'r' ? (a < -90 || d.vx < -0.4) : (a > -90 || d.vx > 0.4);
@@ -237,7 +269,7 @@
   /* first visit: a sticky note and a nudge of the page show how turning works */
   function showHint(delay) {
     let seen = false;
-    try { seen = localStorage.getItem('nb-turn-hint') === '1'; localStorage.setItem('nb-turn-hint', '1'); } catch (e) {}
+    try { seen = localStorage.getItem('nb-turn-hint') === '1'; } catch (e) {}
     if (seen) return;
     const desk = mode === 'desk';
     hintEl = mk('div', 'turn-hint ' + (desk ? 'th-desk' : 'th-pocket'), { 'aria-hidden': 'true' });
@@ -248,11 +280,15 @@
     const el = hintEl;
     setTimeout(() => {
       if (hintEl !== el) return;
+      // only counts as seen once it has actually been on screen
+      try { localStorage.setItem('nb-turn-hint', '1'); } catch (e) {}
       el.classList.add('on');
       if (desk && !reduce()) { setTimeout(() => nudge(cur), 500); setTimeout(() => nudge(cur), 2300); }
       setTimeout(dismissHint, 6500);
     }, delay);
   }
+  // a click before the note appears (say, during the cover opening) shouldn't cancel it; turning a page does
+  const hintShown = () => !!hintEl && hintEl.classList.contains('on');
   function dismissHint() {
     if (!hintEl) return;
     const el = hintEl; hintEl = null;
@@ -304,7 +340,7 @@
     // swipe a sheet sideways to turn it (touch and pen; vertical scrolling stays native)
     let sw = null;
     wrap.addEventListener('pointerdown', (e) => {
-      dismissHint();
+      if (hintShown()) dismissHint();
       sw = e.pointerType === 'mouse' || e.target.closest(INTERACTIVE) ? null : { id: e.pointerId, x: e.clientX, y: e.clientY };
     });
     wrap.addEventListener('pointerup', (e) => {
