@@ -3,7 +3,7 @@ role: Undergraduate Research Assistant
 org: PAIR Lab, Georgia Tech
 when: Jul 2026 to now
 date: 2026-07-01
-stack: [Python, PyTorch, Stable-Baselines3, MiniGrid]
+stack: [Python, PyTorch, Wan 2.2, Slurm, Stable-Baselines3]
 projects: [visual-navigation]
 sticker: { name: pair, width: 56, tilt: 7 }
 ---
