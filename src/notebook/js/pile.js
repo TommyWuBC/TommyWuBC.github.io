@@ -8,7 +8,7 @@
   let topZ = items.length, fanned = false;
   const rnd = (a, b) => a + Math.random() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const baseZ = (el, i) => ({ lavender: 1, desk: 2 }[el.dataset.k] ?? i + 1);
+  const baseZ = (el, i) => ({ lavender: 1, 'great-wall': 1, desk: 2 }[el.dataset.k] ?? i + 1);
   const st = new Map(items.map((el, i) => {
     const r0 = parseFloat(el.style.getPropertyValue('--r')) || 0;
     el.style.setProperty('--z', baseZ(el, i));
@@ -101,7 +101,7 @@
     if (fanBtn) { fanBtn.textContent = on ? 'Pile them up again' : 'Spread them out'; fanBtn.setAttribute('aria-pressed', String(on)); }
     if (quiet) return;
     const W = pile.offsetWidth, H = pile.offsetHeight;
-    const FAN = { desk: [0, 0.05, -8], lake: [0.36, 0, 4], lavender: [0.02, 0.5, 3], 'old-profile': [0.5, 0.53, -6] };
+    const FAN = { desk: [0, 0.05, -8], lake: [0.36, 0, 4], lavender: [0.02, 0.5, 3], 'great-wall': [0.5, 0.5, -6] };
     items.forEach((el, i) => {
       const s = st.get(el);
       if (on) {

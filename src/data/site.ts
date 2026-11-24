@@ -18,6 +18,8 @@ export const site = {
   linkedin: 'https://www.linkedin.com/in/bingchang-wu-017474274',
   resume: '/resume.pdf',
   location: 'Atlanta, GA',
+  /** GoatCounter site code (the <code> in <code>.goatcounter.com). Empty = no analytics. */
+  goatcounter: 'tommywubc',
 };
 
 /** Short facts on the cover. */

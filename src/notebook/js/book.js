@@ -1,5 +1,5 @@
 /* The notebook. One ordered list of .page sections becomes either
-   - a bound book (wide screens): leaves you turn by dragging a corner, clicking a tab, or arrow keys
+   - a bound book (wide screens): leaves you turn by clicking near an edge, dragging a page, clicking a tab, or arrow keys
    - a pocket notebook (narrow screens): one sheet at a time, flipped up over a top spiral.
    Page 0 is the inside front cover, the last page is the inside back cover;
    every pair in between is one leaf (front = right page, back = next left page). */
@@ -21,7 +21,10 @@
   const tabs = pages.map((p, pi) => p.dataset.tab ? { label: p.dataset.tab, c: p.dataset.tabc, pi, spread: spreadOf(pi), leaf: clamp(pi % 2 ? (pi - 1) / 2 : pi / 2 - 1, 0, L - 1) } : null).filter(Boolean);
   const mk = (tag, cls, attrs = {}) => { const n = document.createElement(tag); n.className = cls + ' gen'; for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
 
-  let mode = null, cur = 0, stage = null, leaves = [], grabs = {}, edges = {}, sheets = [], ptabs = [], raf = 0, drag = null, pendingFocus = null;
+  let mode = null, cur = 0, stage = null, leaves = [], edges = {}, sheets = [], ptabs = [], raf = 0, drag = null, pending = null, pendingFocus = null, hintEl = null;
+  // things a press should reach instead of turning the page
+  const INTERACTIVE = 'a, button, input, select, textarea, label, summary, iframe, video, canvas, [contenteditable], [tabindex]:not([tabindex="-1"]), .photo, .front-cover';
+  const ZONE = 0.24; // outer share of each page where a click turns it
 
   /* ---------------- desk ---------------- */
   function buildDesk() {
@@ -35,9 +38,11 @@
     leaves = [];
     for (let i = 0; i < L; i++) {
       const el = mk('div', 'leaf'), front = mk('div', 'face front'), back = mk('div', 'face back');
-      front.append(pages[2 * i + 1]); back.append(pages[2 * i + 2]);
+      // shading lives on its own element: animating an inherited custom property would restyle the whole page every frame
+      const fs = mk('div', 'shade'), bs = mk('div', 'shade');
+      front.append(pages[2 * i + 1], fs); back.append(pages[2 * i + 2], bs);
       el.append(front, back); book.append(el);
-      leaves.push({ el, front, back, a: 0, anim: null, tabs: [] });
+      leaves.push({ el, front, back, fs, bs, a: 0, anim: null, tabs: [] });
     }
     tabs.forEach((t, j) => {
       const lf = leaves[t.leaf];
@@ -49,16 +54,13 @@
         lf[face].append(b); lf.tabs.push({ b, face, spread: t.spread });
       }
     });
-    for (const side of ['l', 'r']) {
-      const g = mk('div', `grab grab-${side}`, { 'aria-hidden': 'true', title: side === 'r' ? 'Drag to turn the page' : 'Drag to turn back' });
-      g.addEventListener('pointerdown', (e) => startDrag(e, side));
-      g.addEventListener('pointerenter', () => book.classList.add('peek-' + side));
-      g.addEventListener('pointerleave', () => book.classList.remove('peek-' + side));
-      book.append(g, mk('div', `fold fold-${side}`, { 'aria-hidden': 'true' }));
-      grabs[side] = g;
-    }
+    for (const side of ['l', 'r']) book.append(mk('div', `fold fold-${side}`, { 'aria-hidden': 'true' }));
     book.append(mk('div', 'ribbon', { 'aria-hidden': 'true' }));
-    if (hint) hint.textContent = 'Drag a page corner, click a tab, or use the arrow keys.';
+    stage.addEventListener('pointerdown', onDown);
+    stage.addEventListener('pointermove', onHover);
+    stage.addEventListener('pointerleave', () => setPeek(null));
+    stage.addEventListener('dragstart', (e) => { if (pending || drag) e.preventDefault(); });
+    if (hint) hint.textContent = 'Click near a page edge or drag a page to turn it. Tabs and arrow keys work too.';
     fit();
   }
 
@@ -66,7 +68,7 @@
   function openCover() {
     let seen = false;
     try { seen = sessionStorage.getItem('opened') === '1'; sessionStorage.setItem('opened', '1'); } catch (e) {}
-    if (seen || reduce() || location.hash || cur !== 0) return;
+    if (seen || reduce() || location.hash || cur !== 0) return false;
     const lf = mk('div', 'leaf front-cover', { 'aria-hidden': 'true' });
     const front = mk('div', 'face front'), back = mk('div', 'face back');
     front.innerHTML = '<div class="fc-out"><div class="fc-label"><b>Tommy Wu</b><span>notes and work, 2025 to now</span></div></div>';
@@ -87,6 +89,7 @@
     };
     requestAnimationFrame(step);
     lf.addEventListener('pointerdown', () => { lf.remove(); book.classList.remove('closed'); });
+    return true;
   }
 
   function fit() {
@@ -110,9 +113,8 @@
     // through a face's back side. Switch faces explicitly at the page edge.
     lf.front.style.visibility = a <= -90 ? 'hidden' : 'visible';
     lf.back.style.visibility = a <= -90 ? 'visible' : 'hidden';
-    lf.front.style.setProperty('--sh', (t * 0.95).toFixed(3));
-    lf.back.style.setProperty('--sh', (t * 0.7).toFixed(3));
-    lf.el.style.setProperty('--lift', t.toFixed(3));
+    lf.fs.style.opacity = (t * 0.95).toFixed(3);
+    lf.bs.style.opacity = (t * 0.7).toFixed(3);
     lf.el.classList.toggle('moving', !!moving);
     lf.el.style.zIndex = moving ? (a > -90 ? 100 + (L - i) : 200 + i) : (a > -90 ? 20 + (L - i) : 20 + i);
   }
@@ -150,39 +152,125 @@
     if (!raf) raf = requestAnimationFrame(tick);
   }
 
-  /* drag a corner: the page edge follows the pointer around the spine */
-  function startDrag(e, side) {
-    const i = side === 'r' ? cur : cur - 1;
-    if (i < 0 || i >= L || e.button > 0) return;
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    const lf = leaves[i]; lf.anim = null;
-    drag = { i, side, x0: e.clientX, moved: false, lx: e.clientX, lt: performance.now(), vx: 0, el: e.currentTarget };
+  /* turning by hand. A click near a page's outer edge turns it; a sideways drag
+     anywhere on a page (not on a link or photo) picks the page up and follows the pointer. */
+  const free = (e) => !e.target.closest(INTERACTIVE) && !book.classList.contains('closed');
+  function zoneAt(x) {
+    const r = book.getBoundingClientRect(), z = (r.width / 2) * ZONE;
+    if (x > r.right - z && cur < L) return 'r';
+    if (x < r.left + z && cur > 0) return 'l';
+    return null;
+  }
+  function setPeek(side) {
+    book.classList.toggle('peek-r', side === 'r');
+    book.classList.toggle('peek-l', side === 'l');
+    if (stage) stage.classList.toggle('turnable', !!side);
+  }
+  function onHover(e) {
+    if (drag || pending || e.pointerType !== 'mouse') return;
+    setPeek(free(e) ? zoneAt(e.clientX) : null);
+  }
+  function onDown(e) {
+    dismissHint();
+    if (e.button > 0 || drag || !free(e)) return;
+    const r = book.getBoundingClientRect();
+    pending = { id: e.pointerId, x0: e.clientX, y0: e.clientY, zone: zoneAt(e.clientX), right: e.clientX > r.left + r.width / 2 };
     const move = (ev) => {
-      if (!drag) return;
-      if (Math.abs(ev.clientX - drag.x0) > 5) drag.moved = true;
-      if (!drag.moved) return;
-      const r = book.getBoundingClientRect();
-      const xr = clamp((ev.clientX - (r.left + r.width / 2)) / (r.width / 2), -1, 1);
-      lf.a = -Math.acos(xr) * 180 / Math.PI;
-      const t = performance.now();
-      drag.vx = 0.7 * drag.vx + 0.3 * ((ev.clientX - drag.lx) / Math.max(1, t - drag.lt));
-      drag.lx = ev.clientX; drag.lt = t;
+      if (!pending || ev.pointerId !== pending.id) return;
+      const dx = ev.clientX - pending.x0, dy = ev.clientY - pending.y0;
+      if (Math.hypot(dx, dy) < 8) return;
+      const p = pending; end();
+      // only a mostly-sideways pull toward the spine picks the page up
+      if (Math.abs(dx) < Math.abs(dy) * 1.2) return;
+      const side = p.right && dx < 0 ? 'r' : !p.right && dx > 0 ? 'l' : null;
+      if (side) startDrag(side, ev.pointerId, p.x0);
+    };
+    const up = (ev) => {
+      if (!pending || ev.pointerId !== pending.id) return;
+      const p = pending; end();
+      if (ev.type === 'pointerup' && p.zone) go(p.zone === 'r' ? cur + 1 : cur - 1);
+    };
+    const end = () => {
+      pending = null;
+      removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', up);
+    };
+    addEventListener('pointermove', move); addEventListener('pointerup', up); addEventListener('pointercancel', up);
+  }
+
+  function startDrag(side, pointerId, x0) {
+    const i = side === 'r' ? cur : cur - 1;
+    if (i < 0 || i >= L) return;
+    try { stage.setPointerCapture(pointerId); } catch (e) {}
+    getSelection()?.removeAllRanges();
+    stage.classList.add('turning'); setPeek(null);
+    const lf = leaves[i]; lf.anim = null;
+    // relative: the page keeps its current angle and moves with the pointer, no jump
+    const c0 = Math.cos((lf.a * Math.PI) / 180);
+    const half = book.getBoundingClientRect().width / 2; // measured once: reading layout per move would force a reflow each time
+    drag = { i, side, lx: x0, lt: performance.now(), vx: 0 };
+    let fx = x0, frame = 0;
+    const paint = () => {
+      frame = 0;
+      lf.a = -Math.acos(clamp(c0 + (fx - x0) / half, -1, 1)) * 180 / Math.PI;
       render(lf, i, true);
     };
-    const up = () => {
-      drag.el.removeEventListener('pointermove', move);
-      drag.el.removeEventListener('pointerup', up);
-      drag.el.removeEventListener('pointercancel', up);
+    const move = (ev) => {
+      if (!drag || ev.pointerId !== pointerId) return;
+      const t = performance.now();
+      drag.vx = 0.7 * drag.vx + 0.3 * ((ev.clientX - drag.lx) / Math.max(1, t - drag.lt));
+      drag.lx = fx = ev.clientX; drag.lt = t;
+      if (!frame) frame = requestAnimationFrame(paint); // at most one render per frame
+    };
+    const up = (ev) => {
+      if (ev.pointerId !== pointerId) return;
+      if (frame) { cancelAnimationFrame(frame); paint(); }
+      removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', up);
+      stage.classList.remove('turning');
       const d = drag; drag = null;
-      if (!d.moved) return go(side === 'r' ? cur + 1 : cur - 1);
       const a = lf.a;
-      const commit = side === 'r' ? (a < -90 || d.vx < -0.5) : (a > -90 || d.vx > 0.5);
+      const commit = side === 'r' ? (a < -90 || d.vx < -0.4) : (a > -90 || d.vx > 0.4);
       go(commit ? (side === 'r' ? cur + 1 : cur - 1) : cur);
     };
-    drag.el.addEventListener('pointermove', move);
-    drag.el.addEventListener('pointerup', up);
-    drag.el.addEventListener('pointercancel', up);
+    addEventListener('pointermove', move); addEventListener('pointerup', up); addEventListener('pointercancel', up);
+  }
+
+  /* first visit: a sticky note and a nudge of the page show how turning works */
+  function showHint(delay) {
+    let seen = false;
+    try { seen = localStorage.getItem('nb-turn-hint') === '1'; localStorage.setItem('nb-turn-hint', '1'); } catch (e) {}
+    if (seen) return;
+    const desk = mode === 'desk';
+    hintEl = mk('div', 'turn-hint ' + (desk ? 'th-desk' : 'th-pocket'), { 'aria-hidden': 'true' });
+    hintEl.innerHTML = desk
+      ? '<span class="th-ring"></span><p class="th-note hand">psst: click near the edge of a page, or grab it and drag, to turn it <b>→</b></p>'
+      : '<p class="th-note hand">swipe a page sideways to turn it, or tap a tab up top</p>';
+    book.append(hintEl);
+    const el = hintEl;
+    setTimeout(() => {
+      if (hintEl !== el) return;
+      el.classList.add('on');
+      if (desk && !reduce()) { setTimeout(() => nudge(cur), 500); setTimeout(() => nudge(cur), 2300); }
+      setTimeout(dismissHint, 6500);
+    }, delay);
+  }
+  function dismissHint() {
+    if (!hintEl) return;
+    const el = hintEl; hintEl = null;
+    el.classList.remove('on');
+    setTimeout(() => el.remove(), 500);
+  }
+  function nudge(i) {
+    const lf = leaves[i];
+    if (!hintEl || !lf || lf.anim || drag || pending) return;
+    const t0 = performance.now(), dur = 1000;
+    const step = (now) => {
+      if (drag || lf.anim || cur !== i) return; // the reader took over
+      const p = Math.min(1, (now - t0) / dur);
+      lf.a = -26 * Math.sin(Math.PI * p);
+      render(lf, i, p < 1);
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
 
   /* ---------------- pocket ---------------- */
@@ -213,6 +301,18 @@
       s.append(sn); wrap.append(s); sheets.push(s);
     }
     book.append(nav, mk('div', 'spiral', { 'aria-hidden': 'true' }), wrap);
+    // swipe a sheet sideways to turn it (touch and pen; vertical scrolling stays native)
+    let sw = null;
+    wrap.addEventListener('pointerdown', (e) => {
+      dismissHint();
+      sw = e.pointerType === 'mouse' || e.target.closest(INTERACTIVE) ? null : { id: e.pointerId, x: e.clientX, y: e.clientY };
+    });
+    wrap.addEventListener('pointerup', (e) => {
+      if (!sw || e.pointerId !== sw.id) return;
+      const dx = e.clientX - sw.x, dy = e.clientY - sw.y; sw = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(cur + (dx < 0 ? 1 : -1), { focus: dx < 0 ? pages[2 * cur + 2] : null });
+    });
+    wrap.addEventListener('pointercancel', () => (sw = null));
     if (hint) hint.textContent = '';
   }
 
@@ -265,7 +365,7 @@
     }));
     ptabs.forEach(({ b, spread }) => b.setAttribute('aria-current', String(spread === (active && k >= active.spread ? active.spread : 0))));
     if (edges.l) { edges.l.style.setProperty('--n', k); edges.r.style.setProperty('--n', L - k); }
-    if (grabs.r) { grabs.r.hidden = k >= L; grabs.l.hidden = k <= 0; }
+    if (prev !== k) dismissHint();
     if (hash && prev !== k) history.replaceState(null, '', k === 0 ? location.pathname : '#' + (focus && focus.id ? focus.id : pages[2 * k].id));
     if (statusEl && prev !== k) statusEl.textContent = k === 0 ? 'Cover and index' : `Pages ${2 * k} and ${Math.min(2 * k + 1, N - 2)}: ${pages[2 * k].dataset.title}`;
   }
@@ -296,7 +396,7 @@
     book.classList.remove('desk', 'pocket', 'peek-l', 'peek-r');
     book.removeAttribute('style');
     if (stage) { stage.before(book); stage.remove(); stage = null; }
-    leaves = []; sheets = []; ptabs = []; grabs = {}; edges = {};
+    leaves = []; sheets = []; ptabs = []; edges = {}; hintEl = null;
   }
 
   const mq = matchMedia('(min-width: 900px) and (min-height: 600px)');
@@ -321,7 +421,8 @@
   const h = fromHash();
   cur = h.k;
   setup();
-  if (mode === 'desk') { openCover(); requestAnimationFrame(() => scrollTo(0, 0)); }
+  if (mode === 'desk') { const animated = openCover(); requestAnimationFrame(() => scrollTo(0, 0)); showHint(animated ? 1700 : 700); }
+  else showHint(900);
   if (h.el && h.el !== pages[2 * cur]) { pendingFocus = h.el; settled(); }
 
   addEventListener('resize', setup);

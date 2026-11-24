@@ -10,9 +10,11 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .page {
   position: relative;
   background-color: var(--paper);
-  background-image: radial-gradient(circle at 50% 50%, var(--dot) 0 1px, transparent 1.6px);
-  background-size: 24px 24px;
-  background-position: 12px 6px;
+  /* ruled paper: a red margin line, then a blue rule every 24px (the body line-height) */
+  background-image:
+    linear-gradient(90deg, transparent 34px, var(--margin) 34px 35px, transparent 35px),
+    repeating-linear-gradient(180deg, transparent 0 23px, var(--ruling) 23px 24px);
+  background-position: 0 0, 0 6px;
   padding: 48px 48px 56px 56px;
   font-size: 16.5px;
   line-height: 24px;
@@ -150,10 +152,12 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .print-l { width: 196px; }
 .print-l .ph-front { padding: 8px 8px 30px; }
 .print-l img { aspect-ratio: 4 / 3; }
-.passport { width: 88px; }
-.passport .ph-front { padding: 5px; }
-.passport img { aspect-ratio: 35 / 45; object-position: 50% 20%; }
-.passport .ph-back { font-size: 17px; line-height: 19px; padding: 8px; }
+/* small print in the pile (Great Wall), and the headshot clipped to the name plate */
+.print-s { width: 112px; }
+.print-s .ph-front { padding: 6px 6px 28px; }
+.print-s .ph-back { font-size: 18px; line-height: 21px; padding: 8px; }
+.plate-photo { position: absolute; right: 18px; top: -14px; width: 84px; padding: 5px; background: #fdfdfb; transform: rotate(5deg); box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 16px -8px rgba(0,0,0,.55); }
+.plate-photo img { display: block; width: 100%; height: auto; aspect-ratio: 35 / 45; object-fit: cover; object-position: 50% 20%; }
 .clip { position: absolute; left: 30px; top: -16px; width: 13px; height: 42px; border: 2.4px solid #b7bcc6; border-radius: 7px; pointer-events: none; box-shadow: 0 2px 2px rgba(0,0,0,.25); }
 .clip::after { content: ""; position: absolute; left: 1.6px; top: 6px; width: 5px; height: 26px; border: 2.2px solid #c9ced6; border-bottom: 0; border-radius: 5px 5px 0 0; }
 .photo .tape { z-index: 2; }
@@ -226,10 +230,13 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .face.back { transform: rotateY(180deg); }
 .face > .page { left: 0; }
-.face::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: var(--sh, 0); }
-.face.front::after { background: linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,.08) 40%, rgba(255,255,255,.06)); }
-.face.back::after { background: linear-gradient(270deg, rgba(0,0,0,.22), rgba(0,0,0,.04) 50%, rgba(255,255,255,.08)); }
-.leaf.moving .face > .page { box-shadow: 0 0 calc(var(--lift, 0) * 30px) rgba(0,0,0,calc(var(--lift, 0) * .3)); }
+/* turning shade (book.js render sets opacity); the opening cover still uses --sh on ::after */
+.shade, .front-cover .face::after { position: absolute; inset: 0; pointer-events: none; opacity: 0; will-change: opacity; }
+.front-cover .face::after { content: ""; opacity: var(--sh, 0); will-change: auto; }
+.face.front > .shade, .front-cover .face.front::after { background: linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,.08) 40%, rgba(255,255,255,.06)); }
+.face.back > .shade, .front-cover .face.back::after { background: linear-gradient(270deg, rgba(0,0,0,.22), rgba(0,0,0,.04) 50%, rgba(255,255,255,.08)); }
+/* a fixed shadow while turning: animating its blur repainted the whole page every frame */
+.leaf.moving .face > .page { box-shadow: 0 0 22px rgba(0,0,0,.16); }
 
 /* stack edges: thickness follows how many leaves sit on each side */
 .edge { position: absolute; top: 3px; bottom: 3px; width: calc(var(--n, 0) * 1.6px); pointer-events: none;
@@ -255,11 +262,24 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .tab.c0 { --tc: var(--tab-0); } .tab.c5 { --tc: var(--tab-5); } .tab.c6 { --tc: var(--tab-6); } .tab.c1 { --tc: var(--tab-1); } .tab.c2 { --tc: var(--tab-2); } .tab.c3 { --tc: var(--tab-3); } .tab.c4 { --tc: var(--tab-4); }
 
 /* turning handles and the folded corner */
-.grab { position: absolute; top: 0; height: 760px; width: 60px; z-index: 400; cursor: grab; touch-action: none; background: none; border: 0; padding: 0; }
-.grab:active { cursor: grabbing; }
-.grab-r { left: calc(1120px - 44px); }
-.grab-l { left: -16px; }
-.grab[hidden] { display: none; }
+/* the whole stage listens for turns (book.js): sideways touch moves come to us, vertical ones still scroll */
+.stage { touch-action: pan-y pinch-zoom; }
+.stage.turnable { cursor: pointer; }
+.stage.turning, .stage.turning * { cursor: grabbing; -webkit-user-select: none; user-select: none; }
+.pocket .sheets { touch-action: pan-y pinch-zoom; }
+
+/* first-visit hint (book.js showHint) */
+.turn-hint { position: absolute; z-index: 450; pointer-events: none; opacity: 0; transition: opacity .45s, translate .45s var(--spring); translate: 0 8px; }
+.turn-hint.on { opacity: 1; translate: 0 0; }
+.th-note { background: #fce38a; color: #1b1e25; padding: 14px 16px 16px; font-size: 25px; line-height: 25px; transform: rotate(-2.5deg);
+  box-shadow: 0 1px 1px rgba(0,0,0,.15), 0 12px 18px -10px rgba(0,0,0,.45); }
+.th-note b { font-weight: 400; color: #2445a6; }
+.th-desk { left: 820px; top: 470px; width: 230px; }
+.th-ring { position: absolute; left: 270px; top: 40px; width: 44px; height: 44px; margin: -22px; border-radius: 50%; border: 3px solid #2445a6; animation: th-pulse 1.4s ease-out infinite; }
+@keyframes th-pulse { from { scale: .5; opacity: .9; } to { scale: 1.6; opacity: 0; } }
+.th-pocket { position: fixed; left: 50%; bottom: 22px; width: min(300px, calc(100vw - 48px)); margin-left: calc(min(300px, calc(100vw - 48px)) / -2); }
+.th-pocket .th-note { font-size: 23px; line-height: 23px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .th-ring { animation: none; } }
 .fold { position: absolute; bottom: 0; width: 0; height: 0; pointer-events: none; transition: width .35s var(--spring), height .35s var(--spring); z-index: 399; }
 .fold-r { left: 1120px; transform: translateX(-100%); background: linear-gradient(315deg, transparent 50%, #e2e3dc 50%, #f5f5f1 80%); box-shadow: -3px -3px 6px -3px rgba(0,0,0,.25); }
 .fold-l { left: 0; background: linear-gradient(45deg, transparent 50%, #e2e3dc 50%, #f5f5f1 80%); box-shadow: 3px -3px 6px -3px rgba(0,0,0,.25); }
@@ -293,6 +313,7 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .pocket .sticky.now { justify-self: start; max-width: 260px; margin: 0 0 0 4px; }
 .pocket .plate { padding: 18px 20px 20px; }
 .pocket .plate h1 { font-size: 48px; line-height: 50px; }
+.pocket .plate-photo { width: 62px; padding: 4px; right: -8px; top: -20px; }
 .pocket .pile { height: 400px; }
 .pocket .pile-note { top: auto; bottom: 2px; left: 0; right: auto; width: 150px; font-size: 20px; line-height: 20px; text-align: left; transform: rotate(-2deg); }
 .pocket .pocket { height: 300px; }
@@ -310,7 +331,7 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
   .pocket .photo.polaroid { width: 138px; }
   .pocket .photo.print-l { width: 168px; }
   .pocket .photo.print-p { width: 112px; }
-  .pocket .photo.passport { width: 78px; }
+  .pocket .photo.print-s { width: 98px; }
 }
 .ph.deckled { filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)) drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
 .ph.deckled .ph-front { box-shadow: none; }
@@ -319,7 +340,7 @@ body.home main { position: relative; display: flex; flex-direction: column; alig
 .book.desk.closed { --shift: calc(-280px * var(--s)); }
 .desk .cover { transition: clip-path 1s cubic-bezier(.6,.05,.25,1); clip-path: inset(-120px); }
 .desk.closed .cover { clip-path: inset(-120px -120px -120px 50%); }
-.desk > .page.l, .desk .ribbon, .desk .edge-l, .desk .grab-l { transition: opacity .35s .55s; }
+.desk > .page.l, .desk .ribbon, .desk .edge-l { transition: opacity .35s .55s; }
 .desk.closed > .page.l, .desk.closed .ribbon, .desk.closed .edge-l { opacity: 0; transition-delay: 0s; }
 .front-cover { z-index: 500 !important; }
 .front-cover .face { border-radius: 0 6px 6px 0; overflow: hidden; }

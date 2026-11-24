@@ -6,11 +6,11 @@ import { site } from '../../data/site';
 import desk from '../../assets/photos/desk.jpg';
 import lake from '../../assets/photos/lake.jpg';
 import lavender from '../../assets/photos/lavender.jpg';
-import oldProfile from '../../assets/photos/old-profile.jpg';
+import greatWall from '../../assets/photos/great-wall.jpg';
 
 const photos = [
   {
-    k: 'desk', cls: 'polaroid', src: desk, w: 639, h: 720, pos: '--x:-0.5%;--y:12%;--r:-9deg',
+    k: 'desk', cls: 'polaroid', src: desk, w: 639, h: 720, pos: '--x:-0.5%;--y:10%;--r:-9deg',
     alt: 'Tommy at his desk, smiling and holding up a peace sign',
     cap: 'at the desk', back: 'Desk, laptop, the stairs behind. Most of this notebook happened here.',
     tape: 'left:34%;top:-10px;transform:rotate(-4deg)',
@@ -18,18 +18,18 @@ const photos = [
   {
     k: 'lavender', cls: 'print-l', src: lavender, w: 720, h: 540, pos: '--x:27%;--y:47%;--r:-4deg',
     alt: 'Selfie of Tommy in a trench coat, hair in the wind, in a lavender field with mountains',
-    cap: 'lavender, very windy', back: 'Lavender field, mountains, a lot of wind.',
+    cap: 'Nalati', back: 'Lavender field, mountains, a lot of wind.',
   },
   {
     k: 'lake', cls: 'print-p', src: lake, w: 540, h: 720, pos: '--x:39%;--y:-1%;--r:3deg',
     alt: 'Tommy standing at a wide, calm lake, mountains and a big blue sky behind him',
-    cap: 'still water', back: 'A huge, very calm lake. Mostly sky.',
+    cap: 'Sayram Lake', back: 'A huge, very calm lake. Mostly sky.',
     tape: 'right:-18px;top:14px;transform:rotate(58deg);width:60px',
   },
   {
-    k: 'old-profile', cls: 'passport', src: oldProfile, w: 549, h: 720, pos: '--x:1%;--y:67%;--r:6deg',
-    alt: 'Headshot of Tommy in glasses and a white polo against a plain wall',
-    back: 'The old headshot. Kept for the record.', clip: true,
+    k: 'great-wall', cls: 'print-p print-s', src: greatWall, w: 540, h: 720, pos: '--x:1%;--y:57%;--r:5deg',
+    alt: 'Tommy on the Great Wall, smiling with a peace sign, a stone watchtower and stairs behind him',
+    cap: 'Great Wall', back: 'The Great Wall. A lot of stairs.',
   },
 ];
 const imgs = await Promise.all(photos.map((p) => getImage({ src: p.src, width: p.w, height: p.h, format: 'webp', quality: 78 })));
@@ -50,7 +50,6 @@ const imgs = await Promise.all(photos.map((p) => getImage({ src: p.src, width: p
             </span>
           </button>
           {p.tape && <span class="tape" style={p.tape} />}
-          {p.clip && <span class="clip" aria-hidden="true" />}
         </li>
       ))
     }

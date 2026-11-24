@@ -9,6 +9,8 @@ import Notebook from '../layouts/Notebook.astro';
 import PhotoPile from '../components/notebook/PhotoPile.astro';
 import OpenCard from '../components/notebook/OpenCard.astro';
 import Sticker from '../components/notebook/Sticker.astro';
+import { Image } from 'astro:assets';
+import headshot from '../assets/photos/old-profile.jpg';
 import '../notebook/css/home.css';
 import '../notebook/css/openers.css';
 import { getProjects, getExperience } from '../lib/content';
@@ -22,9 +24,9 @@ const jobs = await getExperience();
 const jobBodies = await Promise.all(jobs.map(async (j) => (await render(j)).Content));
 const byId = Object.fromEntries([...featured, ...archive].map((p) => [p.id, p]));
 
-// Work: the first job gets a page to itself; the rest share pages, two at a time.
-const workPages: number[][] = [[0]];
-for (let i = 1; i < jobs.length; i += 2) workPages.push(jobs.slice(i, i + 2).map((_, k) => i + k));
+// Work: two jobs to a page.
+const workPages: number[][] = [];
+for (let i = 0; i < jobs.length; i += 2) workPages.push(jobs.slice(i, i + 2).map((_, k) => i + k));
 
 type Page =
   | { kind: 'cover' }
@@ -77,7 +79,7 @@ const year = new Date().getFullYear();
 ---
 
 <Notebook home bodyClass="home">
-  <p class="desk-hint on-mat js-only" id="book-hint">Drag a page corner, click a tab, or use the arrow keys.</p>
+  <p class="desk-hint on-mat js-only" id="book-hint">Click near a page edge or drag a page to turn it. Tabs and arrow keys work too.</p>
 
   <div class="book" id="book" aria-roledescription="notebook" aria-label="Tommy Wu's notebook">
     {
@@ -89,9 +91,13 @@ const year = new Date().getFullYear();
                 <div class="plate">
                   <p class="plate-k">This notebook belongs to</p>
                   <h1 id="name">{site.name}</h1>
+                  <span class="plate-photo" aria-hidden="true">
+                    <Image src={headshot} alt="" width={180} height={236} format="webp" quality={78} loading="eager" />
+                    <span class="clip" />
+                  </span>
                   <p class="plate-sub">
-                    {site.fullName}. Computer science at Georgia Tech, threads in Intelligence and Systems &amp;
-                    Architecture. Usually found lifting weights or discovering that the library closes before the deadline does.
+                    {site.fullName.replace(' ', ' (Tommy) ')}. Computer science at Georgia Tech, threads in Intelligence and Systems &amp;
+                    Architecture. Usually found lifting weights at the gym, or doomscrolling at the library to feel productive.
                   </p>
                   <p class="plate-ret">
                     <span class="hand">If found, please return to</span>

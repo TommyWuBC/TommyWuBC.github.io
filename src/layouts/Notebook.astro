@@ -50,6 +50,27 @@ const data = JSON.stringify({ email: site.email, commands });
         if (t) document.documentElement.dataset.theme = t;
       } catch (e) {}
     </script>
+    {site.goatcounter && (
+      <script is:inline define:vars={{ gc: site.goatcounter }}>
+        // GoatCounter (cookieless). Counted by hand so a private ?r=<tag> shows up as the referrer,
+        // then dropped from the address bar. Localhost visits are ignored by count.js itself.
+        (function () {
+          var q = new URLSearchParams(location.search), tag = q.get('r');
+          window.goatcounter = { no_onload: true };
+          var s = document.createElement('script');
+          s.async = true; s.src = 'https://gc.zgo.at/count.js';
+          s.dataset.goatcounter = 'https://' + gc + '.goatcounter.com/count';
+          s.onload = function () { window.goatcounter.count(tag ? { path: location.pathname, referrer: 'tag:' + tag } : { path: location.pathname }); };
+          document.head.appendChild(s);
+          if (tag) { q.delete('r'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }
+          // résumé opens are a PDF, not a page view, so count them as an event
+          document.addEventListener('click', function (e) {
+            var a = e.target.closest && e.target.closest('a[href$=".pdf"]');
+            if (a && window.goatcounter.count) window.goatcounter.count({ path: 'resume-pdf', title: 'Opened résumé', event: true });
+          });
+        })();
+      </script>
+    )}
     <slot name="head" />
   </head>
   <body class={bodyClass}>

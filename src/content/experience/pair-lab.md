@@ -8,6 +8,5 @@ projects: [visual-navigation]
 sticker: { name: pair, width: 56, tilt: 7 }
 ---
 
-- First project: visual navigation under distribution shift. Benchmarked five approaches; domain-randomized PPO, trained for 40M steps across three layout families, reached 100%, 98.4% and 97.8% success over 42, 249 and 276 layout patterns.
-- Built an LLM-as-judge pipeline with a five-category spatial-reasoning taxonomy, and used it to classify 1,671 VLM reasoning steps across 40 navigation episodes.
-- Made RL training 8&times; faster, from about 200 to 1,600 frames per second, by cutting redundant observation generation, running 8 environments in parallel and removing GPU overhead the job didn't need.
+- Building data and training pipelines for small world action models (diffusion transformers that jointly predict robot actions and 3D scene flow), as part of a lab project built on the Wan 2.2 video model.
+- Built and validated a long-horizon 3D point-tracking pipeline for a 1.37M-frame, 3-dataset robot and egocentric corpus. Segmented tracking to fit within GPU memory, reaching ~0.1&nbsp;px grid reprojection error against ~0.6&nbsp;px for the previous tracker.
